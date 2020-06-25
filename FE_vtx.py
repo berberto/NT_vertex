@@ -39,7 +39,7 @@ class FE_vtx(object):
         m = len(self.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=self.cells.mesh.edges.next
+        nxt=self.cells.mesh.edges.__next__
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -96,7 +96,7 @@ class FE_vtx(object):
         m = len(self.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=self.cells.mesh.edges.next
+        nxt=self.cells.mesh.edges.__next__
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -152,7 +152,7 @@ class FE_vtx(object):
         m = len(self.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=self.cells.mesh.edges.next
+        nxt=self.cells.mesh.edges.__next__
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -196,7 +196,7 @@ class FE_vtx(object):
         m = len(self.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=self.cells.mesh.edges.next
+        nxt=self.cells.mesh.edges.__next__
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -260,7 +260,7 @@ class FE_vtx(object):
         m = len(con)
         A = np.zeros((m,m)) #set up as Array from multiprocessing
         bv = np.zeros(m) #bv stands for b vector, set up as Array from multiprocessing
-        nxt=self.cells.mesh.edges.next
+        nxt=self.cells.mesh.edges.__next__
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -294,7 +294,7 @@ class FE_vtx(object):
             dt is the time step
         
         """
-        nxt=self.cells.mesh.edges.next
+        nxt=self.cells.mesh.edges.__next__
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -392,7 +392,7 @@ def evolve_modified(fe_vtx,v,prod_rate,dt):
         m = len(fe_vtx.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=fe_vtx.cells.mesh.edges.next
+        nxt=fe_vtx.cells.mesh.edges.__next__
         f_by_e = fe_vtx.cells.mesh.face_id_by_edge
         old_verts = fe_vtx.cells.mesh.vertices.T
         old_cents = fe_vtx.centroids

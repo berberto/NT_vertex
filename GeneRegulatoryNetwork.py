@@ -552,9 +552,9 @@ t3=time.time()
 test_g.evolve(1.0,0.001,np.random.normal(0,1,10), 0.01)
 t4=time.time()
 
-print "odeint took ", t4 - t3
-print "basic took ", t2 - t1
-print "basic is ", (t4 - t3)/(t2 - t1), " times quicker."
+print("odeint took ", t4 - t3)
+print("basic took ", t2 - t1)
+print("basic is ", (t4 - t3)/(t2 - t1), " times quicker.")
 
         
 

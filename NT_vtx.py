@@ -232,7 +232,7 @@ def cells_state_video(cells_history, poni_state_history, name_file):
     os.system("cd ")
     #os.system("cd /opt")
     os.system("/opt/ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
-    print os.system("pwd")
+    print(os.system("pwd"))
     #os.system("cd ")
     #os.system("cd Desktop/vertex_model/images")
     #os.system("cd images")
@@ -336,7 +336,7 @@ for k in range(N_step):
     cells_list.append(nt5.FE_vtx.cells)
     poni_state_list.append(nt5.GRN.poni_grn.state)
 t2 = time.time()
-print nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, " took ", t2 - t1
+print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, " took ", t2 - t1)
 cells_state_video(cells_list,poni_state_list, "state-vid")
 animate_surf_video_mpg(nodes_list,concentration_list, "surface-video") 
 #print np.argmax(poni_state_list[0])
