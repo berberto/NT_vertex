@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Fri Apr 17 18:26:22 2020
@@ -543,18 +543,20 @@ def build_GRN_full_basic(n):
     lost_morph = np.zeros(n)
     return GRN_full_basic(poni, trans, effector, lost_morph)
 
-test_g = build_GRN_full_basic(10)
-t1=time.time()
-test_g.evolve_ugly(1.0,0.001,np.random.normal(0,1,10), 0.01)
-t2=time.time()
 
-t3=time.time()
-test_g.evolve(1.0,0.001,np.random.normal(0,1,10), 0.01)
-t4=time.time()
+if __name__ == "__main__":
+    test_g = build_GRN_full_basic(10)
+    t1=time.time()
+    test_g.evolve_ugly(1.0,0.001,np.random.normal(0,1,10), 0.01)
+    t2=time.time()
 
-print("odeint took ", t4 - t3)
-print("basic took ", t2 - t1)
-print("basic is ", (t4 - t3)/(t2 - t1), " times quicker.")
+    t3=time.time()
+    test_g.evolve(1.0,0.001,np.random.normal(0,1,10), 0.01)
+    t4=time.time()
+
+    print("odeint took ", t4 - t3)
+    print("basic took ", t2 - t1)
+    print("basic is ", (t4 - t3)/(t2 - t1), " times quicker.")
 
         
 

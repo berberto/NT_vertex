@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jun  4 19:21:31 2020
@@ -10,7 +10,7 @@ from FE_vtx import  build_FE_vtx, build_FE_vtx_from_scratch, evolve_modified
 from GeneRegulatoryNetwork import GRN_full_basic, build_GRN_full_basic
 from FE_transitions import divide, T1, rem_collapsed
 from cells_extra import ready_to_divide, centroids2
-from cent_test import cen2
+# from cent_test import cen2
 from plotting import animate_surf_video_mpg, draw_cells
 import matplotlib.pyplot as plt
 import numpy as np
@@ -72,24 +72,24 @@ class NT_vtx(object):
         self.FE_vtx.edges_to_nodes = self.FE_vtx.cells.mesh.edges.ids/3
         self.FE_vtx.faces_to_nodes = cTn
         
-    def transitions_faster(self,ready=None):
-        if ready is None:
-            ready = ready_to_divide(self.FE_vtx.cells)
-        c_by_e = self.FE_vtx.concentration[self.FE_vtx.edges_to_nodes]
-        c_by_c = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.cells,c_by_e, c_by_c = divide(self.FE_vtx.cells,c_by_e,c_by_c,ready)
-        self.GRN.division(ready)
-        self.FE_vtx.cells = T1(self.FE_vtx.cells) #perform T1 transitions - "neighbour exchange"
-        self.FE_vtx.cells,c_by_e = rem_collapsed(self.FE_vtx.cells,c_by_e) #T2 transitions-"leaving the tissue"
-        self.FE_vtx.centroids = cen2(self.FE_vtx.cells)
-        eTn = self.FE_vtx.cells.mesh.edges.ids/3
-        n = max(eTn)
-        cTn=np.cumsum(~self.FE_vtx.cells.empty())+n
-        con_part=c_by_e[::3]
-        cent_part = c_by_c[~self.FE_vtx.cells.empty()]
-        self.FE_vtx.concentration = np.hstack([con_part,cent_part])
-        self.FE_vtx.edges_to_nodes = self.FE_vtx.cells.mesh.edges.ids/3
-        self.FE_vtx.faces_to_nodes = cTn
+    # def transitions_faster(self,ready=None):
+    #     if ready is None:
+    #         ready = ready_to_divide(self.FE_vtx.cells)
+    #     c_by_e = self.FE_vtx.concentration[self.FE_vtx.edges_to_nodes]
+    #     c_by_c = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
+    #     self.FE_vtx.cells,c_by_e, c_by_c = divide(self.FE_vtx.cells,c_by_e,c_by_c,ready)
+    #     self.GRN.division(ready)
+    #     self.FE_vtx.cells = T1(self.FE_vtx.cells) #perform T1 transitions - "neighbour exchange"
+    #     self.FE_vtx.cells,c_by_e = rem_collapsed(self.FE_vtx.cells,c_by_e) #T2 transitions-"leaving the tissue"
+    #     self.FE_vtx.centroids = cen2(self.FE_vtx.cells)
+    #     eTn = self.FE_vtx.cells.mesh.edges.ids/3
+    #     n = max(eTn)
+    #     cTn=np.cumsum(~self.FE_vtx.cells.empty())+n
+    #     con_part=c_by_e[::3]
+    #     cent_part = c_by_c[~self.FE_vtx.cells.empty()]
+    #     self.FE_vtx.concentration = np.hstack([con_part,cent_part])
+    #     self.FE_vtx.edges_to_nodes = self.FE_vtx.cells.mesh.edges.ids/3
+    #     self.FE_vtx.faces_to_nodes = cTn
 
     def evolve_parallel(self,v, prod_rate,bind_rate,deg_rate,time,dt):
         """
@@ -232,7 +232,7 @@ def cells_state_video(cells_history, poni_state_history, name_file):
     os.system("cd ")
     #os.system("cd /opt")
     os.system("/opt/ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
-    print(os.system("pwd"))
+    print((os.system("pwd")))
     #os.system("cd ")
     #os.system("cd Desktop/vertex_model/images")
     #os.system("cd images")
@@ -336,7 +336,7 @@ for k in range(N_step):
     cells_list.append(nt5.FE_vtx.cells)
     poni_state_list.append(nt5.GRN.poni_grn.state)
 t2 = time.time()
-print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, " took ", t2 - t1)
+print((nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, " took ", t2 - t1))
 cells_state_video(cells_list,poni_state_list, "state-vid")
 animate_surf_video_mpg(nodes_list,concentration_list, "surface-video") 
 #print np.argmax(poni_state_list[0])

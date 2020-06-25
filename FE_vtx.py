@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun  1 10:07:58 2020
@@ -11,8 +11,8 @@ import scipy
 from cells_extra import cells_setup,add_IKNM_properties, ready_to_divide, cells_evolve
 from Finite_Element import centroids2
 from FE_transitions import T1, rem_collapsed, divide
-from _fe_cy_v3 import ev2, ev3, ev4,ev5
-from cent_test import cen2
+# from _fe_cy_v3 import ev2, ev3, ev4,ev5
+# from cent_test import cen2
 import concurrent.futures
 from multiprocessing import Array ,Process
 import time
@@ -63,7 +63,7 @@ class FE_vtx(object):
             for i in range(3):
                 bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
                 for j in range(3):
-                    A[node_id_tri[i]][node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
+                    A[node_id_tri[i],node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
             #count+=1  MATRIX A IS SYMMETRIC.
             #print count
             #if count ==300:
@@ -77,6 +77,7 @@ class FE_vtx(object):
         #print A[:1]
         #print A[:2], "A2"
         #print scipy.sparse.issparse(A), " that A is sparse"
+        A[np.where(A < 1.0e-8)] = 0
         self.concentration = np.linalg.solve(A,bv)#could change to scipy.linalg.solve(A,bv,assume_a='sym')
         self.cells = new_cells
         self.centroids = new_cents
@@ -122,7 +123,7 @@ class FE_vtx(object):
             for i in range(3):
                 bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
                 for j in range(3):
-                    A[node_id_tri[i]][node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
+                    A[node_id_tri[i],node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
             #t2=time.time()
             #print t2 - t1
             #count+=1  MATRIX A IS SYMMETRIC.
@@ -178,7 +179,7 @@ class FE_vtx(object):
             for i in range(3):
                 bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
                 for j in range(3):
-                    A[node_id_tri[i]][node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
+                    A[node_id_tri[i],node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
             return A, bv
         
         
@@ -222,7 +223,7 @@ class FE_vtx(object):
             for i in range(3):
                 bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
                 for j in range(3):
-                    A[node_id_tri[i]][node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
+                    A[node_id_tri[i],node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
             #t2=time.time()
             #print t2 - t1
             #count+=1  MATRIX A IS SYMMETRIC.
@@ -282,31 +283,31 @@ class FE_vtx(object):
         self.concentration = scipy.sparse.linalg.spsolve(A,bv)#could change to scipy.linalg.solve(A,bv,assume_a='sym')
         self.cells = new_cells
         self.centroids = new_cents
+
+    # def evolve_cy(self,v,prod_rate,dt):
+    #     """
+    #     Performs one step of the FE method. Computes the new cells object itself.
+    #     Uses np.linalg.solve
+    #     Args:
+    #         new_cells is the new cells object after movement
+    #         v is the diffusion coefficient
+    #         prod_rate is the morphogen production rate.
+    #         dt is the time step
         
-    def evolve_cy(self,v,prod_rate,dt):
-        """
-        Performs one step of the FE method. Computes the new cells object itself.
-        Uses np.linalg.solve
-        Args:
-            new_cells is the new cells object after movement
-            v is the diffusion coefficient
-            prod_rate is the morphogen production rate.
-            dt is the time step
-        
-        """
-        nxt=self.cells.mesh.edges.__next__
-        f_by_e = self.cells.mesh.face_id_by_edge
-        old_verts = self.cells.mesh.vertices.T
-        old_cents = self.centroids
-        new_cells = cells_evolve(self.cells,dt)[0]
-        new_verts = new_cells.mesh.vertices.T
-        new_cents = cen2(new_cells)#centroids2(new_cells)
-        f = self.cells.properties['source']*prod_rate #source
-        n_edge = self.cells.mesh.edges.ids[-1]+1
-        #ev2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
-        self.concentration = ev5(old_verts.astype(np.float64), new_verts.astype(np.float64), old_cents.astype(np.float64),new_cents.astype(np.float64), self.concentration.astype(np.float64), nxt.astype(np.intc) ,f_by_e.astype(np.intc), self.edges_to_nodes.astype(np.intc), self.faces_to_nodes.astype(np.intc), f.astype(np.float64) , np.intc(n_edge) , np.float64(v), np.float64(dt) )
-        self.cells = new_cells
-        self.centroids = new_cents
+    #     """
+    #     nxt=self.cells.mesh.edges.__next__
+    #     f_by_e = self.cells.mesh.face_id_by_edge
+    #     old_verts = self.cells.mesh.vertices.T
+    #     old_cents = self.centroids
+    #     new_cells = cells_evolve(self.cells,dt)[0]
+    #     new_verts = new_cells.mesh.vertices.T
+    #     new_cents = cen2(new_cells)#centroids2(new_cells)
+    #     f = self.cells.properties['source']*prod_rate #source
+    #     n_edge = self.cells.mesh.edges.ids[-1]+1
+    #     #ev2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
+    #     self.concentration = ev5(old_verts.astype(np.float64), new_verts.astype(np.float64), old_cents.astype(np.float64),new_cents.astype(np.float64), self.concentration.astype(np.float64), nxt.astype(np.intc) ,f_by_e.astype(np.intc), self.edges_to_nodes.astype(np.intc), self.faces_to_nodes.astype(np.intc), f.astype(np.float64) , np.intc(n_edge) , np.float64(v), np.float64(dt) )
+    #     self.cells = new_cells
+    #     self.centroids = new_cents
         
     def transitions(self,ready=None):
         if ready is None:
@@ -326,23 +327,23 @@ class FE_vtx(object):
         self.edges_to_nodes = self.cells.mesh.edges.ids/3
         self.faces_to_nodes = cTn
         
-    def transitions_faster(self,ready=None):
-        if ready is None:
-            ready = ready_to_divide(self.cells)
-        c_by_e = self.concentration[self.edges_to_nodes]
-        c_by_c = self.concentration[self.faces_to_nodes]
-        self.cells = T1(self.cells) #perform T1 transitions - "neighbour exchange"
-        self.cells,c_by_e = rem_collapsed(self.cells,c_by_e) #T2 transitions-"leaving the tissue"
-        self.cells,c_by_e, c_by_c = divide(self.cells,c_by_e,c_by_c,ready)
-        self.centroids = cen2(self.cells)
-        eTn = self.cells.mesh.edges.ids/3
-        n = max(eTn)
-        cTn=np.cumsum(~self.cells.empty())+n
-        con_part=c_by_e[::3]
-        cent_part = c_by_c[~self.cells.empty()]
-        self.concentration = np.hstack([con_part,cent_part])
-        self.edges_to_nodes = self.cells.mesh.edges.ids/3
-        self.faces_to_nodes = cTn
+    # def transitions_faster(self,ready=None):
+    #     if ready is None:
+    #         ready = ready_to_divide(self.cells)
+    #     c_by_e = self.concentration[self.edges_to_nodes]
+    #     c_by_c = self.concentration[self.faces_to_nodes]
+    #     self.cells = T1(self.cells) #perform T1 transitions - "neighbour exchange"
+    #     self.cells,c_by_e = rem_collapsed(self.cells,c_by_e) #T2 transitions-"leaving the tissue"
+    #     self.cells,c_by_e, c_by_c = divide(self.cells,c_by_e,c_by_c,ready)
+    #     self.centroids = cen2(self.cells)
+    #     eTn = self.cells.mesh.edges.ids/3
+    #     n = max(eTn)
+    #     cTn=np.cumsum(~self.cells.empty())+n
+    #     con_part=c_by_e[::3]
+    #     cent_part = c_by_c[~self.cells.empty()]
+    #     self.concentration = np.hstack([con_part,cent_part])
+    #     self.edges_to_nodes = self.cells.mesh.edges.ids/3
+    #     self.faces_to_nodes = cTn
 
 
 def updater(A,bv,dim, e, new_verts, new_cents, old_verts, old_cents, nxt, f_by_e, etn, ftn, con, f, v, dt):
@@ -561,7 +562,7 @@ def W(i,j,d,nabPhi,nodes, previous_nodes):
         previous_nodes are the positions of the three nodes at the previous time step.
         
     """
-    P0=(nodes[0]-previous_nodes[0]).T
+    P0 = (nodes[0]-previous_nodes[0]).T
     P1 = (nodes[1]-previous_nodes[1]).T
     P2 = (nodes[2]-previous_nodes[2]).T
     dummy = P0 + P1 + P2 + (nodes[j]-previous_nodes[j]).T
