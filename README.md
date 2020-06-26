@@ -10,7 +10,7 @@
 
 1. `FE_vtx.py`:
 	- line 60-61: determinant might be expensive. Can the old one be saved as member? How big is this matrix?
-	- `transitions_faster` is the Cython version for the transitions? Commented out
+	- `transitions_faster` is the Cython version for the transitions? Does it work? Commented out for the moment.
 
 2. `NT_vtx.py`:
 	- `transitions_faster` (same as above)

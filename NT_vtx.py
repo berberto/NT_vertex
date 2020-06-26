@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 import os
+import sys
 import multiprocessing
 import concurrent.futures
 
@@ -63,13 +64,13 @@ class NT_vtx(object):
         self.FE_vtx.cells = T1(self.FE_vtx.cells) #perform T1 transitions - "neighbour exchange"
         self.FE_vtx.cells,c_by_e = rem_collapsed(self.FE_vtx.cells,c_by_e) #T2 transitions-"leaving the tissue"
         self.FE_vtx.centroids = centroids2(self.FE_vtx.cells)
-        eTn = self.FE_vtx.cells.mesh.edges.ids/3
+        eTn = self.FE_vtx.cells.mesh.edges.ids//3
         n = max(eTn)
         cTn=np.cumsum(~self.FE_vtx.cells.empty())+n
         con_part=c_by_e[::3]
         cent_part = c_by_c[~self.FE_vtx.cells.empty()]
         self.FE_vtx.concentration = np.hstack([con_part,cent_part])
-        self.FE_vtx.edges_to_nodes = self.FE_vtx.cells.mesh.edges.ids/3
+        self.FE_vtx.edges_to_nodes = self.FE_vtx.cells.mesh.edges.ids//3
         self.FE_vtx.faces_to_nodes = cTn
         
     # def transitions_faster(self,ready=None):
@@ -319,8 +320,10 @@ def set_colour_poni_state(cells,poni_state):
         elif m==3:
             cells.properties['color'][k] = np.array([0,1,1]) # ?, Irx high 
 
+
 nt5=build_NT_vtx_from_scratch(size = [6,6])
 
+print("build NT")
 
 nodes_list = []
 concentration_list = []
@@ -330,15 +333,15 @@ N_step=10
 t1=time.time()
 for k in range(N_step):
     nt5.evolve(0.2,0.05,0.0,0.0,0.0,0.001) #(v, prod_rate,bind_rate,deg_rate,time,dt):
-    nt5.transitions_faster()
+    nt5.transitions()
     nodes_list.append(np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
     concentration_list.append(nt5.FE_vtx.concentration)
     cells_list.append(nt5.FE_vtx.cells)
     poni_state_list.append(nt5.GRN.poni_grn.state)
 t2 = time.time()
 print((nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, " took ", t2 - t1))
-cells_state_video(cells_list,poni_state_list, "state-vid")
-animate_surf_video_mpg(nodes_list,concentration_list, "surface-video") 
+# cells_state_video(cells_list,poni_state_list, "state-vid")
+# animate_surf_video_mpg(nodes_list,concentration_list, "surface-video") 
 #print np.argmax(poni_state_list[0])
 
 

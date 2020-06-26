@@ -164,7 +164,7 @@ def _edge_table(face_id_pairs, vertex_id_pairs, region_id_pairs):
     # add reverse orientation of each edge
     flip = lambda pair: np.roll(pair, 1, axis=-1)
     edges = np.vstack([np.hstack(edge_data), np.hstack(list(map(flip, edge_data)))])
-    dtype = {'names': ['face', 'face2', 'vertex', 'vertex2', 'region', 'region2'], 'formats': ['int64']*6} #was 'i'
+    dtype = {'names': ['face', 'face2', 'vertex', 'vertex2', 'region', 'region2'], 'formats': ['int64']*6} #was 'int64'
     return edges.view(dtype).view(np.recarray)
 """
 Confused.
@@ -201,10 +201,20 @@ def _modified_edge_table(face_id_pairs, vertex_id_pairs, region_id_pairs):
         region_id_pairs = np.zeros_like(face_id_pairs)
 
     edge_data = [face_id_pairs, vertex_id_pairs, region_id_pairs]
+    # print(edge_data[:4])
     # add reverse orientation of each edge
     flip = lambda pair: np.roll(pair, 1, axis=-1)
     edges = np.vstack([np.hstack(edge_data), np.hstack(list(map(flip, edge_data)))]) 
     dtype = {'names': ['face', 'face2', 'vertex', 'vertex2', 'region', 'region2'], 'formats': ['int64']*6}
+    # # print(dtype)
+    # print(edges[:4], "\n")
+    # # print(np.shape(edges))
+    # print(edges.view(dtype)[:4], "\n")
+    # # print(np.shape(edges.view(dtype)))
+    # print(edges.view(dtype).view(np.recarray)[:4], "\n")
+    # # print(np.shape(edges.view(dtype)))
+    # import sys
+    # sys.exit()
     return edges.view(dtype).view(np.recarray)
 
 def build_mesh(vertex_positions, geometry, face_id_pairs, vertex_id_pairs, region_id_pairs=None, boundary_face_ids=None):
@@ -221,7 +231,7 @@ def build_mesh(vertex_positions, geometry, face_id_pairs, vertex_id_pairs, regio
     vertices = vertex_positions[edge_data.vertex[order]].T.copy()
 
     edges = Edges(reverse)
-    face_id_by_edge = cycles(edges.__next__)[1] 
+    face_id_by_edge = cycles(edges.next)[1] 
     
     """
     I think the following comments are irrelevant....
@@ -262,7 +272,7 @@ def _modified_build_mesh(vertex_positions, geometry, face_id_pairs, vertex_id_pa
     vertices = vertex_positions[edge_data.vertex[order]].T.copy() #start 
 
     edges = Edges(reverse)
-    face_id_by_edge = cycles(edges.__next__)[1] #this is a list of integers with repeats
+    face_id_by_edge = cycles(edges.next)[1] #this is a list of integers with repeats
                                             # each integer corresponds to a cycle of edges.next
                                             #    i.e. each integer corresponds to a cell.
 
@@ -297,8 +307,8 @@ def toroidal_voronoi_mesh(centres, width, height):
     centres_3x3 = np.vstack([centres+[dx, dy] for dx in [-width, 0, width] for dy in [-height, 0, height]])
     vor = voronoi(centres_3x3)
 
-    N_cell = len(vor.points)/9
-    region_id_pairs = vor.ridge_points/N_cell-4  # fundamental region is 0 WHY 4!!!!!!
+    N_cell = len(vor.points)//9
+    region_id_pairs = vor.ridge_points//N_cell-4  # fundamental region is 0 WHY 4!!!!!!
     face_id_pairs = vor.ridge_points % N_cell  # idx mapped to fundamental region
 
     return build_mesh(vor.vertices, Torus(width, height), face_id_pairs, vor.ridge_vertices, region_id_pairs)
@@ -316,11 +326,13 @@ def _modified_toroidal_voronoi_mesh(centres, width, height):
     centres_3x3 = np.vstack([centres+[dx, dy] for dx in [-width, 0, width] for dy in [-height, 0, height]])
     vor = voronoi(centres_3x3)
 
-    N_cell = len(vor.points)/9
-    region_id_pairs = vor.ridge_points/N_cell-4  # fundamental region is 0 
-    face_id_pairs = vor.ridge_points % N_cell  # idx mapped to fundamental region
 
-    return _modified_build_mesh(vor.vertices, Torus(width, height), face_id_pairs, vor.ridge_vertices, region_id_pairs)
+    N_cell = len(vor.points)/9
+    region_id_pairs = (vor.ridge_points//N_cell-4).astype(int)  # fundamental region is 0 
+    face_id_pairs = (vor.ridge_points % N_cell).astype(int)  # idx mapped to fundamental region
+    vertex_id_pairs = (vor.ridge_vertices).astype(int)
+
+    return _modified_build_mesh(vor.vertices, Torus(width, height), face_id_pairs, vertex_id_pairs, region_id_pairs)
 
 def cylindrical_voronoi_mesh(centres, width, height):
     """Returns a Mesh data structure on a cylinder constructed as a voronoi diagram with the given centres.
@@ -339,12 +351,12 @@ def cylindrical_voronoi_mesh(centres, width, height):
     vor = voronoi(all_centres)
 
     N = len(centres)
-    region_id_pairs = ((vor.ridge_points / N) % 3) - 1
+    region_id_pairs = ((vor.ridge_points // N) % 3) - 1
     face_id_pairs = vor.ridge_points
     mask = face_id_pairs < 3*N
     face_id_pairs[mask] %= N
     # round to multiple of 3*N
-    face_id_pairs[~mask] /= 3*N
+    face_id_pairs[~mask] //= 3*N
     face_id_pairs[~mask] *= 3*N
 
     boundary_face_ids = [3*N, 6*N]
@@ -380,12 +392,12 @@ def _modified_cylindrical_voronoi_mesh(centres, width, height):
     vor = voronoi(all_centres)
 
     N = len(centres)
-    region_id_pairs = ((vor.ridge_points / N) % 3) - 1
+    region_id_pairs = ((vor.ridge_points // N) % 3) - 1
     face_id_pairs = vor.ridge_points
     mask = face_id_pairs < 3*N
     face_id_pairs[mask] %= N
     # round to multiple of 3*N
-    face_id_pairs[~mask] /= 3*N
+    face_id_pairs[~mask] //= 3*N
     face_id_pairs[~mask] *= 3*N
 
     boundary_face_ids = [3*N, 6*N]

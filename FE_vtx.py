@@ -6,6 +6,7 @@ Created on Mon Jun  1 10:07:58 2020
 @author: andrewg
 """
 
+import sys
 import numpy as np
 import scipy
 from cells_extra import cells_setup,add_IKNM_properties, ready_to_divide, cells_evolve
@@ -39,7 +40,7 @@ class FE_vtx(object):
         m = len(self.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=self.cells.mesh.edges.__next__
+        nxt=self.cells.mesh.edges.next
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -76,9 +77,16 @@ class FE_vtx(object):
         #print "shape",np.shape(A)
         #print A[:1]
         #print A[:2], "A2"
-        #print scipy.sparse.issparse(A), " that A is sparse"
         A[np.where(A < 1.0e-8)] = 0
-        self.concentration = np.linalg.solve(A,bv)#could change to scipy.linalg.solve(A,bv,assume_a='sym')
+        if scipy.sparse.issparse(A):
+            print("is sparse")
+            sys.exit()
+            self.concentration = scipy.sparse.linalg.spsolve(A,bv)
+        else:
+            print("is not sparse")
+            sys.exit()
+            self.concentration = np.linalg.solve(A,bv)
+
         self.cells = new_cells
         self.centroids = new_cents
         #return A,bv
@@ -97,7 +105,7 @@ class FE_vtx(object):
         m = len(self.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=self.cells.mesh.edges.__next__
+        nxt=self.cells.mesh.edges.next
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -112,9 +120,8 @@ class FE_vtx(object):
             new_nodes = [new_verts[e] ,new_verts[nxt[e]], new_cents[f_by_e[e]]]
             prev_nodes = [old_verts[e] ,old_verts[nxt[e]], old_cents[f_by_e[e]]]
             node_id_tri = [self.edges_to_nodes[e],self.edges_to_nodes[nxt[e]] , self.faces_to_nodes[f_by_e[e]] ]
-            #print "node_id_tri", node_id_tri
             reduced_f = [0,0,f[f_by_e[e]]]
-            old_alpha = self.concentration[np.array(node_id_tri)]
+            old_alpha = self.concentration[np.array(node_id_tri,dtype=int)]
             new_M = M(new_nodes)
             old_M=M(prev_nodes)
             d = np.abs(np.linalg.det(new_M))
@@ -124,6 +131,8 @@ class FE_vtx(object):
                 bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
                 for j in range(3):
                     A[node_id_tri[i],node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
+                # print(bv)
+                # sys.exit()
             #t2=time.time()
             #print t2 - t1
             #count+=1  MATRIX A IS SYMMETRIC.
@@ -153,7 +162,7 @@ class FE_vtx(object):
         m = len(self.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=self.cells.mesh.edges.__next__
+        nxt=self.cells.mesh.edges.next
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -197,7 +206,7 @@ class FE_vtx(object):
         m = len(self.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=self.cells.mesh.edges.__next__
+        nxt=self.cells.mesh.edges.next
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -261,7 +270,7 @@ class FE_vtx(object):
         m = len(con)
         A = np.zeros((m,m)) #set up as Array from multiprocessing
         bv = np.zeros(m) #bv stands for b vector, set up as Array from multiprocessing
-        nxt=self.cells.mesh.edges.__next__
+        nxt=self.cells.mesh.edges.next
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
@@ -295,7 +304,7 @@ class FE_vtx(object):
     #         dt is the time step
         
     #     """
-    #     nxt=self.cells.mesh.edges.__next__
+    #     nxt=self.cells.mesh.edges.next
     #     f_by_e = self.cells.mesh.face_id_by_edge
     #     old_verts = self.cells.mesh.vertices.T
     #     old_cents = self.centroids
@@ -318,13 +327,13 @@ class FE_vtx(object):
         self.cells,c_by_e = rem_collapsed(self.cells,c_by_e) #T2 transitions-"leaving the tissue"
         self.cells,c_by_e, c_by_c = divide(self.cells,c_by_e,c_by_c,ready)
         self.centroids = centroids2(self.cells)
-        eTn = self.cells.mesh.edges.ids/3
+        eTn = self.cells.mesh.edges.ids//3
         n = max(eTn)
         cTn=np.cumsum(~self.cells.empty())+n
         con_part=c_by_e[::3]
         cent_part = c_by_c[~self.cells.empty()]
         self.concentration = np.hstack([con_part,cent_part])
-        self.edges_to_nodes = self.cells.mesh.edges.ids/3
+        self.edges_to_nodes = self.cells.mesh.edges.ids//3
         self.faces_to_nodes = cTn
         
     # def transitions_faster(self,ready=None):
@@ -336,13 +345,13 @@ class FE_vtx(object):
     #     self.cells,c_by_e = rem_collapsed(self.cells,c_by_e) #T2 transitions-"leaving the tissue"
     #     self.cells,c_by_e, c_by_c = divide(self.cells,c_by_e,c_by_c,ready)
     #     self.centroids = cen2(self.cells)
-    #     eTn = self.cells.mesh.edges.ids/3
+    #     eTn = self.cells.mesh.edges.ids//3
     #     n = max(eTn)
     #     cTn=np.cumsum(~self.cells.empty())+n
     #     con_part=c_by_e[::3]
     #     cent_part = c_by_c[~self.cells.empty()]
     #     self.concentration = np.hstack([con_part,cent_part])
-    #     self.edges_to_nodes = self.cells.mesh.edges.ids/3
+    #     self.edges_to_nodes = self.cells.mesh.edges.ids//3
     #     self.faces_to_nodes = cTn
 
 
@@ -354,7 +363,7 @@ def updater(A,bv,dim, e, new_verts, new_cents, old_verts, old_cents, nxt, f_by_e
     reduced_f = [0,0,f[f_by_e[e]]]
     old_con = con[np.array(node_id_tri)]
     new_M = M(new_nodes)
-    old_M=M(prev_nodes)
+    old_M = M(prev_nodes)
     d = np.abs(np.linalg.det(new_M))
     d_old = np.abs(np.linalg.det(old_M))           
     nabla_Phi = nabPhi(new_M)
@@ -393,7 +402,7 @@ def evolve_modified(fe_vtx,v,prod_rate,dt):
         m = len(fe_vtx.concentration)
         A = np.zeros((m,m))
         bv = np.zeros(m) #bv stands for b vector
-        nxt=fe_vtx.cells.mesh.edges.__next__
+        nxt=fe_vtx.cells.mesh.edges.next
         f_by_e = fe_vtx.cells.mesh.face_id_by_edge
         old_verts = fe_vtx.cells.mesh.vertices.T
         old_cents = fe_vtx.centroids
@@ -409,7 +418,7 @@ def evolve_modified(fe_vtx,v,prod_rate,dt):
             node_id_tri = [fe_vtx.edges_to_nodes[e],fe_vtx.edges_to_nodes[nxt[e]] , fe_vtx.faces_to_nodes[f_by_e[e]] ]
             #print "node_id_tri", node_id_tri
             reduced_f = [0,0,f[f_by_e[e]]]
-            old_alpha = fe_vtx.concentration[np.array(node_id_tri)]
+            old_alpha = fe_vtx.concentration[np.array(node_id_tri,dtype=int)]
             new_M = M(new_nodes)
             old_M=M(prev_nodes)
             d = np.abs(np.linalg.det(new_M))
@@ -418,7 +427,7 @@ def evolve_modified(fe_vtx,v,prod_rate,dt):
             for i in range(3):
                 bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
                 for j in range(3):
-                    A[node_id_tri[i]][node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
+                    A[node_id_tri[i],node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
             #count+=1  MATRIX A IS SYMMETRIC.
             #print count
             #if count ==300:
@@ -471,7 +480,7 @@ def build_FE_vtx_from_scratch(size=None, vm_parameters=None,source_data=None,clu
     cells = cells_setup(size, vm_parameters,source_data,cluster_data)
     add_IKNM_properties(cells)
     cents = centroids2(cells)
-    eTn = cells.mesh.edges.ids/3
+    eTn = cells.mesh.edges.ids//3
     n = max(eTn)
     fTn=np.cumsum(~cells.empty())+n #we just care about the living faces getting the correct node index
     m=fTn[-1]+1
