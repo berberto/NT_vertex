@@ -321,7 +321,7 @@ def set_colour_poni_state(cells,poni_state):
             cells.properties['color'][k] = np.array([0,1,1]) # ?, Irx high 
 
 
-nt5=build_NT_vtx_from_scratch(size = [20,20])
+nt5=build_NT_vtx_from_scratch(size = [6,6])
 
 print("build NT")
 
@@ -339,7 +339,7 @@ for k in range(N_step):
     cells_list.append(nt5.FE_vtx.cells)
     poni_state_list.append(nt5.GRN.poni_grn.state)
 t2 = time.time()
-print((nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, " took ", t2 - t1))
+print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, "\n took ", t2 - t1)
 # cells_state_video(cells_list,poni_state_list, "state-vid")
 # animate_surf_video_mpg(nodes_list,concentration_list, "surface-video") 
 #print np.argmax(poni_state_list[0])

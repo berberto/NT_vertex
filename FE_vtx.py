@@ -41,8 +41,8 @@ class FE_vtx(object):
         
         """
         m = len(self.concentration)
-        A = np.zeros((m,m))
-        bv = np.zeros(m) #bv stands for b vector
+        bv = np.zeros(m,dtype=float) #bv stands for b vector
+        # B = np.zeros((m,m),dtype=float)
         nxt=self.cells.mesh.edges.next
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
@@ -52,6 +52,9 @@ class FE_vtx(object):
         new_cents = centroids2(new_cells)
         f = self.cells.properties['source']*prod_rate #source
         count=0
+        rows=[]
+        cols=[]
+        entries=[]
         for e in self.cells.mesh.edges.ids: #modify if cells.mesh.edges.geometry is cylindrical
             new_nodes = [new_verts[e] ,new_verts[nxt[e]], new_cents[f_by_e[e]]]
             prev_nodes = [old_verts[e] ,old_verts[nxt[e]], old_cents[f_by_e[e]]]
@@ -66,21 +69,32 @@ class FE_vtx(object):
             for i in range(3):
                 bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
                 for j in range(3):
-                    A[node_id_tri[i],node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
+                    rows+=[node_id_tri[i]]  # can it be that node_id_tr
+                    cols+=[node_id_tri[j]]
+                    entries+=[I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)]
+                    # B[node_id_tri[i],node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
 
-        # plt.imshow(A)
+        rows=np.array(rows).astype(int)
+        cols=np.array(cols).astype(int)
+        entries=np.array(entries).astype(float)
+        A = coo_matrix((entries,(rows,cols)), shape=(m,m))
+
+        # print( np.allclose(B, B.T, rtol=1e-05, atol=1e-08) )  # doesn't seem symmetrix
+        
+        # plt.imshow(B - B.T)
+        # print( np.max(B - B.T) )
         # plt.colorbar()
+        # plt.show()
+
+        # plt.imshow(A.toarray())
+        # plt.show()
+        # plt.imshow(B)
+        # plt.show()
+        # plt.imshow(A.toarray() - B)
         # plt.show()
         # sys.exit()
 
-        # self.concentration = scipy.linalg.solve(A,bv)
-
-        A = coo_matrix(A)
         self.concentration = scipy.sparse.linalg.spsolve(A,bv)
-
-        # print(A)
-        # sys.exit()
-        
         self.cells = new_cells
         self.centroids = new_cents
 

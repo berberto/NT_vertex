@@ -10,4 +10,5 @@
 ### Comments
 
 1. `FE_vtx.py`:
-	- in `evolution` need to fill the FE matrix in sparse type from the beginning, to avoid conversion
+	- FE matrix filled in coordinate sparse format (can it be that node_id_tri[i (and j)] are the same for a different edge? Tested and it seems correct. No gain in speed anyway.
+	- FE matrix is not symmetric (max difference ~ 1.e-2)
