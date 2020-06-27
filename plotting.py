@@ -54,7 +54,7 @@ _PALETTES = {name: np.array([clr.split()[0]]*4+clr.split()[1:])
 
 
 def _draw_faces(mesh, ax, facecolors, edgecolor='k'):
-    order, labels = cycles(mesh.edges.__next__)
+    order, labels = cycles(mesh.edges.next)
     counts = np.bincount(labels)
 
     vs = mesh.vertices.T.take(order, 0)
@@ -75,7 +75,7 @@ def _draw_faces(mesh, ax, facecolors, edgecolor='k'):
     ax.add_collection(coll)
 
 def _draw_faces_no_edge(mesh, ax, facecolors):
-    order, labels = cycles(mesh.edges.__next__)
+    order, labels = cycles(mesh.edges.next)
     counts = np.bincount(labels)
 
     vs = mesh.vertices.T.take(order, 0)

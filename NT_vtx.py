@@ -6,7 +6,7 @@ Created on Thu Jun  4 19:21:31 2020
 @author: andrewg
 """
 
-from FE_vtx import  build_FE_vtx, build_FE_vtx_from_scratch, evolve_modified
+from FE_vtx import  build_FE_vtx, build_FE_vtx_from_scratch
 from GeneRegulatoryNetwork import GRN_full_basic, build_GRN_full_basic
 from FE_transitions import divide, T1, rem_collapsed
 from cells_extra import ready_to_divide, centroids2
@@ -29,7 +29,7 @@ class NT_vtx(object):
         
     def evolve(self,v, prod_rate,bind_rate,deg_rate,time,dt):
         sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.evolve2(v,prod_rate,dt)
+        self.FE_vtx.evolve(v,prod_rate,dt)
         self.GRN.evolve(time , dt , sig_input , bind_rate)
         self.FE_vtx.concentration=self.FE_vtx.concentration - deg_rate*self.FE_vtx.concentration
         self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
@@ -232,7 +232,7 @@ def cells_state_video(cells_history, poni_state_history, name_file):
         #print tissue.cells.mesh.geometry.width
     os.system("cd ")
     #os.system("cd /opt")
-    os.system("/opt/ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
+    os.system("ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
     print((os.system("pwd")))
     #os.system("cd ")
     #os.system("cd Desktop/vertex_model/images")
@@ -321,7 +321,7 @@ def set_colour_poni_state(cells,poni_state):
             cells.properties['color'][k] = np.array([0,1,1]) # ?, Irx high 
 
 
-nt5=build_NT_vtx_from_scratch(size = [6,6])
+nt5=build_NT_vtx_from_scratch(size = [20,20])
 
 print("build NT")
 
@@ -329,10 +329,10 @@ nodes_list = []
 concentration_list = []
 cells_list=[]
 poni_state_list=[]
-N_step=10
+N_step=100
 t1=time.time()
 for k in range(N_step):
-    nt5.evolve(0.2,0.05,0.0,0.0,0.0,0.001) #(v, prod_rate,bind_rate,deg_rate,time,dt):
+    nt5.evolve(.2,.05,0.,0.,0.,.001) #(v, prod_rate,bind_rate,deg_rate,time,dt):
     nt5.transitions()
     nodes_list.append(np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
     concentration_list.append(nt5.FE_vtx.concentration)
