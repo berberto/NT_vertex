@@ -19,8 +19,5 @@
 1. `NT_vtx.py`:
 	- `transitions_faster()` is actually slower
 
-2. `FE_vtx.py`:
-	- `evolve-cy` gives `nan` for concentration (compilation issue?)
-
-3. `fe_cy_omp.pyx`:
-	- cannot use openMP yet, because of `Calling gil-requiring function not allowed without gil` (working on it)
+2. `fe_cy_omp.pyx`:
+	- now getting to compile with `-fopenmp` flag, but giving `Fatal Python error: PyThreadState_Get: no current thread`. Loop over edges not vectorizable?

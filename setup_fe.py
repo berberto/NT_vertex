@@ -11,7 +11,16 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import numpy
 
-setup(name='fe_attempt',
-      ext_modules=[Extension('_fe_cy_v3', ['fe_cy_v3.pyx'], include_dirs = [numpy.get_include()],)],
+ext_modules=[
+	Extension('_fe_cy_v3',
+			  ['fe_cy_v3.pyx'],
+			  extra_compile_args = ["-DSSE4", "-O3", "-ffast-math"],
+			  # extra_link_args = ["-fopenmp"],
+			  include_dirs = [numpy.get_include()],)
+]
+
+
+setup(name='FE step',
+	  ext_modules = ext_modules,
       cmdclass={'build_ext':build_ext}
 )
