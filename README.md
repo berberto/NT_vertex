@@ -12,3 +12,15 @@
 1. `FE_vtx.py`:
 	- FE matrix filled in coordinate sparse format (can it be that node_id_tri[i (and j)] are the same for a different edge? Tested and it seems correct. No gain in speed anyway.
 	- FE matrix is not symmetric (max difference ~ 1.e-2)
+	- cython code with the sparse solver doesn't seem to work (tested by Graeme)
+
+### Issues
+
+1. `NT_vtx.py`:
+	- `transitions_faster()` is actually slower
+
+2. `FE_vtx.py`:
+	- `evolve-cy` gives `nan` for concentration (compilation issue?)
+
+3. `fe_cy_omp.pyx`:
+	- cannot use openMP yet, because of `Calling gil-requiring function not allowed without gil` (working on it)

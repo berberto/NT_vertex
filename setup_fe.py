@@ -12,6 +12,6 @@ from Cython.Distutils import build_ext
 import numpy
 
 setup(name='fe_attempt',
-      ext_modules=[Extension('_fe_cy_v3', ['fe_cy_v3.pyx'],include_dirs = [numpy.get_include()],)],
+      ext_modules=[Extension('_fe_cy_v3', ['fe_cy_v3.pyx'], include_dirs = [numpy.get_include()],)],
       cmdclass={'build_ext':build_ext}
 )

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun  1 10:07:58 2020
@@ -11,7 +11,7 @@ cimport numpy as np
 import scipy
 import time
 import cython
-from _mat_Solve import cabbage
+# from _mat_Solve import cabbage
 from scipy.linalg.cython_lapack cimport dgesv, dgelsd
 from scipy.linalg import cho_factor, cho_solve
 
@@ -73,9 +73,9 @@ def evo(np.ndarray[np.float_t ,ndim = 2] old_verts, np.ndarray[np.float_t ,ndim 
 @cython.wraparound(False)
 def ev2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
     cdef int m = len(old_con)
-    cdef np.ndarray a = np.empty((m,m), dtype = np.float_) 
+    cdef np.ndarray a = np.zeros((m,m), dtype = np.float_) 
     cdef double[:,:]A = a #memoryview of a
-    cdef np.ndarray b_vect = np.empty(m, dtype = np.float_)#bv stands for b vector
+    cdef np.ndarray b_vect = np.zeros(m, dtype = np.float_)#bv stands for b vector
     cdef double[::1] bv = b_vect #memoryview of b_vect
     cdef double[:,:] ov = old_verts
     cdef double[:,:] nv = new_verts
@@ -169,9 +169,9 @@ def mat_vect_build_basic(np.ndarray[np.float_t ,ndim = 2] old_verts, np.ndarray[
 @cython.wraparound(False)
 def mat_vect_build_views(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
     cdef int m = len(old_con)
-    cdef np.ndarray a = np.empty((m,m), dtype = np.float_) 
+    cdef np.ndarray a = np.zeros((m,m), dtype = np.float_) 
     cdef double[:,:]A = a #memoryview of a
-    cdef np.ndarray b_vect = np.empty(m, dtype = np.float_)#bv stands for b vector
+    cdef np.ndarray b_vect = np.zeros(m , dtype = np.float_)#bv stands for b vector
     cdef double[::1] bv = b_vect #memoryview of b_vect
     cdef double[:,:] ov = old_verts
     cdef double[:,:] nv = new_verts
@@ -212,52 +212,52 @@ def mat_vect_build_views(np.ndarray old_verts, np.ndarray new_verts, np.ndarray 
                 A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
     return a, b_vect
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def ev3(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
-    cdef int m = len(old_con)
-    cdef np.ndarray a = np.empty((m,m), dtype = np.float_) 
-    cdef double[:,:]A = a #memoryview of a
-    cdef np.ndarray b_vect = np.empty(m, dtype = np.float_)#bv stands for b vector
-    cdef double[::1] bv = b_vect #memoryview of b_vect
-    cdef double[:,:] ov = old_verts
-    cdef double[:,:] nv = new_verts
-    cdef double[:,:] oc = old_cents
-    cdef double[:,:] nc = new_cents
-    cdef double[::1] o_con = old_con
-    cdef int[::1] nxt = nx #next
-    cdef int[::1] fbe = f_by_e # face by edge
-    cdef int[::1] etn = e_t_n #edges to nodes
-    cdef int[::1] ftn = f_t_n#faces to nodes
-    cdef double[3][2] nds #coords of triangle in loop
-    cdef double[:,:] nodes = nds #memoryview
-    cdef double[3][2] prev_nds #previous coords of triangle 
-    cdef double[:,:] prev_nodes = prev_nds  #memoryview
-    cdef double[::1] s_fn = f # memoryview of source
-    cdef double d #abs value of determinant of mat
-    cdef double old_d #determinant (abs value of)
-    cdef double[2][2] mat #matrix to be used in  update of A
-    cdef double[:,:] Mat = mat # memoryview of mat
-    cdef double[3][2] nP # to store nab_Phi
-    cdef double [:,:] nab_Phi  = nP #memoryview 
-    cdef int[3] nd_id #node ids for triangle
-    cdef int[::1] node_ids = nd_id
-    cdef int e=0 #to index the loop over edges
-    cdef int i=0 #index 
-    cdef int j=0
-    for e in range(n_edge):
-        set_up_nodes(nodes , nv, nc , nxt, fbe, e)
-        set_up_nodes(prev_nodes , ov, oc , nxt, fbe, e)
-        set_node_ids(node_ids, nxt, fbe, etn, ftn , e)
-        M_c( nodes , Mat )
-        d = just_det(nodes)
-        old_d = just_det( prev_nodes )
-        nabPhi2_c( Mat , nab_Phi)
-        for i in range(3):
-            bv[node_ids[i]]+=b_c2(i, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt) 
-            for j in range(3):
-                A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
-    return cabbage(a,b_vect)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# def ev3(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
+#     cdef int m = len(old_con)
+#     cdef np.ndarray a = np.empty((m,m), dtype = np.float_) 
+#     cdef double[:,:]A = a #memoryview of a
+#     cdef np.ndarray b_vect = np.empty(m, dtype = np.float_)#bv stands for b vector
+#     cdef double[::1] bv = b_vect #memoryview of b_vect
+#     cdef double[:,:] ov = old_verts
+#     cdef double[:,:] nv = new_verts
+#     cdef double[:,:] oc = old_cents
+#     cdef double[:,:] nc = new_cents
+#     cdef double[::1] o_con = old_con
+#     cdef int[::1] nxt = nx #next
+#     cdef int[::1] fbe = f_by_e # face by edge
+#     cdef int[::1] etn = e_t_n #edges to nodes
+#     cdef int[::1] ftn = f_t_n#faces to nodes
+#     cdef double[3][2] nds #coords of triangle in loop
+#     cdef double[:,:] nodes = nds #memoryview
+#     cdef double[3][2] prev_nds #previous coords of triangle 
+#     cdef double[:,:] prev_nodes = prev_nds  #memoryview
+#     cdef double[::1] s_fn = f # memoryview of source
+#     cdef double d #abs value of determinant of mat
+#     cdef double old_d #determinant (abs value of)
+#     cdef double[2][2] mat #matrix to be used in  update of A
+#     cdef double[:,:] Mat = mat # memoryview of mat
+#     cdef double[3][2] nP # to store nab_Phi
+#     cdef double [:,:] nab_Phi  = nP #memoryview 
+#     cdef int[3] nd_id #node ids for triangle
+#     cdef int[::1] node_ids = nd_id
+#     cdef int e=0 #to index the loop over edges
+#     cdef int i=0 #index 
+#     cdef int j=0
+#     for e in range(n_edge):
+#         set_up_nodes(nodes , nv, nc , nxt, fbe, e)
+#         set_up_nodes(prev_nodes , ov, oc , nxt, fbe, e)
+#         set_node_ids(node_ids, nxt, fbe, etn, ftn , e)
+#         M_c( nodes , Mat )
+#         d = just_det(nodes)
+#         old_d = just_det( prev_nodes )
+#         nabPhi2_c( Mat , nab_Phi)
+#         for i in range(3):
+#             bv[node_ids[i]]+=b_c2(i, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt) 
+#             for j in range(3):
+#                 A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+#     return cabbage(a,b_vect)
             
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -356,7 +356,128 @@ def ev5(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.nd
             for j in range(3):
                 A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
     return np.linalg.solve(a,b_vect)
-    #return scipy.linalg.lapack.dgelsd(A, bv, 0,[0,])                
+    #return scipy.linalg.lapack.dgelsd(A, bv, 0,[0,])   
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def ev_test20(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt, int e ):
+    cdef int m = len(old_con)
+    cdef np.ndarray a = np.zeros((m,m), dtype = np.float_) 
+    cdef double[:,:]A = a #memoryview of a
+    cdef np.ndarray b_vect = np.zeros(m, dtype = np.float_)#bv stands for b vector
+    cdef double[::1] bv = b_vect #memoryview of b_vect
+    cdef int [::1] p = np.arange(m, dtype = np.intc)
+    cdef int nrhs=1, info #memory view of the dimension of the array
+    cdef double[:,:] ov = old_verts
+    cdef double[:,:] nv = new_verts
+    cdef double[:,:] oc = old_cents
+    cdef double[:,:] nc = new_cents
+    cdef double[::1] o_con = old_con
+    cdef int[::1] nxt = nx #next
+    cdef int[::1] fbe = f_by_e # face by edge
+    cdef int[::1] etn = e_t_n #edges to nodes
+    cdef int[::1] ftn = f_t_n#faces to nodes
+    cdef double[3][2] nds #coords of triangle in loop
+    cdef double[:,:] nodes = nds #memoryview
+    cdef double[3][2] prev_nds #previous coords of triangle 
+    cdef double[:,:] prev_nodes = prev_nds  #memoryview
+    cdef double[::1] s_fn = f # memoryview of source
+    cdef double d #abs value of determinant of mat
+    cdef double old_d #determinant (abs value of)
+    cdef double[2][2] mat #matrix to be used in  update of A
+    cdef double[:,:] Mat = mat # memoryview of mat
+    cdef double[3][2] nP # to store nab_Phi
+    cdef double [:,:] nab_Phi  = nP #memoryview 
+    cdef int[3] nd_id #node ids for triangle
+    cdef int[::1] node_ids = nd_id
+    #cdef int e=0 #to index the loop over edges
+    cdef int i=0 #index 
+    cdef int j=0
+    set_up_nodes(nodes , nv, nc , nxt, fbe, e)
+    print "nodes" , nds
+    set_up_nodes(prev_nodes , ov, oc , nxt, fbe, e)
+    print "prev_nodes", prev_nds
+    set_node_ids(node_ids, nxt, fbe, etn, ftn , e)
+    print "node_ids", nd_id
+    M_c( nodes , Mat )
+    print "matrix" , mat
+    d = just_det(nodes)
+    print "det",d
+    old_d = just_det( prev_nodes )
+    print "old_d",old_d
+    nabPhi2_c( Mat , nab_Phi)
+    print "nab_Phi", nP
+    for i in range(3):
+        bv[node_ids[i]]+=b_c2(i, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt)
+        print 'bc2', b_c2(i, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt)
+        for j in range(3):
+            A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+            print node_ids[i] , node_ids[j], I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+    return a, b_vect
+
+def ev_test20_v2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt, int e ):
+    cdef np.ndarray a = np.zeros((3,3), dtype = np.float_) 
+    cdef double[:,:]A = a #memoryview of a
+    cdef np.ndarray im = np.zeros((3,3), dtype = np.float_) 
+    cdef double[:,:]Im = im #memoryview of a
+    cdef np.ndarray km = np.zeros((3,3), dtype = np.float_) 
+    cdef double[:,:]Km = km #memoryview of a
+    cdef np.ndarray wm = np.zeros((3,3), dtype = np.float_) 
+    cdef double[:,:]Wm = wm #memoryview of a
+    cdef np.ndarray b_vect = np.zeros(3, dtype = np.float_)#bv stands for b vector
+    cdef double[::1] bv = b_vect #memoryview of b_vect
+    cdef int [::1] p = np.arange(3, dtype = np.intc)
+    cdef int nrhs=1, info #memory view of the dimension of the array
+    cdef double[:,:] ov = old_verts
+    cdef double[:,:] nv = new_verts
+    cdef double[:,:] oc = old_cents
+    cdef double[:,:] nc = new_cents
+    cdef double[::1] o_con = old_con
+    cdef int[::1] nxt = nx #next
+    cdef int[::1] fbe = f_by_e # face by edge
+    cdef int[::1] etn = e_t_n #edges to nodes
+    cdef int[::1] ftn = f_t_n#faces to nodes
+    cdef double[3][2] nds #coords of triangle in loop
+    cdef double[:,:] nodes = nds #memoryview
+    cdef double[3][2] prev_nds #previous coords of triangle 
+    cdef double[:,:] prev_nodes = prev_nds  #memoryview
+    cdef double[::1] s_fn = f # memoryview of source
+    cdef double d #abs value of determinant of mat
+    cdef double old_d #determinant (abs value of)
+    cdef double[2][2] mat #matrix to be used in  update of A
+    cdef double[:,:] Mat = mat # memoryview of mat
+    cdef double[3][2] nP # to store nab_Phi
+    cdef double [:,:] nab_Phi  = nP #memoryview 
+    cdef int[3] nd_id #node ids for triangle
+    cdef int[::1] node_ids = nd_id
+    #cdef int e=0 #to index the loop over edges
+    cdef int i=0 #index 
+    cdef int j=0
+    set_up_nodes(nodes , nv, nc , nxt, fbe, e)
+    #print "nodes" , nds
+    set_up_nodes(prev_nodes , ov, oc , nxt, fbe, e)
+    #print "prev_nodes", prev_nds
+    set_node_ids(node_ids, nxt, fbe, etn, ftn , e)
+    #print "node_ids", nd_id
+    M_c( nodes , Mat )
+    #print "matrix" , mat
+    d = just_det(nodes)
+    #print "det",d
+    old_d = just_det( prev_nodes )
+    #print "old_d",old_d
+    nabPhi2_c( Mat , nab_Phi)
+    #print "nab_Phi", nP
+    for i in range(3):
+        bv[i]+=b_c2(i, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt)
+        #print 'bc2', b_c2(i, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt)
+        for j in range(3):
+            Im[i][j] = I_c(i,j,d)
+            Km[i][j] = K_c(i,j,d,nab_Phi,v)
+            Wm[i][j] = W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+            A[i][j]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+            #print node_ids[i] , node_ids[j], I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+    return nd_id, a , b_vect, im, km, wm
+    #return
 """        
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -444,6 +565,7 @@ cdef M_c( double [:, :] nodes , double [:, :] Mat ):
     Mat[0][1] = nodes[2][0] - nodes[0][0]
     Mat[1][0] = nodes[1][1] - nodes[0][1]
     Mat[1][1] = nodes[2][1] - nodes[0][1]
+    #print "Mc", Mat
     
 
 cdef double just_det( double [:, :] nodes ):
@@ -480,22 +602,20 @@ cdef nabPhi2_c(double [:,:] M , double [:,:] nab_Phi):
     Sets the values of nab_Phi.
     Args:
         M is the FE matrix map.
-    Returns:
-        Forgotten what this is.
-        
     """
-    cdef double dm = 1/(M[0][0]*M[1][1] -  M[0][1]*M[1][0])
+    cdef double dm = 1.0/(M[0][0]*M[1][1] -  M[0][1]*M[1][0])
     cdef double[2][2] inv_t
-    inv_t[0][0] = dm * M[1][1] #inverse 
+    inv_t[0][0] = dm * M[1][1] #inv_t is inverse transpose of M
     inv_t[1][1] = dm * M[0][0]
-    inv_t[0][1] = dm * M[0][1]
-    inv_t[1][0] = dm * M[1][0]
-    nab_Phi[0][0] = inv_t[0][0] - inv_t[0][1]
-    nab_Phi[0][1] = inv_t[1][0] - inv_t[1][1]
+    inv_t[0][1] = -dm * M[1][0] #forgot minus
+    inv_t[1][0] = -dm * M[0][1] #forgot minus
+    nab_Phi[0][0] = -inv_t[0][0] - inv_t[0][1]
+    nab_Phi[0][1] = -inv_t[1][0] - inv_t[1][1]
     nab_Phi[1][0] = inv_t[0][0]  
     nab_Phi[1][1] = inv_t[1][0]  
     nab_Phi[2][0] = inv_t[0][1]
-    nab_Phi[2][1] = inv_t[1][1]    
+    nab_Phi[2][1] = inv_t[1][1]
+        
 
 
 
@@ -510,7 +630,7 @@ cdef double K_c(int i, int j, double d, double[:,:] nabPhi, double v):
     This is a contribution to A[triangle[i],triangle[j]] when updating the 
     matrix with the part of the integral from triangle.
     """   
-    return (0.5)*v*(nabPhi[i][0]*nabPhi[j][0]+ nabPhi[i][1]*nabPhi[j][1])*d        
+    return (0.5)*v*(nabPhi[i][0]*nabPhi[j][0]+nabPhi[i][1]*nabPhi[j][1])*d        
 
 
 
@@ -533,8 +653,7 @@ cdef double W_c(int i,int j,double d, double[:,:] nabPhi, double[:,:] nodes,  do
     P2[1] = nodes[2][1]-previous_nodes[2][1]
     dummy[0] = P0[0] + P1[0] + P2[0] + (nodes[j][0]-previous_nodes[j][0])
     dummy[1] = P0[1] + P1[1] + P2[1] + (nodes[j][1]-previous_nodes[j][1])
-    return (1.0 /24)*d*(nabPhi[j][0]*dummy[0]+nabPhi[j][1]*dummy[1])
-
+    return (1.0 /24)*d*(nabPhi[i][0]*dummy[0]+nabPhi[i][1]*dummy[1])
 
 
 cdef b_c(int i, double d, double d_old, double[::1] f, double[::1] old_alpha, double dt): 
@@ -578,6 +697,8 @@ cdef b_c2(int i, double d, double d_old, double[::1] f, double[::1] old_alpha, i
     dummy +=I_c(i,1,d_old)*old_alpha[node_ids[1]]
     dummy +=I_c(i,2,d_old)*old_alpha[node_ids[2]]
     return dummy
+
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

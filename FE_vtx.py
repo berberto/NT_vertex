@@ -13,8 +13,9 @@ from scipy.sparse import coo_matrix
 from cells_extra import cells_setup,add_IKNM_properties, ready_to_divide, cells_evolve
 from Finite_Element import centroids2
 from FE_transitions import T1, rem_collapsed, divide
-# from _fe_cy_v3 import ev2, ev3, ev4,ev5
-# from cent_test import cen2
+from _fe_cy_v3 import ev2 as ev
+# from _fe_cy_omp import ev5 as ev_omp
+from cent_test import cen2
 import concurrent.futures
 from multiprocessing import Array ,Process
 import matplotlib.pyplot as plt
@@ -98,6 +99,30 @@ class FE_vtx(object):
         self.cells = new_cells
         self.centroids = new_cents
 
+    def evolve_cy(self,v,prod_rate,dt):
+        """
+        Performs one step of the FE method. Computes the new cells object itself.
+        Uses np.linalg.solve
+        Args:
+            new_cells is the new cells object after movement
+            v is the diffusion coefficient
+            prod_rate is the morphogen production rate.
+            dt is the time step
+        
+        """
+        nxt=self.cells.mesh.edges.next
+        f_by_e = self.cells.mesh.face_id_by_edge
+        old_verts = self.cells.mesh.vertices.T
+        old_cents = self.centroids
+        new_cells = cells_evolve(self.cells,dt)[0]
+        new_verts = new_cells.mesh.vertices.T
+        new_cents = cen2(new_cells)#centroids2(new_cells)
+        f = self.cells.properties['source']*prod_rate #source
+        n_edge = self.cells.mesh.edges.ids[-1]+1
+        #ev2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
+        self.concentration = ev(old_verts.astype(np.float64), new_verts.astype(np.float64), old_cents.astype(np.float64),new_cents.astype(np.float64), self.concentration.astype(np.float64), nxt.astype(np.intc) ,f_by_e.astype(np.intc), self.edges_to_nodes.astype(np.intc), self.faces_to_nodes.astype(np.intc), f.astype(np.float64) , np.intc(n_edge) , np.float64(v), np.float64(dt) )
+        self.cells = new_cells
+        self.centroids = new_cents
 
     def transitions(self,ready=None):
         if ready is None:
