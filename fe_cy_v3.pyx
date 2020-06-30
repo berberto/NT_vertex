@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#cython: boundscheck=False, wraparound=False, nonecheck=False
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun  1 10:07:58 2020
@@ -16,8 +16,6 @@ from scipy.linalg.cython_lapack cimport dgesv, dgelsd
 from scipy.linalg import cho_factor, cho_solve
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def evo(np.ndarray[np.float_t ,ndim = 2] old_verts, np.ndarray[np.float_t ,ndim = 2] new_verts, np.ndarray[np.float_t ,ndim = 2] old_cents,  np.ndarray[np.float_t ,ndim = 2] new_cents, np.ndarray[np.float_t ,ndim = 1] old_concentration, np.ndarray[np.int ,ndim = 1] nxt,np.ndarray[np.int ,ndim = 1] f_by_e, np.ndarray[np.int ,ndim = 1]  etn, np.ndarray[np.int ,ndim = 1] ftn, np.ndarray[np.float_t ,ndim = 1] f , np.int n_edge , np.float_t v, np.float_t dt ):
     cdef int m = len(old_concentration)
     cdef np.ndarray A = np.empty((m,m), dtype = np.float_)
@@ -69,8 +67,7 @@ def evo(np.ndarray[np.float_t ,ndim = 2] old_verts, np.ndarray[np.float_t ,ndim 
 
 
 #cdef update(double[:,:] A, double[::1] bv , int n_edge , double[:,:] o_verts, double[:,:] o_cents, double[:,:] n_verts, double[:,:] n_cents ,  )      
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def ev2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
     cdef int m = len(old_con)
     cdef np.ndarray a = np.zeros((m,m), dtype = np.float_) 
@@ -117,8 +114,7 @@ def ev2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.nd
     return np.linalg.solve(a,b_vect)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def mat_vect_build_basic(np.ndarray[np.float_t ,ndim = 2] old_verts, np.ndarray[np.float_t ,ndim = 2] new_verts, np.ndarray[np.float_t ,ndim = 2] old_cents,  np.ndarray[np.float_t ,ndim = 2] new_cents, np.ndarray[np.float_t ,ndim = 1] old_concentration, np.ndarray[np.int ,ndim = 1] nxt,np.ndarray[np.int ,ndim = 1] f_by_e, np.ndarray[np.int ,ndim = 1]  etn, np.ndarray[np.int ,ndim = 1] ftn, np.ndarray[np.float_t ,ndim = 1] f , np.int n_edge , np.float_t v, np.float_t dt ):
     """
     Don't really need this.
@@ -165,8 +161,7 @@ def mat_vect_build_basic(np.ndarray[np.float_t ,ndim = 2] old_verts, np.ndarray[
     #print A[:2], "A2"
     return A, bv #could change to scipy.linalg.solve(A,bv,assume_a='sym')
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def mat_vect_build_views(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
     cdef int m = len(old_con)
     cdef np.ndarray a = np.zeros((m,m), dtype = np.float_) 
@@ -259,8 +254,7 @@ def mat_vect_build_views(np.ndarray old_verts, np.ndarray new_verts, np.ndarray 
 #                 A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
 #     return cabbage(a,b_vect)
             
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def ev4(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
     cdef int m = len(old_con)
     cdef np.ndarray a = np.empty((m,m), dtype = np.float_) 
@@ -308,8 +302,7 @@ def ev4(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.nd
                 A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
     return dgesv(&m, &nrhs, &A[0][0],&m, &piv[0] , &bv[0], &m,  &info)
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def ev5(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
     cdef int m = len(old_con)
     cdef np.ndarray a = np.empty((m,m), dtype = np.float_) 
@@ -358,8 +351,7 @@ def ev5(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.nd
     return np.linalg.solve(a,b_vect)
     #return scipy.linalg.lapack.dgelsd(A, bv, 0,[0,])   
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def ev_test20(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt, int e ):
     cdef int m = len(old_con)
     cdef np.ndarray a = np.zeros((m,m), dtype = np.float_) 
@@ -479,8 +471,7 @@ def ev_test20_v2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cent
     return nd_id, a , b_vect, im, km, wm
     #return
 """        
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def ev6(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
     cdef int m = len(old_con)
     cdef np.ndarray a = np.empty((m,m), dtype = np.float_) 
@@ -700,8 +691,7 @@ cdef b_c2(int i, double d, double d_old, double[::1] f, double[::1] old_alpha, i
 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def M(np.ndarray[np.float_t,ndim = 2] nodes):# , np.ndarray[np.int_t, ndim=2, mode='c']
     """
     Args:
@@ -715,8 +705,7 @@ def M(np.ndarray[np.float_t,ndim = 2] nodes):# , np.ndarray[np.int_t, ndim=2, mo
     Mat=np.array([va , vb])
     return (Mat.T) 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)    
+    
 def I(np.int i, np.int j, np.float_t d):
     """
     Args:
@@ -729,8 +718,7 @@ def I(np.int i, np.int j, np.float_t d):
 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)    
+    
 def nabPhi(np.ndarray[np.float_t ,ndim = 2] M):
     """
     Args:
@@ -744,8 +732,7 @@ def nabPhi(np.ndarray[np.float_t ,ndim = 2] M):
     cdef np.ndarray nabP_p = -nabP_q - nabP_r
     return nabP_p, nabP_q , nabP_r   
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def nabPhi2(np.ndarray[np.float_t ,ndim = 2] M):
     """
     Args:
@@ -761,8 +748,7 @@ def nabPhi2(np.ndarray[np.float_t ,ndim = 2] M):
     return a 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)    
+    
 def K(np.int i,np.int j,np.float_t d, np.ndarray[np.float_t ,ndim = 2] nabPhi, np.float_t v):
     """
     FROM FiniteElement
@@ -778,8 +764,7 @@ def K(np.int i,np.int j,np.float_t d, np.ndarray[np.float_t ,ndim = 2] nabPhi, n
 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def W(np.int i,np.int j,np.float_t d, np.ndarray[np.float_t ,ndim = 2] nabPhi, np.ndarray[np.float_t ,ndim = 2] nodes,  np.ndarray[np.float_t ,ndim = 2] previous_nodes):
     """
     Args:
@@ -797,8 +782,7 @@ def W(np.int i,np.int j,np.float_t d, np.ndarray[np.float_t ,ndim = 2] nabPhi, n
     dummy = P0 + P1 + P2 + (nodes[j]-previous_nodes[j]).T
     return (1.0 / 24 )*d*np.inner(nabPhi[i].T, dummy)
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def b(np.int i, np.float_t d, np.float_t d_old, np.ndarray[np.float_t, ndim=1] f, np.ndarray[np.float_t, ndim=1] old_alpha, np.float_t dt): 
     """
     Args:

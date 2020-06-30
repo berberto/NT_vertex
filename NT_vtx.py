@@ -166,7 +166,7 @@ if __name__ == "__main__":
     concentration_list = []
     cells_list=[]
     poni_state_list=[]
-    N_step = 100
+    N_step = 1000
     if len(sys.argv) > 1:
         N_step=int(sys.argv[1])
     t1=time.time()
@@ -184,73 +184,6 @@ if __name__ == "__main__":
     cells_state_video(cells_list,poni_state_list, "state-vid")
     animate_surf_video_mpg(nodes_list,concentration_list, "surface-video") 
     #print np.argmax(poni_state_list[0])
-
-
-
-"""
-def cell_growth_video_mpg2(cells_array, name_file):    
-    #v_max = np.max((np.max(cells_array[0].mesh.vertices), np.max(cells_array[-1].mesh.vertices)))
-    widths=[]
-    heights=[]
-    for i in range(len(cells_array)):
-        widths.append(cells_array[i].mesh.geometry.width)
-        if hasattr(cells_array[i].mesh.geometry,'height'):
-            heights.append(cells_array[i].mesh.geometry.height)
-    max_width = max(widths)
-    if len(heights)>0:
-        max_height = max(heights)
-    else:
-        max_height =max( max(cells_array[0].mesh.vertices[1]), max(cells_array[-1].mesh.vertices[1]) ) 
-    #z_low = min(dummy_min)
-    #size = 10.0
-    outputdir="images"
-    if not os.path.exists(outputdir): # if the folder doesn't exist create it
-        os.makedirs(outputdir)
-    fig = plt.figure(); 
-    ax = fig.add_subplot(111); 
-    fig.set_size_inches(6,6); 
-    i=0
-    frames=[]
-    for i in range(len(cells_array)):
-        #drawShh(nodes_array[i],alpha_array[i],27.0, ax , size)
-        draw_cells(cells_array[i],max_width,max_height, ax)
-        #drawShh4(nodes_array[i],alpha_array[i], z_low,z_high,final_length, height,ax) #drawShh4(nodes,alpha,z_low,z_high,final_length,width, ax=None):
-        i=i+1
-        frame="images/image%03i.png" % i
-        fig.savefig(frame,dpi=500)
-        frames.append(frame)  
-    #os.system("mencoder 'mf://images/image*.png' -mf type=png:fps=20 -ovc lavc -lavcopts vcodec=wmv2 -oac copy  -o " + name_file)  
-    #os.system("cd /usr/local/bin")
-    os.system("cd ")
-    #os.system("cd /opt")
-    os.system("/opt/ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
-    print os.system("pwd")
-    #os.system("cd ")
-    #os.system("cd Desktop/vertex_model/images")
-    os.system("cd images")
-    for frame in frames: os.remove(frame)  
-
-
-def set_colour_poni(cells,grn):
-    n_face = cells.mesh.n_face
-    poni = grn.poni_grn
-    source =cells.properties['source']
-    cells.properties['color']=np.ones((n_face, 3)) #to store RGB number for each face
-    for k in range(n_face):
-        m = np.argmax(poni.state[k])
-        if source[k]==1:
-            cells.properties['color'][k] = np.array([1,1,1]) #source
-        elif m==0:
-            cells.properties['color'][k] = np.array([0,0,1]) #Blue, pax high
-        elif m==1:
-            cells.properties['color'][k] = np.array([1,0,0]) #Red, Olig2 high
-        elif m==2:
-            cells.properties['color'][k] = np.array([0,0,1]) #Green, NKx22 high
-        elif m==3:
-            cells.properties['color'][k] = np.array([0,1,1]) # ?, Irx high 
-"""      
-
-
 
 
 """

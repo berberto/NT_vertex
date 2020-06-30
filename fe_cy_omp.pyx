@@ -16,6 +16,51 @@ from libc.math cimport fabs
 from scipy.linalg.cython_lapack cimport dgesv, dgelsd
 from scipy.linalg import cho_factor, cho_solve
 
+def ev2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
+    cdef int m = len(old_con)
+    cdef np.ndarray a = np.zeros((m,m), dtype = np.float_) 
+    cdef double[:,:]A = a #memoryview of a
+    cdef np.ndarray b_vect = np.zeros(m, dtype = np.float_)#bv stands for b vector
+    cdef double[::1] bv = b_vect #memoryview of b_vect
+    cdef double[:,:] ov = old_verts
+    cdef double[:,:] nv = new_verts
+    cdef double[:,:] oc = old_cents
+    cdef double[:,:] nc = new_cents
+    cdef double[::1] o_con = old_con
+    cdef int[::1] nxt = nx #next
+    cdef int[::1] fbe = f_by_e # face by edge
+    cdef int[::1] etn = e_t_n #edges to nodes
+    cdef int[::1] ftn = f_t_n#faces to nodes
+    cdef double[3][2] nds #coords of triangle in loop
+    cdef double[:,:] nodes = nds #memoryview
+    cdef double[3][2] prev_nds #previous coords of triangle 
+    cdef double[:,:] prev_nodes = prev_nds  #memoryview
+    cdef double[::1] s_fn = f # memoryview of source
+    cdef double d #abs value of determinant of mat
+    cdef double old_d #determinant (abs value of)
+    cdef double[2][2] mat #matrix to be used in  update of A
+    cdef double[:,:] Mat = mat # memoryview of mat
+    cdef double[3][2] nP # to store nab_Phi
+    cdef double [:,:] nab_Phi  = nP #memoryview 
+    cdef int[3] nd_id #node ids for triangle
+    cdef int[::1] node_ids = nd_id
+    cdef int e=0 #to index the loop over edges
+    cdef int i=0 #index 
+    cdef int j=0
+    with nogil, parallel(num_threads=8):
+        for e in range(n_edge):
+            set_up_nodes(nodes , nv, nc , nxt, fbe, e)
+            set_up_nodes(prev_nodes , ov, oc , nxt, fbe, e)
+            set_node_ids(node_ids, nxt, fbe, etn, ftn , e)
+            M_c( nodes , Mat )
+            d = just_det(nodes)
+            old_d = just_det( prev_nodes )
+            nabPhi2_c( Mat , nab_Phi)
+            for i in range(3):
+                bv[node_ids[i]]+=b_c2(i, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt) 
+                for j in range(3):
+                    A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+    return np.linalg.solve(a,b_vect)
 
 # @cython.boundscheck(False)
 # @cython.wraparound(False)
@@ -52,7 +97,8 @@ def ev5(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.nd
     cdef int e=0 #to index the loop over edges
     cdef int i=0 #index 
     cdef int j=0
-    with nogil, parallel(num_threads=4):
+    cdef int num_threads
+    with nogil, parallel(num_threads=8):
         for e in range(n_edge):
             set_up_nodes(nodes , nv, nc , nxt, fbe, e)
             set_up_nodes(prev_nodes , ov, oc , nxt, fbe, e)

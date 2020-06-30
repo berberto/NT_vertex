@@ -382,7 +382,7 @@ def cell_growth_video_mpg2(cells_array, name_file):
     #os.system("cd /usr/local/bin")
     os.system("cd ")
     #os.system("cd /opt")
-    os.system("/opt/ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
+    os.system("ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
     print(os.system("pwd"))
     #os.system("cd ")
     #os.system("cd Desktop/vertex_model/images")
@@ -433,7 +433,7 @@ def _modified_animate_video_mpg(cells_array,name_file,facecolours='Default'):
     #os.system("mencoder 'mf://images/image*.png' -mf type=png:fps=20 -ovc lavc -lavcopts vcodec=wmv2 -oac copy  -o " + name_file)  
     #os.system("cd /usr/local/bin")
     os.system("cd ")
-    os.system("/opt/ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
+    os.system("ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
     os.system("cd images")
     for frame in frames: os.remove(frame) 
 
@@ -494,7 +494,7 @@ def animate_surf_video_mpg(nodes_array,alpha_array, name_file):
     #os.system("cd /usr/local/bin")
     os.system("cd ")
     #os.system("cd /opt")
-    os.system("/opt/ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
+    os.system("ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
     print(os.system("pwd"))
     #os.system("cd ")
     #os.system("cd Desktop/vertex_model/images")
@@ -530,7 +530,7 @@ def animate_surf_video_mpg2(nodes_array,alpha_array, final_length, height, name_
     #os.system("cd /usr/local/bin")
     os.system("cd ")
     #os.system("cd /opt")
-    os.system("/opt/ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
+    os.system("ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
     print(os.system("pwd"))
     #os.system("cd ")
     #os.system("cd Desktop/vertex_model/images")

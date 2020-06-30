@@ -14,16 +14,34 @@
 	- FE matrix is not symmetric (max difference ~ 1.e-2)
 	- cython code with the sparse solver doesn't seem to work (tested by Graeme)
 
+3. now running with 10^5 steps, saving snapshot every 100
+
+
+### To do
+
+1. `FE_vtx.py`:
+	- maybe make the `build_FE_vtx`/`build_FE_vtx_from_scratch` routines members of the `FE_vtx` class?
+
 2. `fe_cy_omp.pyx`:
 	- rewriting the part to construct the matrix with a loop over nodes, rather than edges?
+		- save the triplets of `node_id_tri` before entering the loop (can be vectorized)
+		- iterates over nodes (can it be vectorized?)
+	- check that I'm using the right cython function
 
-3. now running with 10^5 steps, saving snapshot every 100
+3. `plotting`:
+	- move functions to produce videos there?
+	- `try...except` for `ffmpeg` first
+
+4. Related to slurm issue, figure out which flags are needed in compilation
 
 
 ### Issues
 
 1. `NT_vtx.py`:
-	- `transitions_faster()` is actually slower
+	- `transitions_faster()` is actually slower ?
 
 2. `fe_cy_omp.pyx`:
 	- now getting to compile with `-fopenmp` flag, but giving `Fatal Python error: PyThreadState_Get: no current thread`. Loop over edges not vectorizable?
+
+3. Issue running on CAMP with `sbatch`, but working fine with `srun`.
+
