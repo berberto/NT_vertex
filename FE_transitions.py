@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jun  4 14:49:34 2020
@@ -184,6 +184,7 @@ def rem_collapsed(cells,c_by_e):
     face_id_by_edge = cells.mesh.face_id_by_edge
     rotate=cells.mesh.edges.rotate
     reverse=cells.mesh.edges.reverse
+    reverse.setflags(write = True)
     while True:
         nxt = rotate[reverse]
         two_sided = np.where(nxt[nxt] == edges.ids[:len(nxt)])[0]
@@ -194,8 +195,10 @@ def rem_collapsed(cells,c_by_e):
             prev_face_id_by_edge = face_id_by_edge
             reverse, vertices, face_id_by_edge,c_by_e = _remove(two_sided, reverse, vertices, face_id_by_edge)#_remove only returns a tuple of length 3
             ids_removed = np.setdiff1d(prev_face_id_by_edge,face_id_by_edge)
+            #print "ids_removed", ids_removed
     # if ~(ids_t1==np.delete(ids_t1,ids_removed)):
     #     print 'Ids T1 to remove:', ids_t1, ids_removed, np.delete(ids_t1,ids_removed)
+    reverse.setflags(write = False)
     mesh = cells.mesh.copy()
     mesh.edges = Edges(reverse)
     mesh.vertices = vertices

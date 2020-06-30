@@ -17,7 +17,6 @@ import numpy as np
 import time
 import os
 import sys
-import concurrent.futures
 
 
 
@@ -158,9 +157,48 @@ if __name__ == "__main__":
 
     np.random.seed(1984)
 
-    nt5=build_NT_vtx_from_scratch(size = [6,6])
-
+    nt5=build_NT_vtx_from_scratch(size = [20,10])
     print("build NT")
+
+    # mesh = nt5.FE_vtx.cells.mesh
+    # face_id_by_edge = mesh.face_id_by_edge
+    # edges = mesh.edges
+    # verts = mesh.vertices   # position of the vertices
+    # nexts = edges.next      # indices of the 'starting' vertices
+    # prevs = edges.prev      # indices of the 'arriving' vertices
+
+    # print("faces")
+    # print(face_id_by_edge)
+    # print(type(face_id_by_edge))
+    # print(np.shape(face_id_by_edge), "\n")
+
+    # print("verts")
+    # print(verts)
+    # print(type(verts))
+    # print(np.shape(verts), "\n")
+
+    # print("prevs")
+    # print(prevs)
+    # print(type(prevs))
+    # print(np.shape(prevs), "\n")
+
+    # print("nexts")
+    # print(nexts)
+    # print(type(nexts))
+    # print(np.shape(nexts), "\n")
+
+    # print("xs\n", np.unique(verts[0]))
+    # print("ys\n", np.unique(verts[1]))
+
+    # topvs = 
+
+    # # print("comp")
+    # # comp = np.array([x for x in zip(prevs,nexts,verts[0],verts[1])])
+    # # comp=np.sort(comp, )
+    # # for x in comp:
+    # #     print("%d\t%d\t%.2f\t%.2f\t"%x)
+    # sys.exit()
+
 
     nodes_list = []
     concentration_list = []
@@ -173,12 +211,13 @@ if __name__ == "__main__":
     for k in range(N_step):
         nt5.evolve_fast(.2,.05,0.,0.,0.,.001) #(v, prod_rate,bind_rate,deg_rate,time,dt):
         nt5.transitions_faster()
-        if k%100 == 0:  # append every 100 steps
+        if k%10 == 0:  # append every 100 steps
             print(k)
             nodes_list.append(np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
             concentration_list.append(nt5.FE_vtx.concentration)
             cells_list.append(nt5.FE_vtx.cells)
             poni_state_list.append(nt5.GRN.poni_grn.state)
+            # break
     t2 = time.time()
     print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, "\n took ", t2 - t1)
     cells_state_video(cells_list,poni_state_list, "state-vid")

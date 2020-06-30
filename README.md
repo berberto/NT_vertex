@@ -14,7 +14,15 @@
 	- FE matrix is not symmetric (max difference ~ 1.e-2)
 	- cython code with the sparse solver doesn't seem to work (tested by Graeme)
 
-3. now running with 10^5 steps, saving snapshot every 100
+2. `fe_cy_v3.py` cleaned up and renamed as `fe_cy.pyx`
+	- evolution function now called `ev_cy`
+
+3. now running with 1000 steps, saving snapshot every 10, starting from 20x10
+
+4. `FE_transitions.py` corrected by Graeme, replaced the old one
+
+5. `setup_*`:
+	- set `language_level` inside `cythonize`, got rid of the warning (it was setting it to 2, now set to 3.6)
 
 
 ### To do
@@ -34,6 +42,9 @@
 
 4. Related to slurm issue, figure out which flags are needed in compilation
 
+3. `setup_*`:
+	- where to put the `-xhost` flag?
+
 
 ### Issues
 
@@ -43,5 +54,6 @@
 2. `fe_cy_omp.pyx`:
 	- now getting to compile with `-fopenmp` flag, but giving `Fatal Python error: PyThreadState_Get: no current thread`. Loop over edges not vectorizable?
 
-3. Issue running on CAMP with `sbatch`, but working fine with `srun`.
-
+3. `setup_*`:
+	- still getting the `"Using deprecated NumPy API, disable it by #defining NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"` error... 
+	- bunch of warnings with uninitialized variables inside `#pragma` directives

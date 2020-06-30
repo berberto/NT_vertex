@@ -9,6 +9,8 @@ Created on Sun Jun  7 10:10:44 2020
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
+from Cython.Build import cythonize
+
 # import numpy
 
 ext_modules=[
@@ -22,6 +24,6 @@ ext_modules=[
 
 
 setup(name='FE step',
-	  ext_modules = ext_modules,
+	  ext_modules = cythonize(ext_modules,language_level=3.6),
       cmdclass={'build_ext':build_ext}
 )
