@@ -166,19 +166,23 @@ if __name__ == "__main__":
     concentration_list = []
     cells_list=[]
     poni_state_list=[]
-    N_step=100
+    N_step = 100
+    if len(sys.argv) > 1:
+        N_step=int(sys.argv[1])
     t1=time.time()
     for k in range(N_step):
         nt5.evolve_fast(.2,.05,0.,0.,0.,.001) #(v, prod_rate,bind_rate,deg_rate,time,dt):
         nt5.transitions_faster()
-        nodes_list.append(np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
-        concentration_list.append(nt5.FE_vtx.concentration)
-        cells_list.append(nt5.FE_vtx.cells)
-        poni_state_list.append(nt5.GRN.poni_grn.state)
+        if k%100 == 0:  # append every 100 steps
+            print(k)
+            nodes_list.append(np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
+            concentration_list.append(nt5.FE_vtx.concentration)
+            cells_list.append(nt5.FE_vtx.cells)
+            poni_state_list.append(nt5.GRN.poni_grn.state)
     t2 = time.time()
     print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, "\n took ", t2 - t1)
-    # cells_state_video(cells_list,poni_state_list, "state-vid")
-    # animate_surf_video_mpg(nodes_list,concentration_list, "surface-video") 
+    cells_state_video(cells_list,poni_state_list, "state-vid")
+    animate_surf_video_mpg(nodes_list,concentration_list, "surface-video") 
     #print np.argmax(poni_state_list[0])
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#cython: boundscheck=False, wraparound=False, nonecheck=False
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun  1 10:07:58 2020
@@ -13,13 +13,12 @@ import time
 import cython
 from cython.parallel import parallel, prange
 from libc.math cimport fabs
-# from _mat_Solve import cabbage
 from scipy.linalg.cython_lapack cimport dgesv, dgelsd
 from scipy.linalg import cho_factor, cho_solve
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def ev5(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
     cdef int m = len(old_con)
     cdef np.ndarray a = np.empty((m,m), dtype = np.float_) 
@@ -53,7 +52,7 @@ def ev5(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.nd
     cdef int e=0 #to index the loop over edges
     cdef int i=0 #index 
     cdef int j=0
-    with nogil, parallel(num_threads=3):
+    with nogil, parallel(num_threads=4):
         for e in range(n_edge):
             set_up_nodes(nodes , nv, nc , nxt, fbe, e)
             set_up_nodes(prev_nodes , ov, oc , nxt, fbe, e)
@@ -165,8 +164,8 @@ def ev5(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.nd
 #                 A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
 #     return a, b_vect
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef void set_up_nodes(double[:,:] nds , double[:,:] verts, double[:,:] cents , int[::1] nxt, int[::1] fbe, int e) nogil:
     nds[0][0] = verts[e][0] #used transposed version of cells.mesh.vertices
     nds[0][1] = verts[e][1]
@@ -175,15 +174,15 @@ cdef void set_up_nodes(double[:,:] nds , double[:,:] verts, double[:,:] cents , 
     nds[2][0] = cents[fbe[e]][0] #used transposed version of cells.mesh.vertices
     nds[2][1] = cents[fbe[e]][1]
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef void set_node_ids(int[::1] node_ids, int[::1] nxt, int[::1] fbe, int[::1] etn, int[::1] ftn , int e) nogil:
     node_ids[0] = etn[e]
     node_ids[1] = etn[nxt[e]]
     node_ids[2] = ftn[fbe[e]]
 
-@cython.boundscheck(False)
-@cython.wraparound(False)    
+# @cython.boundscheck(False)
+# @cython.wraparound(False)    
 cdef void set_red_f(double[::1] reduced_f, double[::1] s_fn, int[::1] fbe, int e) nogil:
     reduced_f[0] = 0.0
     reduced_f[1] = 0.0
@@ -192,8 +191,8 @@ cdef void set_red_f(double[::1] reduced_f, double[::1] s_fn, int[::1] fbe, int e
     
          
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef void M_c( double [:, :] nodes , double [:, :] Mat ) nogil:
     """
     Sets the values in the matrix Mat.
@@ -208,8 +207,8 @@ cdef void M_c( double [:, :] nodes , double [:, :] Mat ) nogil:
     Mat[1][1] = nodes[2][1] - nodes[0][1]
     
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef double just_det( double [:, :] nodes ) nogil:
     """
     Returns the absolute value of the determinant of the matrix M derived
@@ -225,8 +224,8 @@ cdef double just_det( double [:, :] nodes ) nogil:
     
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)    
+# @cython.boundscheck(False)
+# @cython.wraparound(False)    
 cdef double I_c(int i, int j, double d) nogil:
     """
     Args:
@@ -241,8 +240,8 @@ cdef double I_c(int i, int j, double d) nogil:
     
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef void nabPhi2_c(double [:,:] M , double [:,:] nab_Phi) nogil:
     """
     Sets the values of nab_Phi.
@@ -267,8 +266,8 @@ cdef void nabPhi2_c(double [:,:] M , double [:,:] nab_Phi) nogil:
 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef double K_c(int i, int j, double d, double[:,:] nabPhi, double v) nogil:
     """
     FROM FiniteElement
@@ -284,8 +283,8 @@ cdef double K_c(int i, int j, double d, double[:,:] nabPhi, double v) nogil:
 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef double W_c(int i,int j,double d, double[:,:] nabPhi, double[:,:] nodes,  double[:,:] previous_nodes) nogil:
     """
     Args:
@@ -309,8 +308,8 @@ cdef double W_c(int i,int j,double d, double[:,:] nabPhi, double[:,:] nodes,  do
 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef double b_c(int i, double d, double d_old, double[::1] f, double[::1] old_alpha, double dt) nogil: 
     """
     Args:
@@ -332,8 +331,8 @@ cdef double b_c(int i, double d, double d_old, double[::1] f, double[::1] old_al
     dummy +=I_c(i,2,d_old)*old_alpha[2]
     return dummy
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef double b_c2(int i, double d, double d_old, double[::1] f, double[::1] old_alpha, int[::1] fbe , int e ,  int[::1]node_ids ,  double dt) nogil: 
     """
     Args:
@@ -355,8 +354,8 @@ cdef double b_c2(int i, double d, double d_old, double[::1] f, double[::1] old_a
     dummy +=I_c(i,2,d_old)*old_alpha[node_ids[2]]
     return dummy
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def M(np.ndarray[np.float_t,ndim = 2] nodes):# , np.ndarray[np.int_t, ndim=2, mode='c']
     """
     Args:
@@ -370,8 +369,8 @@ def M(np.ndarray[np.float_t,ndim = 2] nodes):# , np.ndarray[np.int_t, ndim=2, mo
     Mat=np.array([va , vb])
     return (Mat.T) 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)    
+# @cython.boundscheck(False)
+# @cython.wraparound(False)    
 def I(np.int i, np.int j, np.float_t d):
     """
     Args:
@@ -384,8 +383,8 @@ def I(np.int i, np.int j, np.float_t d):
 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)    
+# @cython.boundscheck(False)
+# @cython.wraparound(False)    
 def nabPhi(np.ndarray[np.float_t ,ndim = 2] M):
     """
     Args:
@@ -399,8 +398,8 @@ def nabPhi(np.ndarray[np.float_t ,ndim = 2] M):
     cdef np.ndarray nabP_p = -nabP_q - nabP_r
     return nabP_p, nabP_q , nabP_r   
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def nabPhi2(np.ndarray[np.float_t ,ndim = 2] M):
     """
     Args:
@@ -416,8 +415,8 @@ def nabPhi2(np.ndarray[np.float_t ,ndim = 2] M):
     return a 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)    
+# @cython.boundscheck(False)
+# @cython.wraparound(False)    
 def K(np.int i,np.int j,np.float_t d, np.ndarray[np.float_t ,ndim = 2] nabPhi, np.float_t v):
     """
     FROM FiniteElement
@@ -433,8 +432,8 @@ def K(np.int i,np.int j,np.float_t d, np.ndarray[np.float_t ,ndim = 2] nabPhi, n
 
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def W(np.int i,np.int j,np.float_t d, np.ndarray[np.float_t ,ndim = 2] nabPhi, np.ndarray[np.float_t ,ndim = 2] nodes,  np.ndarray[np.float_t ,ndim = 2] previous_nodes):
     """
     Args:
@@ -452,8 +451,8 @@ def W(np.int i,np.int j,np.float_t d, np.ndarray[np.float_t ,ndim = 2] nabPhi, n
     dummy = P0 + P1 + P2 + (nodes[j]-previous_nodes[j]).T
     return (1.0 / 24 )*d*np.inner(nabPhi[i].T, dummy)
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def b(np.int i, np.float_t d, np.float_t d_old, np.ndarray[np.float_t, ndim=1] f, np.ndarray[np.float_t, ndim=1] old_alpha, np.float_t dt): 
     """
     Args:

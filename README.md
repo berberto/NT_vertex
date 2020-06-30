@@ -14,6 +14,12 @@
 	- FE matrix is not symmetric (max difference ~ 1.e-2)
 	- cython code with the sparse solver doesn't seem to work (tested by Graeme)
 
+2. `fe_cy_omp.pyx`:
+	- rewriting the part to construct the matrix with a loop over nodes, rather than edges?
+
+3. now running with 10^5 steps, saving snapshot every 100
+
+
 ### Issues
 
 1. `NT_vtx.py`:
