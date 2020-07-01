@@ -157,7 +157,17 @@ if __name__ == "__main__":
 
     np.random.seed(1984)
 
-    nt5=build_NT_vtx_from_scratch(size = [20,10])
+    xsize=20
+    ysize=10
+    N_step = 1000
+    if len(sys.argv) > 1:
+        N_step=int(sys.argv[1])
+    filename="outputs/test_%dx%d_%d"%(xsize, ysize, N_step)
+
+    # print(filename)
+    # sys.exit()
+
+    nt5=build_NT_vtx_from_scratch(size = [xsize,ysize])
     print("build NT")
 
     # mesh = nt5.FE_vtx.cells.mesh
@@ -199,97 +209,36 @@ if __name__ == "__main__":
     # #     print("%d\t%d\t%.2f\t%.2f\t"%x)
     # sys.exit()
 
-
     nodes_list = []
     concentration_list = []
     cells_list=[]
     poni_state_list=[]
-    N_step = 1000
-    if len(sys.argv) > 1:
-        N_step=int(sys.argv[1])
+
+    # for k in range(0,N_step,10):
+    #     nodes_list += [np.load(filename+"_%04d_nodes.npy"%(k))]
+    #     concentration_list += [np.load(filename+"_%04d_conc.npy"%(k))]
+    #     # cells_list += [np.load(filename+"_%04d_cells.npy"%(k))]
+    #     poni_state_list += [np.load(filename+"_%04d_poni.npy"%(k))]
+    # sys.exit()
+
     t1=time.time()
     for k in range(N_step):
-        nt5.evolve_fast(.2,.05,0.,0.,0.,.001) #(v, prod_rate,bind_rate,deg_rate,time,dt):
+        nt5.evolve_fast(.2,.05,0.,0.,.02,.001) #(v, prod_rate,bind_rate,deg_rate,time,dt):
         nt5.transitions_faster()
         if k%10 == 0:  # append every 100 steps
             print(k)
+            np.save(filename+"_%04d_nodes.npy"%(k), np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
+            np.save(filename+"_%04d_conc.npy"%(k), nt5.FE_vtx.concentration)
+            # np.save(filename+"_%04d_cells.npy"%(k), nt5.FE_vtx.cells)
+            np.save(filename+"_%04d_poni.npy"%(k), nt5.GRN.poni_grn.state)
             nodes_list.append(np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
             concentration_list.append(nt5.FE_vtx.concentration)
             cells_list.append(nt5.FE_vtx.cells)
             poni_state_list.append(nt5.GRN.poni_grn.state)
+            # continue
             # break
     t2 = time.time()
     print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, "\n took ", t2 - t1)
-    cells_state_video(cells_list,poni_state_list, "state-vid")
-    animate_surf_video_mpg(nodes_list,concentration_list, "surface-video") 
-    #print np.argmax(poni_state_list[0])
 
-
-"""
-SOME SPEED TESTS
-
-nt=build_NT_vtx_from_scratch(size = [150,6])
-t1=time.time()
-N=10
-for k in range(N):
-    nt.evolve(0.1,1.0,0.01,0.01,0,0.001)
-    nt.transitions()
-t2 = time.time()
-print N, " steps took ", t2 - t1, " secs."
-
-nt2=build_NT_vtx_from_scratch(size = [150,6])
-
-t3=time.time()
-
-for k in range(N):
-    nt2.evolve_fast(0.1,1.0,0.01,0.01,0,0.001)
-    nt2.transitions_faster()
-t4 = time.time()
-print N, " steps fast? took ", t4 - t3, " secs."
-
-nt3=build_NT_vtx_from_scratch(size = [150,6])
-
-t5=time.time()
-for k in range(N):
-    nt3.evolve_original(0.1,1.0,0.01,0.01,0,0.001)
-    nt3.transitions()
-t6 = time.time()
-print N, " original took ", t6 - t5, " secs."
-
-print "new is ", (t6 - t5)/(t4 - t3), " times faster than original."
-
-
-t3=time.time()
-for k in range(N):
-    nt2.evolve_parallel(0.1,1.0,0.01,0.01,0,0.001)
-    nt2.transitions()
-t4 = time.time()
-print N, " steps in parallel took ", t4 - t3, " secs."
-
-nt3=build_NT_vtx_from_scratch()
-t5=time.time()
-for k in range(N):
-    nt3.evolve_parallel_2(0.1,1.0,0.01,0.01,0,0.001) #doesn't seem faster than evolve parallel
-    nt3.transitions()
-t6 = time.time()
-print N, " steps in parallel took ", t6 - t5, " secs."
-"""
-
-"""
-def flow_video(NT_history, name_file):
-"""
-"""
-    Creates a video of the morphogen flow.
-    Args:
-        NT_history is a list of Neural Tube objects.
-        name_file is the name of the output video.
-"""
-"""
-    nodes_array=[]
-    concentration_array=[]
-    for k in range(len(NT_history)):
-        nodes = np.vstack([NT_history[k].cells.vertices.T[::3] , NT_history[k].centroids[~NT_history[k].cells.empty()]])
-        nodes_array.append(nodes)
-        concentration_array.append(NT_history[k].FE.concentration)
-    animate_surf_video_mpg(nodes_array,concentration_array, name_file)  
-"""
+    cells_state_video(cells_list,poni_state_list, filename+"_state-vid")
+    animate_surf_video_mpg(nodes_list,concentration_list, filename+"_surface-video")

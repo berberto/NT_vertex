@@ -13,8 +13,8 @@ from scipy.sparse import coo_matrix
 from cells_extra import cells_setup,add_IKNM_properties, ready_to_divide, cells_evolve
 from Finite_Element import centroids2
 from FE_transitions import T1, rem_collapsed, divide
-from _fe_cy import ev_cy
-# from _fe_cy_omp import ev_cy
+# from _fe_cy import ev_cy
+from _fe_cy_omp import ev_cy
 from cent_test import cen2
 import concurrent.futures
 from multiprocessing import Array ,Process

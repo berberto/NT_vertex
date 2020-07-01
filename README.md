@@ -3,7 +3,7 @@
 1. `NT_vtx.py`: full neural tube object;
 2. `FE_vtx.py`: solving diffusion-degradation equation for morphogen with finite element method on a growing vertex model;
 3. `GeneRegulatoryNetwork.py`: signalling and grn dynamics for individual cells.
-4. `fe_cy_v3.pyx`: cython implementation of finite element methods, setup via `setup_fev3.py`
+4. `fe_cy{,_omp}.pyx`: cython implementation of finite element methods {, with openMP} 
 5. Unused routines inside `evolution_routines.py`
 
 
@@ -17,15 +17,22 @@
 2. `fe_cy_v3.py` cleaned up and renamed as `fe_cy.pyx`
 	- evolution function now called `ev_cy`
 
-3. now running with 1000 steps, saving snapshot every 10, starting from 20x10
+2. `fe_cy_omp.pyx`:
+	- got it running, by adding `with gil` for inner loops over triangle vertices, but it's slower
 
 4. `FE_transitions.py` corrected by Graeme, replaced the old one
 
-5. `setup_*`:
-	- set `language_level` inside `cythonize`, got rid of the warning (it was setting it to 2, now set to 3.6)
+5. `setup.py`:
+	- put all the cython compilation scripts inside here
+	- all shared objects compiled with `python setup.py build_ext --inplace`
+	- deleted all the `setup_*.py` files and the bash script `setup.sh`
 
+3. Ran with 200'000, saving snapshot every 10, in about 3 hrs
 
 ### To do
+
+1. `NT_vtx.py`:
+	- use `dill` for dumping session to disc (restart file)
 
 1. `FE_vtx.py`:
 	- maybe make the `build_FE_vtx`/`build_FE_vtx_from_scratch` routines members of the `FE_vtx` class?
@@ -42,8 +49,12 @@
 
 4. Related to slurm issue, figure out which flags are needed in compilation
 
-3. `setup_*`:
+5. `setup_*`:
 	- where to put the `-xhost` flag?
+
+6. **Everywhere** (all the necessary classes):
+	- add routines to save in binary intermediate configs
+	- add constructors that take info from files
 
 
 ### Issues

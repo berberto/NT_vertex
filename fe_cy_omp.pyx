@@ -1,5 +1,7 @@
 #cython: boundscheck=False, wraparound=False, nonecheck=False
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
 Created on Mon Jun  1 10:07:58 2020
 
@@ -59,20 +61,38 @@ def ev_cy(np.ndarray old_verts,
     cdef int e=0 #to index the loop over edges
     cdef int i=0 #index 
     cdef int j=0
-    with nogil, parallel(num_threads=16):
-        for e in prange(n_edge):
-            set_up_nodes(nodes , nv, nc , nxt, fbe, e)
-            set_up_nodes(prev_nodes , ov, oc , nxt, fbe, e)
-            set_node_ids(node_ids, nxt, fbe, etn, ftn , e)
+    # with nogil, parallel(num_threads=16):
+    for e in prange(n_edge, nogil=True, schedule='dynamic'):
+        set_up_nodes(nodes , nv, nc , nxt, fbe, e)
+        set_up_nodes(prev_nodes , ov, oc , nxt, fbe, e)
+        set_node_ids(node_ids, nxt, fbe, etn, ftn , e)
 
-            M_c( nodes , Mat )
-            d = just_det(nodes)
-            old_d = just_det( prev_nodes )
-            nabPhi2_c( Mat , nab_Phi)
+        M_c( nodes , Mat )
+        d = just_det(nodes)
+        old_d = just_det( prev_nodes )
+        nabPhi2_c( Mat , nab_Phi)
+        
+        with gil:
             for i in range(3):
                 bv[node_ids[i]]+=b_c2(i, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt) 
                 for j in range(3):
-                    A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+                    A[node_ids[i],node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+        # bv[node_ids[1]]=b_c2(1, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt)
+        # bv[node_ids[2]]=b_c2(2, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt)
+        # bv[node_ids[3]]=b_c2(3, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt)
+
+        # A[node_ids[1]][node_ids[1]]=I_c(1,1,d)+K_c(1,1,d,nab_Phi,v)+W_c(1,1,d,nab_Phi,nodes, prev_nodes)
+        # A[node_ids[1]][node_ids[2]]=I_c(1,2,d)+K_c(1,2,d,nab_Phi,v)+W_c(1,2,d,nab_Phi,nodes, prev_nodes)
+        # A[node_ids[1]][node_ids[3]]=I_c(1,3,d)+K_c(1,3,d,nab_Phi,v)+W_c(1,3,d,nab_Phi,nodes, prev_nodes)
+
+        # A[node_ids[2]][node_ids[1]]=I_c(2,1,d)+K_c(2,1,d,nab_Phi,v)+W_c(2,1,d,nab_Phi,nodes, prev_nodes)
+        # A[node_ids[2]][node_ids[2]]=I_c(2,2,d)+K_c(2,2,d,nab_Phi,v)+W_c(2,2,d,nab_Phi,nodes, prev_nodes)
+        # A[node_ids[2]][node_ids[3]]=I_c(2,3,d)+K_c(2,3,d,nab_Phi,v)+W_c(2,3,d,nab_Phi,nodes, prev_nodes)
+
+        # A[node_ids[3]][node_ids[1]]=I_c(3,1,d)+K_c(3,1,d,nab_Phi,v)+W_c(3,1,d,nab_Phi,nodes, prev_nodes)
+        # A[node_ids[3]][node_ids[2]]=I_c(3,2,d)+K_c(3,2,d,nab_Phi,v)+W_c(3,2,d,nab_Phi,nodes, prev_nodes)
+        # A[node_ids[3]][node_ids[3]]=I_c(3,3,d)+K_c(3,3,d,nab_Phi,v)+W_c(3,3,d,nab_Phi,nodes, prev_nodes)
+
 
     return np.linalg.solve(a,b_vect)
 
