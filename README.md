@@ -58,6 +58,8 @@
 
 ### Issues
 
+1. solution breaks down if expansion is set: running simulations with expansion set to 0 in both directions
+
 1. `NT_vtx.py`:
 	- `transitions_faster()` is actually slower ?
 

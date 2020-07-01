@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     # np.random.seed(1984)
 
-    anisotropic=True
+    anisotropic=False
     xsize=20
     ysize=10
     dt = .001
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     N_step = int(tSym/dt)
     N_frames = 200
     # print(tSym, dt, N_step)
-    expansion = np.ones(2)
+    expansion = np.zeros(2)
     expansion *= np.log(5.)/2./N_step # (1 + ex)**2e5 ~ sqrt(5) (area 5x biger after 2e5 steps)
 
     if len(sys.argv) > 1:
@@ -193,7 +193,8 @@ if __name__ == "__main__":
     # concentration_list = []
     # cells_list=[]
     # poni_state_list=[]
-    # for k in range(0,N_step,N_skip):
+    # N_step=10400
+    # for k in range(0,N_step+1,N_skip):
     #     with open(filename+"_%06d_nodes.pkl"%(k), "rb") as f:
     #         nodes_list += [dill.load(f)]
     #     with open(filename+"_%06d_conc.pkl"%(k), "rb") as f:
@@ -206,7 +207,7 @@ if __name__ == "__main__":
     # print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step)
     # cells_state_video(cells_list,poni_state_list, filename+"_state-vid")
     # animate_surf_video_mpg(nodes_list,concentration_list, filename+"_surface-video")
-    
+    # sys.exit()
 
     t1=time.time()
     for k in range(N_step+1):
