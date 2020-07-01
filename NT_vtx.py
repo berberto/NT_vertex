@@ -173,7 +173,7 @@ if __name__ == "__main__":
         N_step=int(sys.argv[1])
         if len(sys.argv) > 2:
             N_frames = int(sys.argv[2])
-    filename="outputs/test_%dx%d_%.0e"%(xsize, ysize, N_step)
+    filename="outputs/dense/test_%dx%d_%.0e"%(xsize, ysize, N_step)
     N_skip = max(N_step//N_frames, 1)
 
     print("N_step   =", N_step)
@@ -189,25 +189,25 @@ if __name__ == "__main__":
     nt5=build_NT_vtx_from_scratch(size = [xsize,ysize])
     print("build NT")
 
-    # nodes_list = []
-    # concentration_list = []
-    # cells_list=[]
-    # poni_state_list=[]
-    # N_step=10400
-    # for k in range(0,N_step+1,N_skip):
-    #     with open(filename+"_%06d_nodes.pkl"%(k), "rb") as f:
-    #         nodes_list += [dill.load(f)]
-    #     with open(filename+"_%06d_conc.pkl"%(k), "rb") as f:
-    #         concentration_list += [dill.load(f)]
-    #     with open(filename+"_%06d_poni.pkl"%(k), "rb") as f:
-    #         poni_state_list += [dill.load(f)]
-    #     with open (filename+"_%06d_cells.pkl"%(k), "rb") as f:
-    #         cells_list+=[dill.load(f)]
+    nodes_list = []
+    concentration_list = []
+    cells_list=[]
+    poni_state_list=[]
+    N_step=10600
+    for k in range(0,N_step+1,N_skip):
+        with open(filename+"_%06d_nodes.pkl"%(k), "rb") as f:
+            nodes_list += [dill.load(f)]
+        with open(filename+"_%06d_conc.pkl"%(k), "rb") as f:
+            concentration_list += [dill.load(f)]
+        with open(filename+"_%06d_poni.pkl"%(k), "rb") as f:
+            poni_state_list += [dill.load(f)]
+        with open (filename+"_%06d_cells.pkl"%(k), "rb") as f:
+            cells_list+=[dill.load(f)]
 
-    # print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step)
-    # cells_state_video(cells_list,poni_state_list, filename+"_state-vid")
-    # animate_surf_video_mpg(nodes_list,concentration_list, filename+"_surface-video")
-    # sys.exit()
+    print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step)
+    cells_state_video(cells_list,poni_state_list, filename+"_state-vid")
+    animate_surf_video_mpg(nodes_list,concentration_list, filename+"_surface-video")
+    sys.exit()
 
     t1=time.time()
     for k in range(N_step+1):
