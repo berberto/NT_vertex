@@ -194,9 +194,12 @@ if __name__ == "__main__":
     # cells_list=[]
     # poni_state_list=[]
     # for k in range(0,N_step,N_skip):
-    #     nodes_list += [np.load(filename+"_%06d_nodes.npy"%(k))]
-    #     concentration_list += [np.load(filename+"_%06d_conc.npy"%(k))]
-    #     poni_state_list += [np.load(filename+"_%06d_poni.npy"%(k))]
+    #     with open(filename+"_%06d_nodes.pkl"%(k), "rb") as f:
+    #         nodes_list += [dill.load(f)]
+    #     with open(filename+"_%06d_conc.pkl"%(k), "rb") as f:
+    #         concentration_list += [dill.load(f)]
+    #     with open(filename+"_%06d_poni.pkl"%(k), "rb") as f:
+    #         poni_state_list += [dill.load(f)]
     #     with open (filename+"_%06d_cells.pkl"%(k), "rb") as f:
     #         cells_list+=[dill.load(f)]
 
@@ -207,13 +210,21 @@ if __name__ == "__main__":
 
     t1=time.time()
     for k in range(N_step+1):
+        # ttot = time.time()
         if k%N_skip == 0:  # append every 100 steps
+            # tdump = time.time()
             print(k)
-            np.save(filename+"_%06d_nodes.npy"%(k), np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
-            np.save(filename+"_%06d_conc.npy"%(k), nt5.FE_vtx.concentration)
-            np.save(filename+"_%06d_poni.npy"%(k), nt5.GRN.poni_grn.state)
+            with open (filename+"_%06d_nodes.pkl"%(k), "wb") as f:
+                dill.dump(np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]), f)
+            with open (filename+"_%06d_conc.pkl"%(k), "wb") as f:
+                dill.dump(nt5.FE_vtx.concentration, f)
+            with open (filename+"_%06d_poni.pkl"%(k), "wb") as f:
+                dill.dump(nt5.GRN.poni_grn.state, f)
             with open (filename+"_%06d_cells.pkl"%(k), "wb") as f:
                 dill.dump(nt5.FE_vtx.cells, f)
+            # tdump = time.time() - tdump
+            # ttot = time.time() - ttot
+            # print(k, ttot, tdump)
         nt5.evolve_fast(.2,.05,0.,0.,.1,dt) #(v, prod_rate,bind_rate,deg_rate,time,dt):
         nt5.transitions_faster()
     t2 = time.time()

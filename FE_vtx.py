@@ -13,7 +13,7 @@ from scipy.sparse import coo_matrix
 from cells_extra import cells_setup,add_IKNM_properties, ready_to_divide, cells_evolve
 from Finite_Element import centroids2
 from FE_transitions import T1, rem_collapsed, divide
-from _fe_cy import ev_cy
+from _fe_cy import ev_cy, ev_cy_sparse
 # from _fe_cy_omp import ev_cy
 from cent_test import cen2
 import concurrent.futures
@@ -104,8 +104,8 @@ class FE_vtx(object):
         new_cents = cen2(new_cells)#centroids2(new_cells)
         f = self.cells.properties['source']*prod_rate #source
         n_edge = self.cells.mesh.edges.ids[-1]+1
-        #ev2(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
         self.concentration = ev_cy(old_verts.astype(np.float64), new_verts.astype(np.float64), old_cents.astype(np.float64),new_cents.astype(np.float64), self.concentration.astype(np.float64), nxt.astype(np.intc) ,f_by_e.astype(np.intc), self.edges_to_nodes.astype(np.intc), self.faces_to_nodes.astype(np.intc), f.astype(np.float64) , np.intc(n_edge) , np.float64(v), np.float64(dt) )
+        # self.concentration = ev_cy_sparse(old_verts.astype(np.float64), new_verts.astype(np.float64), old_cents.astype(np.float64),new_cents.astype(np.float64), self.concentration.astype(np.float64), nxt.astype(np.intc) ,f_by_e.astype(np.intc), self.edges_to_nodes.astype(np.intc), self.faces_to_nodes.astype(np.intc), f.astype(np.float64) , np.intc(n_edge) , np.float64(v), np.float64(dt) )
         self.cells = new_cells
         self.centroids = new_cents
 
