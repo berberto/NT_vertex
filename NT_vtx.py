@@ -17,6 +17,7 @@ import numpy as np
 import time
 import os
 import sys
+import dill
 
 
 
@@ -25,19 +26,19 @@ class NT_vtx(object):
         self.FE_vtx = FE_vtx
         self.GRN = GRN
         
-    def evolve(self,v, prod_rate,bind_rate,deg_rate,time,dt):
+    def evolve(self,v, prod_rate,bind_rate,deg_rate,time,dt,expansion=None):
         sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
         self.FE_vtx.evolve(v,prod_rate,dt)
-        self.GRN.evolve(time , dt , sig_input , bind_rate)
+        self.GRN.evolve(time , dt , sig_input , bind_rate, expansion=expansion)
         self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source
         self.FE_vtx.concentration=self.FE_vtx.concentration - deg_rate*self.FE_vtx.concentration
         self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
         neg = np.where(self.FE_vtx.concentration < 0)[0]
         self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
         
-    def evolve_fast(self,v, prod_rate,bind_rate,deg_rate,time,dt):
+    def evolve_fast(self,v, prod_rate,bind_rate,deg_rate,time,dt,expansion=None):
         sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.evolve_cy(v,prod_rate,dt)
+        self.FE_vtx.evolve_cy(v,prod_rate,dt,expansion=expansion)
         self.GRN.evolve_ugly(time , dt , sig_input , bind_rate)
         self.FE_vtx.concentration=self.FE_vtx.concentration - deg_rate*self.FE_vtx.concentration
         self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
@@ -155,20 +156,68 @@ def set_colour_poni_state(cells,poni_state):
 
 if __name__ == "__main__":
 
-    np.random.seed(1984)
+    # np.random.seed(1984)
 
+    anisotropic=True
     xsize=20
     ysize=10
-    N_step = 1000
+    dt = .001
+    tSym = 200. # total time 
+    N_step = int(tSym/dt)
+    N_frames = 200
+    # print(tSym, dt, N_step)
+    expansion = np.ones(2)
+    expansion *= np.log(5.)/2./N_step # (1 + ex)**2e5 ~ sqrt(5) (area 5x biger after 2e5 steps)
+
     if len(sys.argv) > 1:
         N_step=int(sys.argv[1])
-    filename="outputs/test_%dx%d_%d"%(xsize, ysize, N_step)
+        if len(sys.argv) > 2:
+            N_frames = int(sys.argv[2])
+    filename="outputs/test_%dx%d_%.0e"%(xsize, ysize, N_step)
+    N_skip = max(N_step//N_frames, 1)
 
-    # print(filename)
-    # sys.exit()
+    print("N_step   =", N_step)
+    print("N_frames =", N_frames)
+    print("N_skip   =", N_skip)
+
+    if anisotropic:
+        expansion *= 2
+        expansion[1] = 0
+        filename += "_anis"
+
 
     nt5=build_NT_vtx_from_scratch(size = [xsize,ysize])
     print("build NT")
+
+    # nodes_list = []
+    # concentration_list = []
+    # cells_list=[]
+    # poni_state_list=[]
+    # for k in range(0,N_step,N_skip):
+    #     nodes_list += [np.load(filename+"_%06d_nodes.npy"%(k))]
+    #     concentration_list += [np.load(filename+"_%06d_conc.npy"%(k))]
+    #     poni_state_list += [np.load(filename+"_%06d_poni.npy"%(k))]
+    #     with open (filename+"_%06d_cells.pkl"%(k), "rb") as f:
+    #         cells_list+=[dill.load(f)]
+
+    # print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step)
+    # cells_state_video(cells_list,poni_state_list, filename+"_state-vid")
+    # animate_surf_video_mpg(nodes_list,concentration_list, filename+"_surface-video")
+    
+
+    t1=time.time()
+    for k in range(N_step+1):
+        if k%N_skip == 0:  # append every 100 steps
+            print(k)
+            np.save(filename+"_%06d_nodes.npy"%(k), np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
+            np.save(filename+"_%06d_conc.npy"%(k), nt5.FE_vtx.concentration)
+            np.save(filename+"_%06d_poni.npy"%(k), nt5.GRN.poni_grn.state)
+            with open (filename+"_%06d_cells.pkl"%(k), "wb") as f:
+                dill.dump(nt5.FE_vtx.cells, f)
+        nt5.evolve_fast(.2,.05,0.,0.,.1,dt) #(v, prod_rate,bind_rate,deg_rate,time,dt):
+        nt5.transitions_faster()
+    t2 = time.time()
+    print("took:", t2 - t1)
 
     # mesh = nt5.FE_vtx.cells.mesh
     # face_id_by_edge = mesh.face_id_by_edge
@@ -200,8 +249,6 @@ if __name__ == "__main__":
     # print("xs\n", np.unique(verts[0]))
     # print("ys\n", np.unique(verts[1]))
 
-    # topvs = 
-
     # # print("comp")
     # # comp = np.array([x for x in zip(prevs,nexts,verts[0],verts[1])])
     # # comp=np.sort(comp, )
@@ -209,36 +256,5 @@ if __name__ == "__main__":
     # #     print("%d\t%d\t%.2f\t%.2f\t"%x)
     # sys.exit()
 
-    nodes_list = []
-    concentration_list = []
-    cells_list=[]
-    poni_state_list=[]
 
-    # for k in range(0,N_step,10):
-    #     nodes_list += [np.load(filename+"_%04d_nodes.npy"%(k))]
-    #     concentration_list += [np.load(filename+"_%04d_conc.npy"%(k))]
-    #     # cells_list += [np.load(filename+"_%04d_cells.npy"%(k))]
-    #     poni_state_list += [np.load(filename+"_%04d_poni.npy"%(k))]
-    # sys.exit()
 
-    t1=time.time()
-    for k in range(N_step):
-        nt5.evolve_fast(.2,.05,0.,0.,.02,.001) #(v, prod_rate,bind_rate,deg_rate,time,dt):
-        nt5.transitions_faster()
-        if k%10 == 0:  # append every 100 steps
-            print(k)
-            np.save(filename+"_%04d_nodes.npy"%(k), np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
-            np.save(filename+"_%04d_conc.npy"%(k), nt5.FE_vtx.concentration)
-            # np.save(filename+"_%04d_cells.npy"%(k), nt5.FE_vtx.cells)
-            np.save(filename+"_%04d_poni.npy"%(k), nt5.GRN.poni_grn.state)
-            nodes_list.append(np.vstack([nt5.FE_vtx.cells.mesh.vertices.T[::3] , nt5.FE_vtx.centroids[~nt5.FE_vtx.cells.empty()]]))
-            concentration_list.append(nt5.FE_vtx.concentration)
-            cells_list.append(nt5.FE_vtx.cells)
-            poni_state_list.append(nt5.GRN.poni_grn.state)
-            # continue
-            # break
-    t2 = time.time()
-    print(nodes_list[-1][0], concentration_list[-1][0], poni_state_list[-1][0],  N_step, "\n took ", t2 - t1)
-
-    cells_state_video(cells_list,poni_state_list, filename+"_state-vid")
-    animate_surf_video_mpg(nodes_list,concentration_list, filename+"_surface-video")

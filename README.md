@@ -29,6 +29,8 @@
 
 3. Ran with 200'000, saving snapshot every 10, in about 3 hrs
 
+4. Corrected `expansion`: including anisotropy (or not)
+
 ### To do
 
 1. `NT_vtx.py`:
@@ -49,9 +51,6 @@
 
 4. Related to slurm issue, figure out which flags are needed in compilation
 
-5. `setup_*`:
-	- where to put the `-xhost` flag?
-
 6. **Everywhere** (all the necessary classes):
 	- add routines to save in binary intermediate configs
 	- add constructors that take info from files
@@ -66,5 +65,5 @@
 	- now getting to compile with `-fopenmp` flag, but giving `Fatal Python error: PyThreadState_Get: no current thread`. Loop over edges not vectorizable?
 
 3. `setup_*`:
-	- still getting the `"Using deprecated NumPy API, disable it by #defining NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"` error... 
-	- bunch of warnings with uninitialized variables inside `#pragma` directives
+	- still getting the `"Using deprecated NumPy API, disable it by #defining NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"` warning... 
+	- bunch of warnings with uninitialized variables inside `#pragma` directives. Looked at the `fe_cy_omp.c` output, and seems to be normal: they are auxiliary variables used for the vectorized loop.

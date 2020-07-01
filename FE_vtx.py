@@ -13,8 +13,8 @@ from scipy.sparse import coo_matrix
 from cells_extra import cells_setup,add_IKNM_properties, ready_to_divide, cells_evolve
 from Finite_Element import centroids2
 from FE_transitions import T1, rem_collapsed, divide
-# from _fe_cy import ev_cy
-from _fe_cy_omp import ev_cy
+from _fe_cy import ev_cy
+# from _fe_cy_omp import ev_cy
 from cent_test import cen2
 import concurrent.futures
 from multiprocessing import Array ,Process
@@ -30,7 +30,7 @@ class FE_vtx(object):
         self.edges_to_nodes = edges_to_nodes
         self.faces_to_nodes = faces_to_nodes
         
-    def evolve(self,v,prod_rate,dt):
+    def evolve(self,v,prod_rate,dt,expansion=None):
         """
         Performs one step of the FE method. Computes the new cells object itself.
         Uses np.linalg.solve
@@ -48,7 +48,7 @@ class FE_vtx(object):
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
-        new_cells = cells_evolve(self.cells,dt)[0]      # cell objects
+        new_cells = cells_evolve(self.cells,dt,[0.,0.])[0]      # cell objects
         new_verts = new_cells.mesh.vertices.T           # x,y coordinates
         new_cents = centroids2(new_cells)
         f = self.cells.properties['source']*prod_rate #source
@@ -80,26 +80,11 @@ class FE_vtx(object):
         entries=np.array(entries).astype(float)
         A = coo_matrix((entries,(rows,cols)), shape=(m,m))
 
-        # print( np.allclose(B, B.T, rtol=1e-05, atol=1e-08) )  # doesn't seem symmetrix
-        
-        # plt.imshow(B - B.T)
-        # print( np.max(B - B.T) )
-        # plt.colorbar()
-        # plt.show()
-
-        # plt.imshow(A.toarray())
-        # plt.show()
-        # plt.imshow(B)
-        # plt.show()
-        # plt.imshow(A.toarray() - B)
-        # plt.show()
-        # sys.exit()
-
         self.concentration = scipy.sparse.linalg.spsolve(A,bv)
         self.cells = new_cells
         self.centroids = new_cents
 
-    def evolve_cy(self,v,prod_rate,dt):
+    def evolve_cy(self,v,prod_rate,dt,expansion=None):
         """
         Performs one step of the FE method. Computes the new cells object itself.
         Uses np.linalg.solve
@@ -114,7 +99,7 @@ class FE_vtx(object):
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
-        new_cells = cells_evolve(self.cells,dt)[0]
+        new_cells = cells_evolve(self.cells,dt,expansion=expansion)[0]
         new_verts = new_cells.mesh.vertices.T
         new_cents = cen2(new_cells)#centroids2(new_cells)
         f = self.cells.properties['source']*prod_rate #source
