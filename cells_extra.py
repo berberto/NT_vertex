@@ -12,13 +12,15 @@ from Global_Constant import *
 from cells import Cells
 from forces import *
 import copy
-from initialisationEd import  *
+from initialisationEd import *
 from initialisationEd import _modified_toroidal_hex_mesh, _modified_toroidal_random_mesh#, _modified_toroidal_voronoi_mesh
 from Finite_Element import *
 from Finite_Element import _add_edges
 from run_select import division_axis, mod_division_axis
 from scipy.integrate import odeint
 from plotting import _modified_animate_video_mpg
+import sys
+
 #rand=np.random
 default_vm_parameters = [1.0,1.0,0.04,0.075,0.5,0.0,0.0]
 
@@ -442,9 +444,9 @@ def setup_source4(cells, width=None): #used in NT_full_sim_seq
         width=2
     for k in range(n_face):
         if (cents[k][0] < 0.5*width*approx_cell_width):
-                cells.properties['left'][k]=1.0
-                if (cents[k][0] > -0.5*width*approx_cell_width):
-                    cells.properties['source'][k]=1.0
+            cells.properties['left'][k]=1.0
+            if (cents[k][0] > -0.5*width*approx_cell_width):
+                cells.properties['source'][k]=1.0
 
         
                 
@@ -1121,13 +1123,17 @@ def cells_evolve(cells,dt,expansion=None):
     dv = dt*sum_vertices(cells.mesh.edges,F)
     if expansion is None:
         expansion=np.array([0.0,0.0]) #initialise
+        # if hasattr(cells.mesh.geometry,'width'):
+        #     expansion[0] = 0.00015
+        # if hasattr(cells.mesh.geometry,'height'): #Cylinder mesh doesn't have 'height' argument
+        #     expansion[1] = 0.00015
+        # expansion[0] = np.abs(expansion[0])
+        # expansion[1] = np.abs(expansion[1])
         if hasattr(cells.mesh.geometry,'width'):
-            expansion[0] = 0.00015
+            expansion[0] = expansion_constant*np.average(F[0]*cells.mesh.vertices[0])*dt/(cells.mesh.geometry.width**2)
         if hasattr(cells.mesh.geometry,'height'): #Cylinder mesh doesn't have 'height' argument
-            expansion[1] = 0.00015
-        expansion[0] = np.abs(expansion[0])
-        expansion[1] = np.abs(expansion[1])
-        #print "Expansion turns out to be " , expansion
+            expansion[1] = np.average(F[1]*cells.mesh.vertices[1])*dt/(cells.mesh.geometry.height**2)
+
     cells.mesh = cells.mesh.moved(dv).scaled(1.0+expansion) #expansion a global constant
     if 'age' in cells.properties:
         update_age(cells,dt)

@@ -9,6 +9,9 @@
 
 ### Comments
 
+1. `NT_vtx`:
+	- `deg_rate`: shouldn't it be multiplied by `dt`?
+
 1. `FE_vtx.py`:
 	- FE matrix filled in coordinate sparse format (can it be that node_id_tri[i (and j)] are the same for a different edge? Tested and it seems correct. No gain in speed anyway.
 	- FE matrix is not symmetric (max difference ~ 1.e-2)
@@ -29,12 +32,12 @@
 
 3. Ran with 200'000, saving snapshot every 10, in about 3 hrs
 
-4. Corrected `expansion`: including anisotropy (or not)
+4. Corrected `expansion`: including anisotropy (or not) -> arbitrary growth factor
+
+5. 
+
 
 ### To do
-
-1. `NT_vtx.py`:
-	- use `dill` for dumping session to disc (restart file)
 
 1. `FE_vtx.py`:
 	- maybe make the `build_FE_vtx`/`build_FE_vtx_from_scratch` routines members of the `FE_vtx` class?
@@ -44,6 +47,7 @@
 		- save the triplets of `node_id_tri` before entering the loop (can be vectorized)
 		- iterates over nodes (can it be vectorized?)
 	- check that I'm using the right cython function
+	- maybe SIMD enable some of the functions? how does that work with the `gil` stuff?
 
 3. `plotting`:
 	- move functions to produce videos there?
@@ -54,6 +58,27 @@
 6. **Everywhere** (all the necessary classes):
 	- add routines to save in binary intermediate configs
 	- add constructors that take info from files
+
+### NEXT STUFF
+
+1. `forces.py`:
+	- check forces (comment for MAC?) `by_face`, check mesh objects? `cells_extra` update property methods
+
+2. setup `expansion`.. why does it become negative? (see `run_select`)
+
+3. check `add_IKNM_properties`, random age initialization
+
+4. run "thermalization" phase of vm before initializing FE object (`build_FE_vtx`)
+
+5. `source_data` in `cells_setup`, includes width of shh producing strip
+
+6. check how to delete property from cells (like 'age', so cells divide only based on area and not on time)
+
+7. check new concentration at centroids on division (should not lose/add material)
+
+8. FE for cylinder
+
+9. Full evolution but without expansion
 
 
 ### Issues

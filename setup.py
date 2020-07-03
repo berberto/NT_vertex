@@ -10,17 +10,17 @@ import numpy
 ext_modules=[
 	Extension('_centroids_cy',
 			  ['centroids_cy.pyx'],
-			  extra_compile_args = ["-O3", "-ffast-math", "-march=native"],
+			  extra_compile_args = ["-O3", "-ffast-math", "-mavx"],
 			  include_dirs = [numpy.get_include()],
 	),
 	Extension('_fe_cy',
 			  ['fe_cy.pyx'],
-			  extra_compile_args = ["-O3", "-ffast-math", "-march=native"],
+			  extra_compile_args = ["-O3", "-ffast-math", "-mavx"],	# "-march=native"
 			  include_dirs = [numpy.get_include()],
 	),
 	Extension('_fe_cy_omp',
 			  ['fe_cy_omp.pyx'],
-			  extra_compile_args = ["-fopenmp", "-O3", "-ffast-math", "-march=native"],
+			  extra_compile_args = ["-fopenmp", "-O3", "-ffast-math", "-mavx"],
 			  extra_link_args = ["-fopenmp"],
 			  include_dirs = [numpy.get_include()],
 	)

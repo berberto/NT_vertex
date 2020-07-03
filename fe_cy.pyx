@@ -16,6 +16,8 @@ from libc.math cimport fabs
 from scipy.linalg.cython_lapack cimport dgesv, dgelsd
 from scipy.linalg import cho_factor, cho_solve
 
+def ev_cy_trivial(np.ndarray new_verts):
+    return np.zeros(len(new_verts))
 
 def ev_cy_sparse(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.ndarray new_cents, np.ndarray old_con, np.ndarray nx,np.ndarray f_by_e, np.ndarray  e_t_n, np.ndarray f_t_n, np.ndarray f , int n_edge , double v, double dt ):
     cdef int m = len(old_con)
@@ -61,7 +63,6 @@ def ev_cy_sparse(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cent
             for j in range(3):
                 A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
     
-
     return scipy.sparse.linalg.spsolve(scipy.sparse.coo_matrix(a),b_vect)
 
 

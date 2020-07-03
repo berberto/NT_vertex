@@ -460,10 +460,10 @@ def _modified_animate_video_mpg2(cells_array,name_file,facecolours='Default'):
     os.system("cd /usr/local/bin")
     os.system("ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
     os.system("cd images")
-    for frame in frames: os.remove(frame)     
+    for frame in frames: os.remove(frame) 
     
     
-def animate_surf_video_mpg(nodes_array,alpha_array, name_file):    
+def animate_surf_video_mpg(nodes_array,alpha_array, outputdir, name_file):    
     #v_max = np.max((np.max(cells_array[0].mesh.vertices), np.max(cells_array[-1].mesh.vertices)))
     v_max = np.max((np.max(nodes_array[0]) , np.max(nodes_array[-1])))
     size = 2*v_max
@@ -475,9 +475,9 @@ def animate_surf_video_mpg(nodes_array,alpha_array, name_file):
     z_high = max(dummy_max)
     z_low = min(dummy_min)
     #size = 10.0
-    outputdir="images"
-    if not os.path.exists(outputdir): # if the folder doesn't exist create it
-        os.makedirs(outputdir)
+    # outputdir="images"
+    # if not os.path.exists(outputdir): # if the folder doesn't exist create it
+    #     os.makedirs(outputdir)
     fig = plt.figure(); 
     ax = fig.add_subplot(111, projection='3d'); 
     fig.set_size_inches(6,6); 
@@ -487,15 +487,11 @@ def animate_surf_video_mpg(nodes_array,alpha_array, name_file):
         #drawShh(nodes_array[i],alpha_array[i],27.0, ax , size)
         drawShh2(nodes_array[i],alpha_array[i],z_high, z_low,ax,size)
         i=i+1
-        frame="images/image%03i.png" % i
+        frame=outputdir+"/image%03i.png" % i
         fig.savefig(frame,dpi=500)
         frames.append(frame)  
-    #os.system("mencoder 'mf://images/image*.png' -mf type=png:fps=20 -ovc lavc -lavcopts vcodec=wmv2 -oac copy  -o " + name_file)  
-    #os.system("cd /usr/local/bin")
-    os.system("cd ")
-    #os.system("cd /opt")
-    os.system("ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
-    print(os.system("pwd"))
+    os.system("ffmpeg -framerate 5/1 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
+    # print(os.system("pwd"))
     #os.system("cd ")
     #os.system("cd Desktop/vertex_model/images")
     #os.system("cd images")
@@ -558,7 +554,56 @@ def animate_video_mpg_zoom(cells_array,name_file,facecolours='Default'):
     # os.system("ffmpeg -framerate 5/1 -i images/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p test.mp4") #for Mac computer
     for frame in frames: os.remove(frame)
 
-# In[2]:
+def set_colour_poni_state(cells,poni_state):
+    n_face = cells.mesh.n_face
+    source =cells.properties['source']
+    cells.properties['color']=np.ones((n_face, 3)) #to store RGB number for each face
+    for k in range(n_face):
+        m = np.argmax(poni_state[k])
+        if source[k]==1:
+            cells.properties['color'][k] = np.array([1,1,1]) #source
+        elif m==0:
+            cells.properties['color'][k] = np.array([0,0,1]) #Blue, pax high
+        elif m==1:
+            cells.properties['color'][k] = np.array([1,0,0]) #Red, Olig2 high
+        elif m==2:
+            cells.properties['color'][k] = np.array([0,0,1]) #Green, NKx22 high
+        elif m==3:
+            cells.properties['color'][k] = np.array([0,1,1]) # ?, Irx high 
 
-#os.system("mencoder images/image*.png -mf type=png:fps=20 -ovc lavc -lavcopts vcodec=wmv2 -oac copy  -o  clones.mpg")
-
+def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
+    #time = 0
+    #history=[tissue.cells]
+    # outputdir="images"
+    # if not os.path.exists(outputdir): # if the folder doesn't exist create it
+    #     os.makedirs(outputdir)
+    fig = plt.figure(); 
+    ax = fig.add_subplot(111); 
+    fig.set_size_inches(6,6); 
+    i=0
+    frames=[]
+    final_width = cells_history[-1].mesh.geometry.width
+    if hasattr(cells_history[-1].mesh.geometry,'height'):
+        final_height = cells_history[-1].mesh.geometry.height
+    else:
+        final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
+    for k in range(len(cells_history)):
+        #tissue = normalised_simulate_tissue_step(surface_function,tissue,bind_rate,time,dt,expansion)
+        set_colour_poni_state(cells_history[k],poni_state_history[k])
+        draw_cells(cells_history[k],final_width,final_height, ax) #draw_cells(cells,final_width=None,final_height=None, ax=None)
+        #drawShh4(nodes_array[i],alpha_array[i], z_low,z_high,final_length, height,ax) #drawShh4(nodes,alpha,z_low,z_high,final_length,width, ax=None):
+        i=i+1
+        frame=outputdir+"/image%03i.png" % i
+        fig.savefig(frame,dpi=500)
+        frames.append(frame)  
+        #print tissue.cells.properties['color']
+        #history.append(copy.deepcopy(tissue))
+        #print tissue.cells.mesh.geometry.width
+    os.system("cd ")
+    #os.system("cd /opt")
+    os.system("ffmpeg -framerate 5/1 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
+    print((os.system("pwd")))
+    #os.system("cd ")
+    #os.system("cd Desktop/vertex_model/images")
+    #os.system("cd images")
+    #for frame in frames: os.remove(frame)  
