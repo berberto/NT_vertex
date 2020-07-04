@@ -48,7 +48,7 @@ class FE_vtx(object):
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
-        new_cells = cells_evolve(self.cells,dt,[0.,0.])[0]      # cell objects
+        new_cells = cells_evolve(self.cells,dt,expansion)[0]      # cell objects
         new_verts = new_cells.mesh.vertices.T           # x,y coordinates
         new_cents = centroids2(new_cells)
         f = self.cells.properties['source']*prod_rate #source

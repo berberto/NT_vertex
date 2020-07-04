@@ -28,8 +28,8 @@ class NT_vtx(object):
         
     def evolve(self,v, prod_rate,bind_rate,deg_rate,time,dt,expansion=None):
         sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.evolve(v,prod_rate,dt)
-        self.GRN.evolve(time , dt , sig_input , bind_rate, expansion=expansion)
+        self.FE_vtx.evolve(v,prod_rate,dt, expansion=expansion)
+        self.GRN.evolve(time , dt , sig_input , bind_rate)
         self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source
         self.FE_vtx.concentration=self.FE_vtx.concentration - deg_rate*self.FE_vtx.concentration
         self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         N_step=int(sys.argv[1])
         if len(sys.argv) > 2:
             N_frames = int(sys.argv[2])
-    filename="outputs/nogrowth_%dx%d_%.0e"%(xsize, ysize, N_step)
+    filename="outputs/nogrowth_py_%dx%d_%.0e"%(xsize, ysize, N_step)
     expansion*=0.
     N_skip = max(N_step//N_frames, 1)
 
@@ -160,8 +160,8 @@ if __name__ == "__main__":
             # tdump = time.time() - tdump
             # ttot = time.time() - ttot
             # print(k, ttot, tdump)
-        neural_tube.evolve_fast(.2,.05,0.,0.,.0,dt,expansion=expansion) #(v, prod_rate,bind_rate,deg_rate,time,dt):
-        neural_tube.transitions_faster()
+        neural_tube.evolve(.2,.05,0.,0.,.0,dt,expansion=expansion) #(v, prod_rate,bind_rate,deg_rate,time,dt):
+        neural_tube.transitions()
     t2 = time.time()
     print("took:", t2 - t1)
 
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     concentration_list = []
     cells_list=[]
     poni_state_list=[]
-    N_step = 22800
+    # N_step = 88600
     N_skip = 1000
     for k in range(0,N_step+1,N_skip):
         with open(filename+"/%06d_nodes.pkl"%(k), "rb") as f:
