@@ -30,7 +30,7 @@ class FE_vtx(object):
         self.edges_to_nodes = edges_to_nodes
         self.faces_to_nodes = faces_to_nodes
         
-    def evolve(self,v,prod_rate,dt,expansion=None):
+    def evolve(self,v,prod_rate,dt,expansion=None,evolve_vertex=True):
         """
         Performs one step of the FE method. Computes the new cells object itself.
         Uses np.linalg.solve
@@ -48,9 +48,15 @@ class FE_vtx(object):
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
-        new_cells = cells_evolve(self.cells,dt,expansion)[0]      # cell objects
-        new_verts = new_cells.mesh.vertices.T           # x,y coordinates
-        new_cents = centroids2(new_cells)
+
+        if evolve_vertex:
+            new_cells = cells_evolve(self.cells,dt,expansion=expansion)[0]
+            new_verts = new_cells.mesh.vertices.T
+            new_cents = centroids2(new_cells)
+        else:
+            new_verts = old_verts
+            new_cents = old_cents
+
         f = self.cells.properties['source']*prod_rate #source
         count=0
         rows=[]
@@ -84,7 +90,7 @@ class FE_vtx(object):
         self.cells = new_cells
         self.centroids = new_cents
 
-    def evolve_cy(self,v,prod_rate,dt,expansion=None):
+    def evolve_cy(self,v,prod_rate,dt,expansion=None,evolve_vertex=True):
         """
         Performs one step of the FE method. Computes the new cells object itself.
         Uses np.linalg.solve
@@ -99,9 +105,16 @@ class FE_vtx(object):
         f_by_e = self.cells.mesh.face_id_by_edge
         old_verts = self.cells.mesh.vertices.T
         old_cents = self.centroids
-        new_cells = cells_evolve(self.cells,dt,expansion=expansion)[0]
-        new_verts = new_cells.mesh.vertices.T
-        new_cents = cen2(new_cells)#centroids2(new_cells)
+        new_cells = self.cells
+        
+        if evolve_vertex:
+            new_cells = cells_evolve(self.cells,dt,expansion=expansion)[0]
+            new_verts = new_cells.mesh.vertices.T
+            new_cents = cen2(new_cells)#centroids2(new_cells)
+        else:
+            new_verts = old_cents
+            new_cents = new_cells
+
         f = self.cells.properties['source']*prod_rate #source
         n_edge = self.cells.mesh.edges.ids[-1]+1
         # self.concentration = ev_cy_trivial(new_verts.astype(np.float64))
