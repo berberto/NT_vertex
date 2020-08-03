@@ -108,7 +108,7 @@ def ev_cy(np.ndarray old_verts, np.ndarray new_verts, np.ndarray old_cents,  np.
         for i in range(3):
             bv[node_ids[i]]+=b_c2(i, d, old_d, s_fn, old_con , fbe , e ,node_ids ,dt) 
             for j in range(3):
-                A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
+                A[node_ids[i]][node_ids[j]]+=I_c(i,j,d)+dt*K_c(i,j,d,nab_Phi,v)+W_c(i,j,d,nab_Phi,nodes, prev_nodes)
 
     return np.linalg.solve(a,b_vect)
 

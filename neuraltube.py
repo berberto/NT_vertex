@@ -31,6 +31,12 @@ if __name__ == "__main__":
     N_step = int(tSym/dt)
     N_frames = 1000
 
+    # parameters of the PDE
+    degr_rate = 0.1
+    prod_rate = 0.05
+    diff_coef = 0.2
+    bind_rate = 0.
+
     # fixed expansion parameters
     expansion = np.ones(2)
     expansion *= np.log(5.)/2./N_step # (1 + ex)**2e5 ~ sqrt(5) (area 5x biger after 2e5 steps)
@@ -56,9 +62,6 @@ if __name__ == "__main__":
     print("N_frames =", N_frames)
     print("N_skip   =", N_skip)
     print("saving in / retrieving from  \"%s\"\n"%(path))
-    # print("expansion = ", expansion)
-    # print(np.prod(1+expansion)**2e5)
-    # sys.exit()
 
     if simulate:
         os.system("mkdir -p "+path)
@@ -70,21 +73,17 @@ if __name__ == "__main__":
             if k%N_skip == 0:
                 # tdump = time.time()
                 print(k)
-                with open (path+"/%06d_nodes.pkl"%(k), "wb") as f:
-                    dill.dump(np.vstack([
-                        neural_tube.FE_vtx.cells.mesh.vertices.T[::3],
-                        neural_tube.FE_vtx.centroids[~neural_tube.FE_vtx.cells.empty()]
-                    ]), f)
-                with open (path+"/%06d_conc.pkl"%(k), "wb") as f:
-                    dill.dump(neural_tube.FE_vtx.concentration, f)
-                with open (path+"/%06d_poni.pkl"%(k), "wb") as f:
-                    dill.dump(neural_tube.GRN.poni_grn.state, f)
-                with open (path+"/%06d_cells.pkl"%(k), "wb") as f:
-                    dill.dump(neural_tube.FE_vtx.cells, f)
-                # tdump = time.time() - tdump
-                # ttot = time.time() - ttot
-                # print(k, ttot, tdump)
-            neural_tube.evolve(.2,.05,0.,0.,.0,dt,expansion=expansion) #(v, prod_rate,bind_rate,deg_rate,time,dt):
+                with open (path+"/%06d_NT.pkl"%(k), "wb") as f:
+                    dill.dump(neural_tube, f)
+            neural_tube.evolve(
+                diff_coef,
+                prod_rate,
+                bind_rate,
+                degr_rate,
+                .0,
+                dt,
+                expansion=expansion
+            )
             neural_tube.transitions()
         t2 = time.time()
         print("took:", t2 - t1)
@@ -98,15 +97,17 @@ if __name__ == "__main__":
         except FileNotFoundError:
             print("path not found: ", path)
 
-        allnodes = sorted([x for x in allfiles if "_nodes.pkl" in x])
-        allconcs = sorted([x for x in allfiles if "_conc.pkl" in x])
-        allponis = sorted([x for x in allfiles if "_poni.pkl" in x])
-        allcells = sorted([x for x in allfiles if "_cells.pkl" in x])
-        
-        nodes_list = [load(path+"/"+file) for file in allnodes]
-        concs_list = [load(path+"/"+file) for file in allconcs]
-        ponis_list = [load(path+"/"+file) for file in allponis]
-        cells_list = [load(path+"/"+file) for file in allcells]
+        allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
+        NT_list = [load(path+"/"+file) for file in allNT]
+        nodes_list = [
+                    np.vstack([
+                        nt.FE_vtx.cells.mesh.vertices.T[::3],
+                        nt.FE_vtx.centroids[~nt.FE_vtx.cells.empty()]
+                    ])   for nt in NT_list]
+        concs_list = [nt.FE_vtx.concentration   for nt in NT_list]
+        ponis_list = [nt.GRN.poni_grn.state   for nt in NT_list]
+        cells_list = [nt.FE_vtx.cells   for nt in NT_list]
+        verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
 
         print(nodes_list[-1][0], concs_list[-1][0], ponis_list[-1][0],  N_step)
         cells_state_video(cells_list, ponis_list, path, path+"/state-vid")

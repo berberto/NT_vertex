@@ -22,13 +22,57 @@ import matplotlib.pyplot as plt
 import time
 import ctypes
 
+
+class Meshing(object):
+    def __init__(self,                  # members:
+                    N,                  # int              number of nodes
+                    nodes=None,         # float (N, 2)     components of the N nodes
+                    values=None,        # float (N, )      values of FE sol at nodes
+                    neighbours=None,    # int   (N, 3)     indices of neighbouring triangles
+                    adjacency=None,     # int   (N, N)     adjacency of vertices (zeros and ones -- sparse format?)
+                    jacobian=None       # float (N, 2, 2)  matrix containing the sides vectors, x1-x0 and x2-x0
+                ):
+        self.nodes = nodes
+        self.values = values
+        self.neighbours = neighbours
+        self.adjacency = adjacency
+        self.jacobian = jacobian
+
+
 class FE_vtx(object):
-    def __init__(self,cells,centroids,concentration,edges_to_nodes,faces_to_nodes):
+    def __init__(self,cells,centroids,concentration,edges_to_nodes,faces_to_nodes,
+                    adjacency=None, # adjacency matrix of nodes (sparse format?)
+                    matrix=None,    # matrix of the linear FE problem (sparse format?)
+                    vector=None     # vector of the linear FE problem
+                ):
         self.cells=cells
         self.centroids=centroids
         self.concentration = concentration
         self.edges_to_nodes = edges_to_nodes
         self.faces_to_nodes = faces_to_nodes
+        self.adjacency = adjacency
+        self.matrix = matrix
+        self.vector = vector
+
+
+    def triangles(self,dx_max):
+        
+        new_nodes = [
+            new_verts[e],
+            new_verts[nxt[e]],
+            new_cents[f_by_e[e]]
+        ]
+        prev_nodes = [
+            old_verts[e],
+            old_verts[nxt[e]],
+            old_cents[f_by_e[e]]
+        ]
+        node_id_tri = np.array([
+            self.edges_to_nodes[e],
+            self.edges_to_nodes[nxt[e]],
+            self.faces_to_nodes[f_by_e[e]]
+        ],dtype=int)
+
         
     def evolve(self,v,prod_rate,dt,expansion=None,evolve_vertex=True):
         """
@@ -69,7 +113,7 @@ class FE_vtx(object):
             reduced_f = [0,0,f[f_by_e[e]]]
             old_alpha = self.concentration[node_id_tri]
             new_M = M(new_nodes)
-            old_M=M(prev_nodes)
+            old_M = M(prev_nodes)
             d = np.abs(np.linalg.det(new_M))
             d_old = np.abs(np.linalg.det(old_M))           
             nabla_Phi = nabPhi(new_M)
@@ -78,7 +122,7 @@ class FE_vtx(object):
                 for j in range(3):
                     rows+=[node_id_tri[i]]  # can it be that node_id_tr
                     cols+=[node_id_tri[j]]
-                    entries+=[I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)]
+                    entries+=[I(i,j,d)+dt*K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)]
                     # B[node_id_tri[i],node_id_tri[j]]+=I(i,j,d)+K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
 
         rows=np.array(rows).astype(int)
@@ -236,12 +280,12 @@ def b(i,d,d_old,f,old_alpha,dt):
             old_alpha is the vector of coefficients alphas from the previous time step.
             dt is the time step
     """
-    dummy = I(i,0,d)*f[0]
-    dummy +=I(i,1,d)*f[1]
-    dummy +=I(i,2,d)*f[2]
-    dummy +=I(i,0,d_old)*old_alpha[0]
-    dummy +=I(i,1,d_old)*old_alpha[1]
-    dummy +=I(i,2,d_old)*old_alpha[2]
+    dummy =  I(i,0,d) * f[0] * dt
+    dummy += I(i,1,d) * f[1] * dt
+    dummy += I(i,2,d) * f[2] * dt
+    dummy += I(i,0,d_old) * old_alpha[0]
+    dummy += I(i,1,d_old) * old_alpha[1]
+    dummy += I(i,2,d_old) * old_alpha[2]
     return dummy
 
         

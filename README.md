@@ -13,6 +13,7 @@
 	- FE matrix filled in coordinate sparse format (can it be that node_id_tri[i (and j)] are the same for a different edge? Tested and it seems correct. No gain in speed anyway.
 	- FE matrix is not symmetric (max difference ~ 1.e-2)
 	- cython code with the sparse solver doesn't seem to work (tested by Graeme)
+	- `dt` was nowhere in the functions to build the finite element matrix and vector.
 
 2. `fe_cy_omp.pyx`:
 	- got it running, by adding `with gil` for inner loops over triangle vertices, but it's slower
@@ -22,6 +23,8 @@
 4. `NT_vtx`:
 	- added check on whether to simulate/plot results.
 	- all intermediate files are first checked, and then used for plotting (all of those present in the directory are used)
+
+5. What is the **ALE** method?
 
 
 ### To do
@@ -60,8 +63,24 @@
 
 7. check new concentration at centroids on division (should not lose/add material)
 
-8. FE for cylinder 
+8. FE for cylinder
 
+#### Finite element edits (to do)
+
+*Mesh refinement.*
+
+If area of the triangle is too big,
+- divide it into 4 triangles, by splitting each side into 2: this, however, requires splitting also the neighbouring triangles.
+- divide it into 3 triangles by inserting at its centroid (baricentre).
+
+Alternatively, if the length of an edge is too long, split it into 2: the triangle, and the adjacent one along that edge, will be divided into two triangles each
+(SEE NOTES)
+
+ 
+
+Finite element matrix-vector assembly. Instead of looping over edges, first construct an array of triangles and loop over triangles.
+1. Define set of triangles for the mesh as the triplet of edges (vectors -- alternatively, with the coordinates of the 3 vertices, being careful to identify equivalent vertices for periodic b.c.)
+2. 
 
 ### Issues
 
