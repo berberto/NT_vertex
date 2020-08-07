@@ -463,17 +463,24 @@ def _modified_animate_video_mpg2(cells_array,name_file,facecolours='Default'):
     for frame in frames: os.remove(frame) 
     
     
-def animate_surf_video_mpg(nodes_array,alpha_array, outputdir, name_file):    
+def animate_surf_video_mpg(nodes_array,alpha_array, outputdir, name_file, zmin=None, zmax=None):    
     #v_max = np.max((np.max(cells_array[0].mesh.vertices), np.max(cells_array[-1].mesh.vertices)))
     v_max = np.max((np.max(nodes_array[0]) , np.max(nodes_array[-1])))
     size = 2*v_max
-    dummy_max=[]
-    dummy_min=[]
-    for i in range(len(alpha_array)):
-        dummy_max.append(np.max(alpha_array[i]))
-        dummy_min.append(np.min(alpha_array[i]))
-    z_high = max(dummy_max)
-    z_low = min(dummy_min)
+    if zmax is None:
+        dummy_max=[]
+        for i in range(len(alpha_array)):
+            dummy_max.append(np.max(alpha_array[i]))
+        z_high = max(dummy_max)
+    else:
+        z_high = zmax
+    if zmin is None:
+        dummy_min=[]
+        for i in range(len(alpha_array)):
+            dummy_min.append(np.min(alpha_array[i]))
+        z_low = min(dummy_min)
+    else:
+        z_low = zmin
     #size = 10.0
     # outputdir="images"
     # if not os.path.exists(outputdir): # if the folder doesn't exist create it

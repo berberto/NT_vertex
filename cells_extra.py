@@ -1134,12 +1134,16 @@ def cells_evolve(cells,dt,expansion=None):
         if hasattr(cells.mesh.geometry,'height'): #Cylinder mesh doesn't have 'height' argument
             expansion[1] = np.average(F[1]*cells.mesh.vertices[1])*dt/(cells.mesh.geometry.height**2)
 
+    old_verts = cells.mesh.vertices
     cells.mesh = cells.mesh.moved(dv).scaled(1.0+expansion) #expansion a global constant
+    new_verts = cells.mesh.vertices
+    cells.mesh.velocities = (new_verts - old_verts)/dt
+
     if 'age' in cells.properties:
         update_age(cells,dt)
     if 'zposn' in cells.properties:
         update_zposn_and_A0(cells)
-    return cells, expansion
+    return cells #, expansion
 
 def cell_dynamics(cells, N_step, dt, expansion=None):
     history=[]

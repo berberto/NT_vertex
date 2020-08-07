@@ -128,9 +128,10 @@ class Mesh(object):
         n_face: total number of cells including 'dead' cells which are no longer in edges network.
     """
 
-    def __init__(self, edges, vertices, face_id_by_edge, geometry, n_face=None, boundary_faces=None):
+    def __init__(self, edges, vertices, face_id_by_edge, geometry, n_face=None, boundary_faces=None, velocities=None):
         self.edges = edges
         self.vertices = vertices
+        self.velocities = velocities
         self.face_id_by_edge = face_id_by_edge
         face_id_by_edge.setflags(write=False)
         self.n_face = n_face or np.max(face_id_by_edge) + 1

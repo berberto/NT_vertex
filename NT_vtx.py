@@ -25,28 +25,28 @@ class NT_vtx(object):
         self.FE_vtx = FE_vtx
         self.GRN = GRN
         
-    def evolve(self,v, prod_rate,bind_rate,deg_rate,time,dt, expansion=None, evolve_vertex=True):
+    def evolve(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt, expansion=None, evolve_vertex=True):
         sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.evolve(v,prod_rate,dt, expansion=expansion, evolve_vertex=evolve_vertex)
+        self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, expansion=expansion, evolve_vertex=evolve_vertex)
         self.GRN.evolve(time , dt , sig_input , bind_rate)
         self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source
-        self.FE_vtx.concentration=self.FE_vtx.concentration - dt*deg_rate*self.FE_vtx.concentration
+        # self.FE_vtx.concentration=(1. - dt*deg_rate)*self.FE_vtx.concentration
         self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
         neg = np.where(self.FE_vtx.concentration < 0)[0]
         self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
         
-    def evolve_fast(self,v, prod_rate,bind_rate,deg_rate,time,dt, expansion=None, evolve_vertex=True):
+    def evolve_fast(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt, expansion=None, evolve_vertex=True):
         sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.evolve_cy(v,prod_rate,dt, expansion=expansion, evolve_vertex=evolve_vertex)
+        self.FE_vtx.evolve_cy(diff_coeff,prod_rate,dt, expansion=expansion, evolve_vertex=evolve_vertex)
         self.GRN.evolve_ugly(time , dt , sig_input , bind_rate)
-        self.FE_vtx.concentration=self.FE_vtx.concentration - dt*deg_rate*self.FE_vtx.concentration
+        # self.FE_vtx.concentration=self.FE_vtx.concentration - dt*deg_rate*self.FE_vtx.concentration
         self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
         neg = np.where(self.FE_vtx.concentration < 0)[0]
         self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
     
-    def evolve_original(self,v, prod_rate,bind_rate,deg_rate,time,dt):
+    def evolve_original(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt):
         sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.evolve_original(v,prod_rate,dt)
+        self.FE_vtx.evolve_original(diff_coeff,prod_rate,dt)
         self.GRN.evolve(time , dt , sig_input , bind_rate)
         self.FE_vtx.concentration=self.FE_vtx.concentration - dt*deg_rate*self.FE_vtx.concentration
         self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
