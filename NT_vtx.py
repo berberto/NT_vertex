@@ -59,13 +59,36 @@ class NT_vtx(object):
                 ready = ready_to_divide(self.FE_vtx.cells)
             self.FE_vtx.cells,c_by_e, c_by_c = divide(self.FE_vtx.cells,c_by_e,c_by_c,ready)
             self.GRN.division(ready)
-        self.FE_vtx.cells = T1(self.FE_vtx.cells) #perform T1 transitions - "neighbour exchange"
-        self.FE_vtx.cells,c_by_e = rem_collapsed(self.FE_vtx.cells,c_by_e) #T2 transitions-"leaving the tissue"
+
+        #
+        # modify the geometry of the cells
+        #
+
+        # perform T1 transitions - "neighbour exchange"
+        self.FE_vtx.cells = T1(self.FE_vtx.cells)
+
+        # T2 transitions-"leaving the tissue"
+        # by removing small edges from cells through T1 transitions,
+        # some cells will become triangular and collapse,
+        self.FE_vtx.cells,c_by_e = rem_collapsed(self.FE_vtx.cells,c_by_e)
+
+        # compute the new centroids
         self.FE_vtx.centroids = centroids2(self.FE_vtx.cells)
+
+        # calculate the number of nodes associated to edges
         eTn = self.FE_vtx.cells.mesh.edges.ids//3
+
+        # number of nodes associated to vertices (?)
         n = max(eTn)
+
+        # what the hell is this?
         cTn=np.cumsum(~self.FE_vtx.cells.empty())+n
+
+        # take che concentration at nodes which are roots of edges
+        # take every 3, because each node has 3 edges coming out
         con_part=c_by_e[::3]
+
+        # 
         cent_part = c_by_c[~self.FE_vtx.cells.empty()]
         self.FE_vtx.concentration = np.hstack([con_part,cent_part])
         self.FE_vtx.edges_to_nodes = self.FE_vtx.cells.mesh.edges.ids//3

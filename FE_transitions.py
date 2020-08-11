@@ -134,14 +134,14 @@ def T1(cells,eps=None):
         short_edges = set(half_edges[np.sum(dv*dv, 0) < eps*eps]) #why did they make this a set?
         ids_t1=half_edges[np.sum(dv*dv, 0) < eps*eps] #edges which are shorter than the tolerance eps>0
             
-        if not short_edges: # if we have 
+        if not short_edges: # if the set is empty (no T1 transition occurring), then return the cells as they are
             return cells
         reverse, vertices, face_id_by_edge = edges.reverse.copy(), mesh.vertices.copy(), mesh.face_id_by_edge.copy()
         rotate = edges.rotate
-    # Do T1 transitions
-    # to avoid nasty edge cases, we don't allow T1's to happen on adjacent edges
-    # and delay to the next timestep if necessary.
-    # A better approach would be to take multiple partial timesteps.
+        # Do T1 transitions
+        # to avoid nasty edge cases, we don't allow T1's to happen on adjacent edges
+        # and delay to the next timestep if necessary.
+        # A better approach would be to take multiple partial timesteps.
         boundary_edges = mesh.boundary_edges if mesh.has_boundary() else []
         while short_edges:
             edge = short_edges.pop()
@@ -150,8 +150,8 @@ def T1(cells,eps=None):
             neighbours = _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge)
             for x in neighbours:
                 short_edges.discard(x)
-        mesh = mesh.copy() #copy mesh 
-        mesh.edges = Edges(reverse) #set attributes
+        mesh = mesh.copy() # copy mesh 
+        mesh.edges = Edges(reverse) # set attributes
         mesh.vertices = vertices    
         mesh.face_id_by_edge = face_id_by_edge        
         cells = Cells(mesh, props) #make a cells object
