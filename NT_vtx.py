@@ -25,21 +25,19 @@ class NT_vtx(object):
         self.FE_vtx = FE_vtx
         self.GRN = GRN
         
-    def evolve(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt, expansion=None, evolve_vertex=True):
+    def evolve(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt, expansion=None, vertex=True, move=True):
         sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, expansion=expansion, evolve_vertex=evolve_vertex)
+        self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, expansion=expansion, vertex=vertex, move=move)
         self.GRN.evolve(time , dt , sig_input , bind_rate)
         self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source
-        # self.FE_vtx.concentration=(1. - dt*deg_rate)*self.FE_vtx.concentration
         self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
         neg = np.where(self.FE_vtx.concentration < 0)[0]
         self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
         
-    def evolve_fast(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt, expansion=None, evolve_vertex=True):
+    def evolve_fast(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt, expansion=None, vertex=True, move=True):
         sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.evolve_cy(diff_coeff,prod_rate,dt, expansion=expansion, evolve_vertex=evolve_vertex)
+        self.FE_vtx.evolve_cy(diff_coeff,prod_rate,dt, expansion=expansion, vertex=vertex, move=move)
         self.GRN.evolve_ugly(time , dt , sig_input , bind_rate)
-        # self.FE_vtx.concentration=self.FE_vtx.concentration - dt*deg_rate*self.FE_vtx.concentration
         self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
         neg = np.where(self.FE_vtx.concentration < 0)[0]
         self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
@@ -53,13 +51,14 @@ class NT_vtx(object):
         neg = np.where(self.FE_vtx.concentration < 0)[0]
         self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
         
-    def transitions(self,ready=None):
-        if ready is None:
-            ready = ready_to_divide(self.FE_vtx.cells)
+    def transitions(self,ready=None,division=True):
         c_by_e = self.FE_vtx.concentration[self.FE_vtx.edges_to_nodes]
         c_by_c = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-        self.FE_vtx.cells,c_by_e, c_by_c = divide(self.FE_vtx.cells,c_by_e,c_by_c,ready)
-        self.GRN.division(ready)
+        if division:
+            if ready is None:
+                ready = ready_to_divide(self.FE_vtx.cells)
+            self.FE_vtx.cells,c_by_e, c_by_c = divide(self.FE_vtx.cells,c_by_e,c_by_c,ready)
+            self.GRN.division(ready)
         self.FE_vtx.cells = T1(self.FE_vtx.cells) #perform T1 transitions - "neighbour exchange"
         self.FE_vtx.cells,c_by_e = rem_collapsed(self.FE_vtx.cells,c_by_e) #T2 transitions-"leaving the tissue"
         self.FE_vtx.centroids = centroids2(self.FE_vtx.cells)

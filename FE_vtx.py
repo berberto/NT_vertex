@@ -194,9 +194,28 @@ class FE_Triangle(object):
 #   END EDIT
 #
 
+# lambda objects defining auxiliary functions for triangle operations
+# and their vectorized forms
+# jac = lambda x: np.array([x[1]-x[0], x[2]-x[0]])                  # x is the nodes array
+# jacs = np.vectorize(jac)
+
+# det = lambda x: np.linalg.det(x)                                  # x is the Jacobian
+# dets = np.vectorize(det)
+
+# grad = lambda x: np.matmul(np.linalg.inv(x),canonicalBasisGrads)  # x is the Jacobian
+# grads = np.vectorize(grad)
+
+# mulIP = lambda x: x * canonicalBasisInnerProd                     # x is a scalar or (3,3) matrix
+# mulIPs = np.vectorize(mulIP)
+
+# gradgrad = lambda x,y: x * np.matmul(y,y.T)                       # x is a scalar, y is a matrix
+# gradgrads = np.vectorize(gradgrad)
+
+# adv = lambda x,y,z: x*np.matmul(np.matmul(y,z.T),canonicalBasisInnerProd) # x determinant, y gradients, z velocities
+# advs = np.vectorize(adv)
 
 class FE_vtx(object):
-  def __init__(self,cells,centroids,concentration,edges_to_nodes,faces_to_nodes,triangles=None):
+  def __init__(self,cells,centroids,concentration,edges_to_nodes,faces_to_nodes):
     # default parameters: will be set in the "evolve" method,
     # and specified triangle by triangle (when they are locally defined)
     self.parameters = {
@@ -210,78 +229,119 @@ class FE_vtx(object):
     self.concentration = concentration
     self.edges_to_nodes = edges_to_nodes
     self.faces_to_nodes = faces_to_nodes
-    self.triangles = triangles
-    
-    nNodes = len(self.concentration)
-    self.mass_matrix = np.zeros((nNodes,nNodes),dtype=float)
-    self.matrix = np.zeros((nNodes,nNodes),dtype=float)
-    self.vector = np.zeros(nNodes,dtype=float)
 
+    self.nNodes = len(self.concentration)
+    print("nodes = ", self.nNodes)
+    print("cells = ", self.cells.__len__())
+    print("verts = ", len(self.cells.mesh.vertices.T)//3)
+    if self.nNodes != self.cells.__len__() + len(self.cells.mesh.vertices.T)//3:
+      raise Exception("Wrong number of nodes.")
+    self.nEdges = len(self.cells.mesh.edges.ids)
+    # nCells = self.cells.__len__()
+    self.mass_matrix = np.zeros((self.nNodes,self.nNodes),dtype=float)
+    self.matrix = np.zeros((self.nNodes,self.nNodes),dtype=float)
+    self.vector = np.zeros(self.nNodes,dtype=float)
 
+    # triangles information, initially undefined
+    self.tria_ids   = np.zeros((self.nEdges,3),dtype=int)      # element node ids
+    self.tria_nodes = np.zeros((self.nEdges,3,2),dtype=float)  #    ''   node coordinates
+    self.tria_vels  = np.zeros((self.nEdges,3,2),dtype=float)  #    ''   node velocities
+    self.tria_grds  = np.zeros((self.nEdges,3,2),dtype=float)  #    ''   gradients of basis functions
+    self.tria_jacs  = np.zeros((self.nEdges,2,2),dtype=float)  #    ''   Jacobian of map from canonical to physical triangle
+    self.tria_dets  = np.zeros(self.nEdges,dtype=float)        #    ''   determinants of Jacobian (2*area)
+    self.tria_vecs  = np.zeros((self.nEdges,3),dtype=float)    #    ''   FE vectors
+    self.tria_mats  = np.zeros((self.nEdges,3,3),dtype=float)  #    ''   FE matrices
+    self.tria_srcs  = np.zeros((self.nEdges,3),dtype=float)    #    ''   local production rate
 
   #
   #   EDIT: NEW METHODS
   #
-  # define FE_Triangle objects from vertices, centroids and edges
-  def _triangles(self, verP, cenP, verV, cenV, parameters):
+  def _updateTriangles(self, dt):
+    """
+    Updates the elements' geometry and integrals, at intermediate steps between
+    two consecutive updates of the underlying vertex model.
+
+    """
+    D  = self.parameters["diff_coeff"]
+    k  = self.parameters["degr_rate"]
+    f  = self.parameters["prod_rate"]
+    dt = self.parameters["delta_t"]
+    
+    self.tria_dets  = np.zeros(self.nEdges)
+    self.tria_vecs  = np.zeros((self.nEdges, 3))     
+    self.tria_mats  = np.zeros((self.nEdges, 3, 3))
+
+    # update the positions of the nodes
+    # velocities assumed constant in between two updates of the vertex model
+    self.tria_nodes += self.tria_vels * dt
+
+    # calculate the new Jacobians and determinants
+    # self.tria_jacs = jacs(self.tria_nodes)
+    # self.tria_dets = dets(self.tria_jacs)
+    self.tria_jacs = np.array([[x[1]-x[0], x[2]-x[0]] for x in self.tria_nodes])
+    self.tria_dets = np.array([np.linalg.det(x) for x in self.tria_jacs])
+
+    # gradients
+    # self.tria_grds = grads(self.tria_jacs)
+    self.tria_grds = np.array([np.matmul(canonicalBasisGrads, np.linalg.inv(x)) for x in self.tria_jacs])
+
+    # "mass" and degradation
+    # self.tria_mats += (1 + k*dt) * mulIPs(self.tria_dets)
+    self.tria_mats += (1 + k*dt) * np.array([canonicalBasisInnerProd for i in range(len(self.tria_mats))])
+    
+    # diffusion
+    # self.tria_mats += D * dt / 2. * gradgrads(self.tria_dets, self.tria_grds)
+    self.tria_mats += D * dt / 2. * np.array([np.matmul(x,x.T) for x in self.tria_grds])
+    
+    # fictitious advection
+    # self.tria_mats += dt * advs(self.tria_dets, self.tria_grds, self.tria_vel)
+    self.tria_mats += dt * np.array([np.matmul(np.matmul(x,y.T),canonicalBasisInnerProd) for (x,y) in zip(self.tria_grds, self.tria_vels)])
+    
+    # multiply all terms by determinants
+    self.tria_mats = np.array([x*y for (x,y) in zip(self.tria_dets, self.tria_mats)])
+
+    # source term
+    self.tria_vecs += dt / 6. * np.array([s*x*np.ones(3) for (s,x) in zip(self.tria_srcs, self.tria_dets)])  # if source constant over the element
+    # self.vector += dt * np.matmul(self.mass_matrix, f_vec) # if source has different values at nodes
+
+
+  def _defineTriangles(self, verP, cenP, verV, cenV, parameters):
+    """
+    Redefine the triangles' properties: needed whenever the topology of 
+    the underlying vertex model changes due to transitions
+
+    """
     verts = verP
-    vets_vel = verV
+    verts_vel = verV
     cents = cenP
     cents_vel = cenV
     edges = self.cells.mesh.edges
     nxt = self.cells.mesh.edges.next
     f_by_e = self.cells.mesh.face_id_by_edge
     f = self.cells.properties['source']
-    
-    #
-    # CREATING A NEW LIST OF TRIANGLES ALL THE TIMES,
-    # WE MAY JUST EDIT THE LIST OF THE TRIANGLES (PERHAPS FASTER -- NOT DONE).
-    # IF SO, WE NEED TO MAKE SURE THAT THE LIST OF TRIANGLES
-    # IS TAKEN CARE OF BY "TRANSITIONS" AS WELL.
-    # SO WE MAY JUST REDEFINE "TRIANGLES" ONLY WHEN
-    # A TRANSITION OCCURS (DIVISION, T1, T2)
-    #
 
-    # set constant production rate everywhere on the producing cells
-    # DIFFERENT FROM PREVIOUS SOLUTIONS WHERE PRODUCTION RATES WERE NON ZERO
-    # ONLY AT THE CENTROIDS: THIS SHOULD LEAVE EVERYTHING UNAFFECTED,
-    # WE MIGHT ONLY NEED TO DIVIDE THE PRODUCTION RATE BY 3 TO GET THE SAME
-    # TOTAL AMOUNT OF MORPHOGEN PRODUCED
+    self.nEdges = len(edges.ids)
+    self.nNodes = len(self.concentration)
 
-    # pass the arguments for constructing the triangle as dictionary
-    triangle_properties = [{
-            "nodes_ids": np.array([self.edges_to_nodes[e],self.edges_to_nodes[nxt[e]],self.faces_to_nodes[f_by_e[e]]],dtype=int),
-            "nodes": np.array([verts[e],verts[nxt[e]],cents[f_by_e[e]]],dtype=float),
-            "nodes_vel": np.array([verts[e],verts[nxt[e]],cents[f_by_e[e]]],dtype=float),
-            "parameters": parameters,
-            "source": f[f_by_e[e]]
-      } for e in edges.ids]
-
-    triangles = [FE_Triangle(**triangle_properties[e]) for e in edges.ids]
-
-    for tr in triangles:
-      tr._elementIntegrals()
-
-    return triangles
+    self.tria_ids   = np.array([np.array([self.edges_to_nodes[e],self.edges_to_nodes[nxt[e]],self.faces_to_nodes[f_by_e[e]]],dtype=int) for e in edges.ids]).astype(int)
+    self.tria_nodes = np.array([np.array([verts[e],verts[nxt[e]],cents[f_by_e[e]]],dtype=float) for e in edges.ids]).astype(float)
+    self.tria_vels  = np.array([np.array([verts_vel[e],verts_vel[nxt[e]],cents_vel[f_by_e[e]]],dtype=float) for e in edges.ids]).astype(float)
+    self.tria_srcs  = np.array([f[f_by_e[e]] for e in edges.ids])
 
 
   # assembly te FE matrix and vector
   def _assembly(self):
-    nNodes = len(self.concentration)
+    # nNodes = 
     self.matrix = np.zeros((nNodes,nNodes),dtype=float)
-    self.vector = np.zeros(nNodes,dtype=float)
-
-    # contribution to FE vector from concentration at previous step
-    self.vector = np.matmul(self.mass_matrix, self.concentration)
 
     # update the FE matrix and vector
-    for tr in self.triangles:
+    for tr in range(len(self.tria_ids)):
       # select tables of indices
-      ii,jj=np.meshgrid(tr.nodes_ids,tr.nodes_ids)
+      ii,jj=np.meshgrid(self.tria_ids[tr],self.tria_ids[tr])
       # add element matrix and vector to correct entries
-      self.mass_matrix[ii,jj] += tr.mass_matrix
-      self.matrix[ii,jj] += tr.matrix
-      self.vector[tr.nodes_ids] += tr.vector
+      self.mass_matrix[ii,jj] += self.tria_dets[tr] * canonicalBasisInnerProd
+      self.matrix[ii,jj] += self.tria_mats[tr]
+      self.vector[self.tria_ids[tr]] += self.tria_vecs[tr]
 
 
   # solve the FE step
@@ -289,7 +349,7 @@ class FE_vtx(object):
     return scipy.linalg.solve(self.matrix, self.vector)
 
 
-  def evolve_new(self, diff_coeff, prod_rate, degr_rate, dt, expansion=None, evolve_vertex=True):
+  def evolve_new(self, diff_coeff, prod_rate, degr_rate, dt, expansion=None, vertex=True, refinement=1):
     self.parameters["diff_coeff"] = diff_coeff
     self.parameters["prod_rate"] = prod_rate
     self.parameters["degr_rate"] = degr_rate
@@ -298,8 +358,8 @@ class FE_vtx(object):
     old_verts = self.cells.mesh.vertices.T
     old_cents = self.centroids
 
-    if evolve_vertex:
-      new_cells = cells_evolve(self.cells,dt,expansion=expansion)[0]
+    if vertex:
+      new_cells = cells_evolve(self.cells,dt,expansion=expansion)
       new_verts = new_cells.mesh.vertices.T
       new_cents = centroids2(new_cells)
       verts_vel = new_cells.mesh.velocities.T
@@ -311,15 +371,22 @@ class FE_vtx(object):
       verts_vel = np.zeros(np.shape(old_verts))
       cents_vel = np.zeros(np.shape(old_cents))
 
-    self.triangles = self._triangles(new_verts, new_cents, verts_vel, cents_vel, self.parameters)
+    self._defineTriangles(new_verts, new_cents, verts_vel, cents_vel, self.parameters)
 
-    self._assembly()
-    self.concentration = self._solve()
+    # 'refinement' is the number of FE evolution steps
+    # between two consecutive updates of the vertex model
+    # 
+    for steps in range(refinement):
+      self.vector = np.matmul(self.mass_matrix, self.concentration)
+      self._updateTriangles(dt/refinement)
+      self._assembly()
+      self.concentration = self._solve()
   #
   #   END EDIT
   #
 
-  def evolve(self,v,prod_rate,degr_rate,dt,expansion=None,evolve_vertex=True):
+
+  def evolve(self,v,prod_rate,degr_rate,dt,expansion=None,vertex=True,move=True):
     """
     Performs one step of the FE method. Computes the new cells object itself.
     Uses np.linalg.solve
@@ -338,8 +405,8 @@ class FE_vtx(object):
     old_verts = self.cells.mesh.vertices.T
     old_cents = self.centroids
     
-    if evolve_vertex:
-      new_cells = cells_evolve(self.cells,dt,expansion=expansion)[0]
+    if move: # move: use vertex model forces if True, else only expansion
+      new_cells = cells_evolve(self.cells,dt,expansion=expansion,vertex=vertex)
       new_verts = new_cells.mesh.vertices.T
       new_cents = centroids2(new_cells)
       verts_vel = new_cells.mesh.velocities.T
@@ -386,7 +453,7 @@ class FE_vtx(object):
     self.centroids = new_cents
 
 
-  def evolve_cy(self,v,prod_rate,degr_rate,dt,expansion=None,evolve_vertex=True):
+  def evolve_cy(self,v,prod_rate,degr_rate,dt,expansion=None,vertex=True):
     """
     Performs one step of the FE method. Computes the new cells object itself.
     Uses np.linalg.solve
@@ -402,8 +469,8 @@ class FE_vtx(object):
     old_verts = self.cells.mesh.vertices.T
     old_cents = self.centroids
     
-    if evolve_vertex:
-      new_cells = cells_evolve(self.cells,dt,expansion=expansion)[0]
+    if vertex:
+      new_cells = cells_evolve(self.cells,dt,expansion=expansion)
       new_verts = new_cells.mesh.vertices.T
       new_cents = cen2(new_cells)#centroids2(new_cells)
     else:
@@ -420,14 +487,16 @@ class FE_vtx(object):
     self.centroids = new_cents
 
 
-  def transitions(self,ready=None):
+  # this is never used anywhere
+  def transitions(self,division=True):
     if ready is None:
       ready = ready_to_divide(self.cells)
     c_by_e = self.concentration[self.edges_to_nodes]
     c_by_c = self.concentration[self.faces_to_nodes]
     self.cells = T1(self.cells) #perform T1 transitions - "neighbour exchange"
     self.cells,c_by_e = rem_collapsed(self.cells,c_by_e) #T2 transitions-"leaving the tissue"
-    self.cells,c_by_e, c_by_c = divide(self.cells,c_by_e,c_by_c,ready)
+    if division:
+      self.cells,c_by_e, c_by_c = divide(self.cells,c_by_e,c_by_c,ready)
     self.centroids = centroids2(self.cells)
     eTn = self.cells.mesh.edges.ids//3
     n = max(eTn)

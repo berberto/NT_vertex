@@ -1114,13 +1114,10 @@ def evolve(cells,dt,expansion=None):
         update_zposn_and_A0(cells)
     return cells, expansion
 
-def cells_evolve(cells,dt,expansion=None):
+def cells_evolve(cells,dt,expansion=None,vertex=True):
     """
     Same as evolve, just renamed (for use in another method called 'evolve')
     """
-    force= TargetArea()+Perimeter()+Tension()+Pressure()
-    F = force(cells)/viscosity #viscosity is from Global_Constant
-    dv = dt*sum_vertices(cells.mesh.edges,F)
     if expansion is None:
         expansion=np.array([0.0,0.0]) #initialise
         # if hasattr(cells.mesh.geometry,'width'):
@@ -1135,7 +1132,13 @@ def cells_evolve(cells,dt,expansion=None):
             expansion[1] = np.average(F[1]*cells.mesh.vertices[1])*dt/(cells.mesh.geometry.height**2)
 
     old_verts = cells.mesh.vertices
-    cells.mesh = cells.mesh.moved(dv).scaled(1.0+expansion) #expansion a global constant
+    if vertex: # move with forces
+        force= TargetArea()+Perimeter()+Tension()+Pressure()
+        F = force(cells)/viscosity #viscosity is from Global_Constant
+        dv = dt*sum_vertices(cells.mesh.edges,F)
+        cells.mesh = cells.mesh.moved(dv)
+    # move only by stretching
+    cells.mesh = cells.mesh.scaled(1.0+expansion) #expansion a global constant
     new_verts = cells.mesh.vertices
     cells.mesh.velocities = (new_verts - old_verts)/dt
 
