@@ -9,7 +9,8 @@ Created on Thu Jun  4 19:21:31 2020
 from FE_vtx import  build_FE_vtx, build_FE_vtx_from_scratch
 from GeneRegulatoryNetwork import GRN_full_basic, build_GRN_full_basic
 from FE_transitions import divide, T1, rem_collapsed
-from cells_extra import ready_to_divide, centroids2
+from Finite_Element import centroids2
+from cells_extra import ready_to_divide
 from cent_test import cen2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -52,43 +53,46 @@ class NT_vtx(object):
         self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
         
     def transitions(self,ready=None,division=True):
+        # values of concentration at nodes on cell boundaries (roots of edges)
         c_by_e = self.FE_vtx.concentration[self.FE_vtx.edges_to_nodes]
+        # values of concentration at nodes on cell centroids
         c_by_c = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
         if division:
             if ready is None:
                 ready = ready_to_divide(self.FE_vtx.cells)
+            # interpolation at new nodes is done in the 'divide' function
+            # CHECK!
             self.FE_vtx.cells,c_by_e, c_by_c = divide(self.FE_vtx.cells,c_by_e,c_by_c,ready)
             self.GRN.division(ready)
 
-        #
-        # modify the geometry of the cells
-        #
-
         # perform T1 transitions - "neighbour exchange"
         self.FE_vtx.cells = T1(self.FE_vtx.cells)
-
-        # T2 transitions-"leaving the tissue"
-        # by removing small edges from cells through T1 transitions,
-        # some cells will become triangular and collapse,
+        # performe T2 transitions-"leaving the tissue"
+        # by removing small edges from cells through T1 transitions, some cells will become triangular and collapse to a point, which becomes a new node
+        # c_by_e is the vector of concentrations given the index of the edge: only that is affected by the T1 transitions, while centroids are untouched 
         self.FE_vtx.cells,c_by_e = rem_collapsed(self.FE_vtx.cells,c_by_e)
 
         # compute the new centroids
+        # HOW ABOUT THE INTERPOLATION WHERE CELLS HAVE DIVIDED?
         self.FE_vtx.centroids = centroids2(self.FE_vtx.cells)
 
         # calculate the number of nodes associated to edges
+        # this changes if there are boundaries
         eTn = self.FE_vtx.cells.mesh.edges.ids//3
 
-        # number of nodes associated to vertices (?)
+        # number of nodes associated to vertices
         n = max(eTn)
 
-        # what the hell is this?
+        # counts the living cells (the 'Cells' object in 'FE_vtx' class also contains info about dead cells)
+        # counting starts from 'n', i.e. the number of cell-boundary nodes
         cTn=np.cumsum(~self.FE_vtx.cells.empty())+n
 
         # take che concentration at nodes which are roots of edges
         # take every 3, because each node has 3 edges coming out
+        # THESE HAVE BEEN AFFECTED BY THE T1 TRANSITIONS
         con_part=c_by_e[::3]
 
-        # 
+
         cent_part = c_by_c[~self.FE_vtx.cells.empty()]
         self.FE_vtx.concentration = np.hstack([con_part,cent_part])
         self.FE_vtx.edges_to_nodes = self.FE_vtx.cells.mesh.edges.ids//3

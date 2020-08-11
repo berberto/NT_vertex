@@ -18,8 +18,6 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser(description='Run neuraltube simulation')
 
-parser.add_argument('--test-triangles', desst="testing", action='store_true', default=False)
-
 parser.add_argument('-t', dest='T', metavar='<val>', type=float, default=200., help='Total time of the simulation (float). Default: 200.')
 parser.add_argument('-s', dest='size', metavar=('<X>','<Y>'), type=int, nargs=2, default=(20,10), help='Initial tissue size (width and height) in cell numbers. Default: (20 10)')
 parser.add_argument('--prefix', dest='file_prefix', metavar='<name>', type=str, default=None, help='Set prefix name (name of the simulation test). Default: none')

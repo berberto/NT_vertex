@@ -246,12 +246,12 @@ class FE_vtx(object):
     self.tria_ids   = np.zeros((self.nEdges,3),dtype=int)      # element node ids
     self.tria_nodes = np.zeros((self.nEdges,3,2),dtype=float)  #    ''   node coordinates
     self.tria_vels  = np.zeros((self.nEdges,3,2),dtype=float)  #    ''   node velocities
+    self.tria_srcs  = np.zeros((self.nEdges,3),dtype=float)    #    ''   local production rate
     self.tria_grds  = np.zeros((self.nEdges,3,2),dtype=float)  #    ''   gradients of basis functions
     self.tria_jacs  = np.zeros((self.nEdges,2,2),dtype=float)  #    ''   Jacobian of map from canonical to physical triangle
     self.tria_dets  = np.zeros(self.nEdges,dtype=float)        #    ''   determinants of Jacobian (2*area)
     self.tria_vecs  = np.zeros((self.nEdges,3),dtype=float)    #    ''   FE vectors
     self.tria_mats  = np.zeros((self.nEdges,3,3),dtype=float)  #    ''   FE matrices
-    self.tria_srcs  = np.zeros((self.nEdges,3),dtype=float)    #    ''   local production rate
 
   #
   #   EDIT: NEW METHODS
@@ -304,11 +304,51 @@ class FE_vtx(object):
     self.tria_vecs += dt / 6. * np.array([s*x*np.ones(3) for (s,x) in zip(self.tria_srcs, self.tria_dets)])  # if source constant over the element
     # self.vector += dt * np.matmul(self.mass_matrix, f_vec) # if source has different values at nodes
 
+  def _transitionsTriangles(self):
+    """
+    Perform transitions directly on the triangles.
+
+    """
+    #
+    # T1
+    #
+
+    # perform the T1 transitions
+    # for all indices of edges undergoing the transition:
+    # 1. find all the triangles that share each vertex joined by that edge
+    # 2. find the 2 triangles that share both:
+    #    - calculate positions, velocities and concentrations at the centroids of these 2 triangles (averages over their vertices)
+    #    -  find vertices opposite to the shared edge (centroids of old cells)
+    #    -  
+
+
+
+    #
+    # T2
+    #
+
+    # perform the T2 transitions - 
+
+    pass
+
+  def _velocitiesTriangles(self):
+    """
+    Updates the velocities of the vertices and assigns them to the triangles,
+    in order to avoid re-defining all the triangles if no topological transition
+    has occurred.
+
+    """
+    pass
 
   def _defineTriangles(self, verP, cenP, verV, cenV, parameters):
     """
     Redefine the triangles' properties: needed whenever the topology of 
-    the underlying vertex model changes due to transitions
+    the underlying vertex model changes due to transitions.
+
+    TO DO: the change of topology should be taken care of by the function
+           performing the transitions. This allows to change only those
+           triangles which where involved in the transitions.
+           It is a waste of time redefining the triangles at every time-step
 
     """
     verts = verP

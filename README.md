@@ -9,27 +9,15 @@
 
 ### Comments/Questions
 
-1. `FE_vtx.py`:
-	- FE matrix filled in coordinate sparse format (can it be that node_id_tri[i (and j)] are the same for a different edge? Tested and it seems correct. No gain in speed anyway.
-	- FE matrix is not symmetric (max difference ~ 1.e-2)
-	- cython code with the sparse solver doesn't seem to work (tested by Graeme)
-	- `dt` was nowhere in the functions to build the finite element matrix and vector.
+1. Added comments to 'FE_transitions' and to 'FE_vtx.transition': **where is the interpolation to find concentrations at the new centroids upon cell division done? Is it in the `_add_edges` function?**
 
-2. `fe_cy_omp.pyx`:
-	- got it running, by adding `with gil` for inner loops over triangle vertices, but it's slower
+2. In 'NT_vtx', the function 'centroids2' was imported from 'cells_extra', where it was not defined!!! It was instead in 'Finite_Element'. **Please, let's clean up the code, removing duplicates of functions which are not used**
 
-3. Added argument `evolve_vertex` to `evolve` methods (for `NT_vtx` and `FE_vtx`), to enable/disable evolution of tissue
-
-4. `NT_vtx`:
-	- added check on whether to simulate/plot results.
-	- all intermediate files are first checked, and then used for plotting (all of those present in the directory are used)
-
-5. What is the **ALE** method?
 
 
 ### To do
 
-1. Test when **expansion but not motion** is set.
+1. **Check the velocities at the nodes which are involved in T1 and T2 transitions. Might be that they explode there.**
 
 1. `FE_vtx.py`:
 	- maybe make the `build_FE_vtx`/`build_FE_vtx_from_scratch` routines members of the `FE_vtx` class?
@@ -65,40 +53,7 @@
 
 8. FE for cylinder
 
-#### Finite element edits (to do)
-
-*Mesh refinement.*
-
-If area of the triangle is too big,
-- divide it into 4 triangles, by splitting each side into 2: this, however, requires splitting also the neighbouring triangles.
-- divide it into 3 triangles by inserting at its centroid (baricentre).
-
-Alternatively, if the length of an edge is too long, split it into 2: the triangle, and the adjacent one along that edge, will be divided into two triangles each
-(SEE NOTES)
-
- 
-
-Finite element matrix-vector assembly. Instead of looping over edges, first construct an array of triangles and loop over triangles.
-1. Define set of triangles for the mesh as the triplet of edges (vectors -- alternatively, with the coordinates of the 3 vertices, being careful to identify equivalent vertices for periodic b.c.)
-2. 
 
 ### Issues
 
-1. Finite element solution breaks down if:
-	- tissue is not moving
-	- tissue is moving but *NOT* expanding
-	- **how about expansion but not motion?**
-
-1. `NT_vtx.py`:
-	- `transitions_faster()` is actually slower ?
-
-2. `fe_cy_omp.pyx`:
-	- now getting to compile with `-fopenmp` flag, but giving `Fatal Python error: PyThreadState_Get: no current thread`. Loop over edges not vectorizable?
-
-3. `setup_*`:
-	- still getting the `"Using deprecated NumPy API, disable it by #defining NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"` warning... 
-	- bunch of warnings with uninitialized variables inside `#pragma` directives. Looked at the `fe_cy_omp.c` output, and seems to be normal: they are auxiliary variables used for the vectorized loop.
-
-9. Full evolution but without expansion
-	- concentration still diverges (though tissue doesn't grow with if `expansion` is zero)
-	- diverges faster for the cython code (?)
+- Finite element solution breaks down if the full vertex model dynamics, it is fine when growth (`expansion`) is set while excluding topological transitions. Cell division also taken care of not too bad.

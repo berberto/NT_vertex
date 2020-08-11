@@ -41,7 +41,6 @@ def _add_edges(mesh,edge_pairs,concentration_by_edge, concentration_by_centroid)
     Again mostly taken from the corresponding function in mesh.  Adapted for 
     FE.
     
-    
     """
     cbye = concentration_by_edge #shorthand
     cbycent = concentration_by_centroid #shorthand
@@ -134,7 +133,8 @@ def T1(cells,eps=None):
         short_edges = set(half_edges[np.sum(dv*dv, 0) < eps*eps]) #why did they make this a set?
         ids_t1=half_edges[np.sum(dv*dv, 0) < eps*eps] #edges which are shorter than the tolerance eps>0
             
-        if not short_edges: # if the set is empty (no T1 transition occurring), then return the cells as they are
+        # if the set is empty (no T1 transition occurring), then return the cells as they are
+        if not short_edges:
             return cells
         reverse, vertices, face_id_by_edge = edges.reverse.copy(), mesh.vertices.copy(), mesh.face_id_by_edge.copy()
         rotate = edges.rotate
@@ -155,7 +155,8 @@ def T1(cells,eps=None):
         mesh.vertices = vertices    
         mesh.face_id_by_edge = face_id_by_edge        
         cells = Cells(mesh, props) #make a cells object
-        #T1 transitions do not change the concentration_by_edge or concentration_by_centroid
+        # T1 transitions do not change the concentration_by_edge or concentration_by_centroid
+        # and this is wrong, isn't it?
         return cells
  
        
@@ -174,7 +175,9 @@ def rem_collapsed(cells,c_by_e):
         
     Remark:
         We do not need to update the concentration_by_centroid.  We would only
-        be changing values which are not used when we call build_FE.  
+        be changing values which are not used when we call build_FE.
+        WHAT DOES THIS MEAN?
+        I UNDERSTAND THAT C_BY_C IS NOT NEEDED, WHAT IS THE BUILD_FE THING?
     
     """
     props=cells.properties #to pass on to the new object
