@@ -74,6 +74,7 @@ class NT_vtx(object):
 
         # compute the new centroids
         # HOW ABOUT THE INTERPOLATION WHERE CELLS HAVE DIVIDED?
+        # IS IT IN THE 'divide' FUNCTION?
         self.FE_vtx.centroids = centroids2(self.FE_vtx.cells)
 
         # calculate the number of nodes associated to edges
@@ -89,7 +90,7 @@ class NT_vtx(object):
 
         # take che concentration at nodes which are roots of edges
         # take every 3, because each node has 3 edges coming out
-        # THESE HAVE BEEN AFFECTED BY THE T1 TRANSITIONS
+        # THESE ARE AFFECTED BY THE T1 TRANSITIONS
         con_part=c_by_e[::3]
 
 

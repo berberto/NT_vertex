@@ -8,13 +8,13 @@ import dill
 import numpy as np
 from NT_vtx import build_NT_vtx_from_scratch
 from plotting import animate_surf_video_mpg, cells_state_video
+from argparse import ArgumentParser
 
 
 def load (filename):
     with open(filename, "rb") as f:
         return dill.load(f)
 
-from argparse import ArgumentParser
 
 parser = ArgumentParser(description='Run neuraltube simulation')
 
@@ -85,25 +85,34 @@ if __name__ == "__main__":
 
     # fixed expansion parameters
     expansion = np.ones(2)
-    expansion *= np.log(5.)/2./(200./dt) # (1 + ex)**2e5 ~ sqrt(5) (area 5x biger after 2e5 steps)
+    expansion *= 100.*np.log(5.)/2./(200./dt) # (1 + ex)**(200./dt) ~ sqrt(5) (area 5x biger after 2e5 steps)
     anisotropy=0.   # must be in [0,1] -> 0 = isotropy, 1 = expansion only on x
     expansion *= np.array([1.+anisotropy, 1.-anisotropy])
 
 
     # SET OUTPUT
     path = "outputs/"
-    if not file_prefix is None:
+    if not file_prefix is None: # default is None
         path += file_prefix+"_"
 
     path += "%dx%d_T%.0e_dt%.0e"%(xsize, ysize, T_sim, dt)
     N_skip = max(N_step//N_frames, 1)
 
-    if not vertex:
-        expansion *= 0.
-        path += "_novertex"
-    else:
+    if move: # default: move=True, vertex=True, division=True
         if anisotropy != 0.:
             path += "_anis_%.1e_%.1e"%tuple(expansion)
+        else:
+            path += "_E%.1e"%(expansion[0])
+        
+        if not vertex:
+            path += "_novtx"
+        
+        if not division:
+            path += "_nodiv"
+
+    elif not move:
+        path += "_static"
+
 
     if cython:
         path += "_cy"

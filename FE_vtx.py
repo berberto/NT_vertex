@@ -242,7 +242,8 @@ class FE_vtx(object):
     self.matrix = np.zeros((self.nNodes,self.nNodes),dtype=float)
     self.vector = np.zeros(self.nNodes,dtype=float)
 
-    # triangles information, initially undefined
+    # triangles information, initially
+    self.tria_init  = False
     self.tria_ids   = np.zeros((self.nEdges,3),dtype=int)      # element node ids
     self.tria_nodes = np.zeros((self.nEdges,3,2),dtype=float)  #    ''   node coordinates
     self.tria_vels  = np.zeros((self.nEdges,3,2),dtype=float)  #    ''   node velocities
@@ -368,10 +369,12 @@ class FE_vtx(object):
     self.tria_vels  = np.array([np.array([verts_vel[e],verts_vel[nxt[e]],cents_vel[f_by_e[e]]],dtype=float) for e in edges.ids]).astype(float)
     self.tria_srcs  = np.array([f[f_by_e[e]] for e in edges.ids])
 
+    self.tria_init = True
+
 
   # assembly te FE matrix and vector
   def _assembly(self):
-    # nNodes = 
+    nNodes = self.nNodes
     self.matrix = np.zeros((nNodes,nNodes),dtype=float)
 
     # update the FE matrix and vector
@@ -389,7 +392,7 @@ class FE_vtx(object):
     return scipy.linalg.solve(self.matrix, self.vector)
 
 
-  def evolve_new(self, diff_coeff, prod_rate, degr_rate, dt, expansion=None, vertex=True, refinement=1):
+  def evolve_new(self, diff_coeff, prod_rate, degr_rate, dt, expansion=None, vertex=True, move=True, refinement=1):
     self.parameters["diff_coeff"] = diff_coeff
     self.parameters["prod_rate"] = prod_rate
     self.parameters["degr_rate"] = degr_rate
@@ -398,20 +401,24 @@ class FE_vtx(object):
     old_verts = self.cells.mesh.vertices.T
     old_cents = self.centroids
 
-    if vertex:
-      new_cells = cells_evolve(self.cells,dt,expansion=expansion)
+    if move:
+      new_cells = cells_evolve(self.cells,dt,expansion=expansion,vertex=vertex)
       new_verts = new_cells.mesh.vertices.T
       new_cents = centroids2(new_cells)
       verts_vel = new_cells.mesh.velocities.T
       cents_vel = (new_cents - old_cents)/dt
+      # triangles redefined at all time-steps if the cells move
+      self._defineTriangles(new_verts, new_cents, verts_vel, cents_vel, self.parameters)
     else:
       new_cells = self.cells
       new_verts = old_verts
       new_cents = old_cents
       verts_vel = np.zeros(np.shape(old_verts))
       cents_vel = np.zeros(np.shape(old_cents))
+      # triangles defined only once if cells do not move
+      if not self.tria_init: # if triangles are NOT initialized
+        self._defineTriangles(new_verts, new_cents, verts_vel, cents_vel, self.parameters)
 
-    self._defineTriangles(new_verts, new_cents, verts_vel, cents_vel, self.parameters)
 
     # 'refinement' is the number of FE evolution steps
     # between two consecutive updates of the vertex model
