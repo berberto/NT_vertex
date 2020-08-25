@@ -9,9 +9,11 @@
 
 ### Comments/Questions
 
-1. Added comments to 'FE_transitions' and to 'FE_vtx.transition': **where is the interpolation to find concentrations at the new centroids upon cell division done? Is it in the `_add_edges` function?**
+1. **Expansion** was negative only in the initialization period, then it becomes positive, so the tissue grows (check out its formula from the paper).
 
-2. In 'NT_vtx', the function 'centroids2' was imported from 'cells_extra', where it was not defined!!! It was instead in 'Finite_Element'. **Please, let's clean up the code, removing duplicates of functions which are not used**
+2. Added comments to 'FE_transitions' and to 'FE_vtx.transition': **where is the interpolation to find concentrations at the new centroids upon cell division done? Is it in the `_add_edges` function?**
+
+3. In 'NT_vtx', the function 'centroids2' was imported from 'cells_extra', where it was not defined!!! It was instead in 'Finite_Element'. **Please, let's clean up the code, removing duplicates of functions which are not used**
 
 
 

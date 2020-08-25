@@ -1118,8 +1118,15 @@ def cells_evolve(cells,dt,expansion=None,vertex=True):
     """
     Same as evolve, just renamed (for use in another method called 'evolve')
     """
+    old_verts = cells.mesh.vertices
+    if vertex: # move with forces
+        force= TargetArea()+Perimeter()+Tension()+Pressure()
+        F = force(cells)/viscosity #viscosity is from Global_Constant
+        dv = dt*sum_vertices(cells.mesh.edges,F)
+        cells.mesh = cells.mesh.moved(dv)
+        
     if expansion is None:
-        expansion=np.array([0.0,0.0]) #initialise
+        expansion=np.zeros(2) #initialise
         # if hasattr(cells.mesh.geometry,'width'):
         #     expansion[0] = 0.00015
         # if hasattr(cells.mesh.geometry,'height'): #Cylinder mesh doesn't have 'height' argument
@@ -1131,12 +1138,6 @@ def cells_evolve(cells,dt,expansion=None,vertex=True):
         if hasattr(cells.mesh.geometry,'height'): #Cylinder mesh doesn't have 'height' argument
             expansion[1] = np.average(F[1]*cells.mesh.vertices[1])*dt/(cells.mesh.geometry.height**2)
 
-    old_verts = cells.mesh.vertices
-    if vertex: # move with forces
-        force= TargetArea()+Perimeter()+Tension()+Pressure()
-        F = force(cells)/viscosity #viscosity is from Global_Constant
-        dv = dt*sum_vertices(cells.mesh.edges,F)
-        cells.mesh = cells.mesh.moved(dv)
     # move only by stretching
     cells.mesh = cells.mesh.scaled(1.0+expansion) #expansion a global constant
     new_verts = cells.mesh.vertices

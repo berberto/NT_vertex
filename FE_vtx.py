@@ -433,7 +433,7 @@ class FE_vtx(object):
   #
 
 
-  def evolve(self,v,prod_rate,degr_rate,dt,expansion=None,vertex=True,move=True):
+  def evolve(self,v,prod_rate,degr_rate,dt,expansion=None,vertex=True,move=True,dynamics=True):
     """
     Performs one step of the FE method. Computes the new cells object itself.
     Uses np.linalg.solve
@@ -464,38 +464,31 @@ class FE_vtx(object):
       new_cents = old_cents
       verts_vel = np.zeros(np.shape(old_verts))
       cents_vel = np.zeros(np.shape(old_cents))
-    
-    f = self.cells.properties['source']*prod_rate #source
-    count=0
-    rows=[]
-    cols=[]
-    entries=[]
-    for e in self.cells.mesh.edges.ids: #modify if cells.mesh.edges.geometry is cylindrical
-      new_nodes = [new_verts[e] ,new_verts[nxt[e]], new_cents[f_by_e[e]]]
-      prev_nodes = [old_verts[e] ,old_verts[nxt[e]], old_cents[f_by_e[e]]]
-      node_id_tri = np.array([self.edges_to_nodes[e],self.edges_to_nodes[nxt[e]] , self.faces_to_nodes[f_by_e[e]] ],dtype=int)
-      reduced_f = f[f_by_e[e]]*np.ones(3) # [0,0,f[f_by_e[e]]]
-      old_alpha = self.concentration[node_id_tri]
-      new_M = M(new_nodes)
-      old_M = M(prev_nodes)
-      d = np.abs(np.linalg.det(new_M))
-      d_old = np.abs(np.linalg.det(old_M))
-      nabla_Phi = nabPhi(new_M)
-      for i in range(3):
-        bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
-        for j in range(3):
-          A[node_id_tri[i],node_id_tri[j]] += (1. + degr_rate*dt)*I(i,j,d)+ dt*K(i,j,d,nabla_Phi,v)+ W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
-          # rows+=[node_id_tri[i]]  # can it be that node_id_tr
-          # cols+=[node_id_tri[j]]
-          # entries+=[(1.+ degr_rate*dt)*I(i,j,d)+dt*K(i,j,d,nabla_Phi,v)+W(i,j,d,nabla_Phi,new_nodes, prev_nodes)]
-    
-    # rows=np.array(rows).astype(int)
-    # cols=np.array(cols).astype(int)
-    # entries=np.array(entries).astype(float)
-    # A = coo_matrix((entries,(rows,cols)), shape=(m,m))
-    # self.concentration = scipy.sparse.linalg.spsolve(A,bv)
-    
-    self.concentration = scipy.linalg.solve(A,bv)
+
+    if dynamics:
+      f = self.cells.properties['source']*prod_rate #source
+      count=0
+      rows=[]
+      cols=[]
+      entries=[]
+      for e in self.cells.mesh.edges.ids: #modify if cells.mesh.edges.geometry is cylindrical
+        new_nodes = [new_verts[e] ,new_verts[nxt[e]], new_cents[f_by_e[e]]]
+        prev_nodes = [old_verts[e] ,old_verts[nxt[e]], old_cents[f_by_e[e]]]
+        node_id_tri = np.array([self.edges_to_nodes[e],self.edges_to_nodes[nxt[e]] , self.faces_to_nodes[f_by_e[e]] ],dtype=int)
+        reduced_f = f[f_by_e[e]]*np.ones(3) # [0,0,f[f_by_e[e]]]
+        old_alpha = self.concentration[node_id_tri]
+        new_M = M(new_nodes)
+        old_M = M(prev_nodes)
+        d = np.abs(np.linalg.det(new_M))
+        d_old = np.abs(np.linalg.det(old_M))
+        nabla_Phi = nabPhi(new_M)
+        for i in range(3):
+          bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
+          for j in range(3):
+            A[node_id_tri[i],node_id_tri[j]] += (1. + degr_rate*dt)*I(i,j,d)+ dt*K(i,j,d,nabla_Phi,v)+ W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
+
+      self.concentration = scipy.linalg.solve(A,bv)
+
     self.cells = new_cells
     self.centroids = new_cents
 

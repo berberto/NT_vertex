@@ -136,12 +136,19 @@ def T1(cells,eps=None):
         # if the set is empty (no T1 transition occurring), then return the cells as they are
         if not short_edges:
             return cells
+
+        # make a copy of the lists to be changed
         reverse, vertices, face_id_by_edge = edges.reverse.copy(), mesh.vertices.copy(), mesh.face_id_by_edge.copy()
+
+        # edges obtained from `edges` by CW rotation around their roots
         rotate = edges.rotate
+
         # Do T1 transitions
         # to avoid nasty edge cases, we don't allow T1's to happen on adjacent edges
         # and delay to the next timestep if necessary.
         # A better approach would be to take multiple partial timesteps.
+
+        # how about copies here???
         boundary_edges = mesh.boundary_edges if mesh.has_boundary() else []
         while short_edges:
             edge = short_edges.pop()
