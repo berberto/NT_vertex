@@ -307,31 +307,38 @@ def sum_vertices(edges, dv):
 
 
 def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
-    e0 = edge
-    e1 = rotate[edge]
-    e2 = rotate[e1]
-    e3 = reverse[edge]
-    e4 = rotate[e3]
-    e5 = rotate[e4]
 
-    before = np.array([e1, e2, e4, e5])
-    after = np.array([e2, e4, e5, e1])
 
-    after_r = reverse.take(after)
-    reverse[before] = after_r
-    reverse[after_r] = before
+    e0 = edge           # edge to be rotated by 90 deg and rescaled
+    e1 = rotate[edge]   #  ''  found CCW from e0 around origin of e0
+    e2 = rotate[e1]     #  ''  found CCW from e1 around origin of e0
+    e3 = reverse[edge]  #  ''  anti-parallel to e0
+    e4 = rotate[e3]     #  ''  found CCW from e3 around origin of e3
+    e5 = rotate[e4]     #  ''  found CCW from e4 around origin of e3
 
-    dv = vertices[:, e4]-vertices[:, e0]
-    l = 1.01*eps/np.sqrt(dv[0]*dv[0]+dv[1]*dv[1])
-    dw = [dv[1]*l, -dv[0]*l]
+    # (A) permutation of indices (0 and 3 remain the same)
+    # (A) changing the topology of the mesh
+    before = np.array([e1, e2, e4, e5]) # edges indicated by 'before' indices
+    after = np.array([e2, e4, e5, e1])  # are now indicated by the corresponding 'after' indices
 
+    after_r = reverse.take(after) # (A) select the reverse of the new labels
+    reverse[before] = after_r     # (A) the reverse of the 'after' edges become the reverse of the 'before' edges
+    reverse[after_r] = before     # (A) the reverse of the (new) reverse takes the value of before
+
+    # (A) 'vertices' is a numpy array indexed by (component [0,1], index)
+    dv = vertices[:, e4]-vertices[:, e0]            # (A) any reason why not e3 or e5?
+    # (A) isn't there a problem if the edge is on the boundary? 
+    #     are vertices labelled like this always nearby?
+    l = 1.01*eps/np.sqrt(dv[0]*dv[0]+dv[1]*dv[1])   # (A) new length of edge to be 1.01 eps
+    dw = [dv[1]*l, -dv[0]*l]    # (A) dw = dv rotated by 90 deg CW (rot -90 deg)
+
+    # (A) change the coordinates of the vertices
     for i in [0, 1]:
         dp = 0.5*(dv[i]+dw[i])
         dq = 0.5*(dv[i]-dw[i])
-        v = vertices[i]
-        v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
-        v[e0] = v[e4] + dw[i]
-        v[e3] = v[e1] - dw[i]
+        vertices[i,e0] += dq
+        vertices[i,e3] -= dq
+        vertices[i,before] = vertices[i,after] + np.array([dq, -dp, -dq, dp])
 
     face_id_by_edge[before] = face_id_by_edge.take(after)
     face_id_by_edge[e0] = face_id_by_edge[e4]

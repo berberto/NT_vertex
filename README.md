@@ -19,6 +19,8 @@
 
 ### To do
 
+1. From `_T1` one should get information about the new positions of the extremes and the indices of the half-edges that are rotated. At the moment, it only returns a numpy array with the edges pointing to (and coming from) the neighbouring vertices, in order to avoid performing T1 transitions on those.
+
 1. **Check the velocities at the nodes which are involved in T1 and T2 transitions. Might be that they explode there.**
 
 1. `FE_vtx.py`:
@@ -56,6 +58,74 @@
 8. FE for cylinder
 
 
-### Issues
+### Issues/Troubleshooting
 
-- Finite element solution breaks down if the full vertex model dynamics, it is fine when growth (`expansion`) is set while excluding topological transitions. Cell division also taken care of not too bad.
+#### Problem with `_remove` and `_rem_collapsed`:
+
+Running with
+```
+python neuraltube.py --init 10. -t 50. --every 0.1 --dt 0.005
+```
+
+`_remove` requires as positional argument the concentration-by-edge vector, which wasn't there. When added (at the same point where it was complaining about missing argument), it gave this.
+```
+Traceback (most recent call last):77
+  File "neuraltube.py", line 134, in <module>
+    neural_tube.transitions(division=division)
+  File "/camp/lab/briscoej/working/alberto/vertex/NT_vtx.py", line 78, in transitions
+    self.FE_vtx.cells,c_by_e = rem_collapsed(self.FE_vtx.cells,c_by_e)
+  File "/camp/lab/briscoej/working/alberto/vertex/FE_transitions.py", line 203, in rem_collapsed
+    while np.any(reverse[reverse[rotate[two_sided]]] != reverse[rotate[nxt[two_sided]]]):
+IndexError: index 1958 is out of bounds for axis 1 with size 1956
+```
+There was a floating-point division at line 26, corrected to this:
+```
+    es = np.unique(edges//3*3)
+```
+The `//3*3` operation, presumably, is a "modulus 3" operator.
+
+Still, error persists.
+
+
+#### Repeated T1 transitions on same edge
+
+With these settings,
+```
+python neuraltube.py --prefix debugRemAll --init 10. -t .3 --every 0.0005 --dt 0.0005
+```
+towards 0.3, one starts to see singularites developing where a T1 transition occurs frequently on the same edge.
+In a T1, the line length goes from a value `l ~ eps` (tiny bit less `eps`), to a value `l' ~ (1 + 0.01)eps`. If the displacement, under the new forces, is larger than `0.01 eps`, then another T1 occurs.
+Meaning that, perhaps `eps` is too large, or `dt` is too large.
+
+One necessary thing is to **interpolate** when performing the T1.
+
+Possible ways to cure this:
+- time step `dt` smaller, in such a way that
+- threshold on line length `eps` for T1 transition is too big, might have to be reduced compatibly with `dt`
+
+
+#### Changed `mesh._T1` code
+
+Commented 
+New code for changing the coordinates of the edge's extremes
+'''python
+for i in [0, 1]:
+    dp = 0.5*(dv[i]+dw[i])
+    dq = 0.5*(dv[i]-dw[i])
+    vertices[i,e0] += dq
+    vertices[i,e3] -= dq
+    vertices[i,before] = vertices[i,after]  + np.array([dq, -dp, -dq, dp])
+'''
+
+Old code
+'''python
+for i in [0, 1]:
+    dp = 0.5*(dv[i]+dw[i])
+    dq = 0.5*(dv[i]-dw[i])
+    v = vertices[i]
+    v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
+    v[e0] = v[e4] + dw[i]
+    v[e3] = v[e1] - dw[i]
+'''
+
+The old code was changing the indices in the correct way (correct topological change), but it was swapping the coordinates of the two extremes of the short edge. Now it seems fine. **How was this not causing problems? Why were cells printed fine at the end?**

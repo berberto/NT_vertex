@@ -104,13 +104,14 @@ if __name__ == "__main__":
         print("Initialization: simulation of the vertex model only")
         for k in range(int(T_init/dt)):
             if k%N_skip == 0:
-                print(k)
+                print("%2.1f/100   t = %.4f   frame = %d"%(k*dt/T_init*100., k*dt, int(k/N_skip)), end="\r")
                 with open (path+"/%06d_NT_init.pkl"%(k), "wb") as f:
                     dill.dump(neural_tube, f)
 
             neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
                 grn=False, morphogen=False)
             neural_tube.transitions(division=division)
+        print("")
         
         if not init_only:
             # simulation
@@ -118,7 +119,7 @@ if __name__ == "__main__":
             # t1=time.time()
             for k in range(N_step+1):
                 if k%N_skip == 0:
-                    print(k)
+                    print("%2.1f/100   t = %.4f   frame = %d"%(k*dt/T_sim*100., k*dt, int(k/N_skip)), end="\r")
                     with open (path+"/%06d_NT.pkl"%(k), "wb") as f:
                         dill.dump(neural_tube, f)
 
@@ -133,6 +134,7 @@ if __name__ == "__main__":
                 neural_tube.transitions(division=division)
             # t2 = time.time()
             # print("took:", t2 - t1)
+            print("")
 
     if plotting:
 

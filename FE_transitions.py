@@ -23,7 +23,7 @@ def _remove(edges, reverse, vertices, face_id_by_edge , concentration_by_edge):
         Updated attributes of fe object.
         
     """    
-    es = np.unique(edges/3*3) #for all j in edges, we obtain j , rot[j] , rot[rot[j]] in  
+    es = np.unique(edges//3*3) #for all j in edges, we obtain j , rot[j] , rot[rot[j]] in  
     to_del= np.dstack([es, es+1, es+2]).ravel()                         #to_del
     reverse = np.delete(reverse, to_del)
     reverse = (np.cumsum(np.bincount(reverse))-1)[reverse]  # relabel to get a perm of [0,...,N-1]
@@ -148,10 +148,10 @@ def T1(cells,eps=None):
         # and delay to the next timestep if necessary.
         # A better approach would be to take multiple partial timesteps.
 
-        # how about copies here???
+        # (A) how about copies here???
         boundary_edges = mesh.boundary_edges if mesh.has_boundary() else []
         while short_edges:
-            edge = short_edges.pop()
+            edge = short_edges.pop()    # (A) picks the last element of 'short_edges' and removes it from list
             if edge in boundary_edges:
                 edge = reverse[edge]
             neighbours = _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge)
@@ -163,7 +163,7 @@ def T1(cells,eps=None):
         mesh.face_id_by_edge = face_id_by_edge        
         cells = Cells(mesh, props) #make a cells object
         # T1 transitions do not change the concentration_by_edge or concentration_by_centroid
-        # and this is wrong, isn't it?
+        # (A) and this is wrong, isn't it?
         return cells
  
        
@@ -203,7 +203,7 @@ def rem_collapsed(cells,c_by_e):
         while np.any(reverse[reverse[rotate[two_sided]]] != reverse[rotate[nxt[two_sided]]]):
             reverse[reverse[rotate[two_sided]]] = reverse[rotate[nxt[two_sided]]]
             prev_face_id_by_edge = face_id_by_edge
-            reverse, vertices, face_id_by_edge,c_by_e = _remove(two_sided, reverse, vertices, face_id_by_edge)#_remove only returns a tuple of length 3
+            reverse, vertices, face_id_by_edge,c_by_e = _remove(two_sided, reverse, vertices, face_id_by_edge, c_by_e)
             ids_removed = np.setdiff1d(prev_face_id_by_edge,face_id_by_edge)
             #print "ids_removed", ids_removed
     # if ~(ids_t1==np.delete(ids_t1,ids_removed)):
