@@ -15,6 +15,7 @@ parser.add_argument('--no-sim', dest='simulate', action='store_false', default=T
 parser.add_argument('--no-plot', dest='plotting', action='store_false', default=True, help='Do not perform plot')
 parser.add_argument('--no-move', dest='move', action='store_false', default=True, help='Do not move cells at all, ie solve with static mesh.')
 parser.add_argument('--no-vertex', dest='vertex', action='store_false', default=True, help='Do not simulate the vertex model. Still, the expansion could be set different from zero, allowing cells to stretch, and divide')
+parser.add_argument('--no-morph', dest='morphogen', action='store_false', default=True, help='Simulate the vertex model only, concentration identically vanishing.')
 parser.add_argument('--no-divide', dest='division', action='store_false', default=True, help='Do not let cells divide')
 parser.add_argument('--cython', dest='cython', action='store_true', default=False, help='Use cython version of FE code')
 parser.add_argument('--dry', dest='test_output', action='store_true', default=False, help='Dry run. Test output path and options')
@@ -46,6 +47,7 @@ plotting = args.plotting
 (xsize,ysize) = args.size
 test_output = args.test_output
 vertex = args.vertex
+morphogen = args.morphogen
 cython = args.cython
 expand = args.expand
 move = args.move

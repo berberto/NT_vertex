@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     if simulate:
         os.system("mkdir -p "+path)
-        print("build NT")
+        print("building NT")
         neural_tube=build_NT_vtx_from_scratch(size = [xsize,ysize])
 
         # initialization
@@ -116,24 +116,15 @@ if __name__ == "__main__":
         if not init_only:
             # simulation
             print("Simulation of the full model")
-            # t1=time.time()
             for k in range(N_step+1):
                 if k%N_skip == 0:
                     print("%2.1f/100   t = %.4f   frame = %d"%(k*dt/T_sim*100., k*dt, int(k/N_skip)), end="\r")
                     with open (path+"/%06d_NT.pkl"%(k), "wb") as f:
                         dill.dump(neural_tube, f)
 
-                if cython:
-                    neural_tube.evolve_fast(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                        expansion=expansion,vertex=vertex
-                    )
-                else:
-                    neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                        expansion=expansion,vertex=vertex,move=move
-                    )
+                neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
+                    expansion=expansion,vertex=vertex,move=move,morphogen=morphogen)
                 neural_tube.transitions(division=division)
-            # t2 = time.time()
-            # print("took:", t2 - t1)
             print("")
 
     if plotting:

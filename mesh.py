@@ -319,20 +319,20 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
     #
     #   DEBUG
     #
-    print([e0,e1,e2,e3,e4,e5])
-    # vertices before T1
-    A = vertices[:,np.array([e0,e1,e2])]
-    B = vertices[:,np.array([e3,e4,e5])]
-    An1 = vertices[:,reverse[e1]]
-    An2 = vertices[:,reverse[e2]]
-    Bn4 = vertices[:,reverse[e4]]
-    Bn5 = vertices[:,reverse[e5]]
-    print("A = \n", A,"\n")
-    print("B = \n", B,"\n")
-    print("An1 = \n", An1,"\n")
-    print("An2 = \n", An2,"\n")
-    print("Bn4 = \n", Bn4,"\n")
-    print("Bn5 = \n", Bn5,"\n")
+    # print([e0,e1,e2,e3,e4,e5])
+    # # vertices before T1
+    # A = vertices[:,np.array([e0,e1,e2])]
+    # B = vertices[:,np.array([e3,e4,e5])]
+    # An1 = vertices[:,reverse[e1]]
+    # An2 = vertices[:,reverse[e2]]
+    # Bn4 = vertices[:,reverse[e4]]
+    # Bn5 = vertices[:,reverse[e5]]
+    # print("A = \n", A,"\n")
+    # print("B = \n", B,"\n")
+    # print("An1 = \n", An1,"\n")
+    # print("An2 = \n", An2,"\n")
+    # print("Bn4 = \n", Bn4,"\n")
+    # print("Bn5 = \n", Bn5,"\n")
     #
     #
     #
@@ -355,52 +355,52 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
 
     # (A) change the coordinates of the vertices
     for i in [0, 1]:
-        dp = 0.5*(dv[i]+dw[i])
-        dq = 0.5*(dv[i]-dw[i])
-        vertices[i,e0] += dq
-        vertices[i,e3] -= dq
-        vertices[i,before] = vertices[i,after] + np.array([dq, -dp, -dq, dp])
-
-        # # (A) previous version
         # dp = 0.5*(dv[i]+dw[i])
         # dq = 0.5*(dv[i]-dw[i])
-        # v = vertices[i] # (A) i-th component of all the vertices (array) -- changing its entries changes 'vertices' !!
-        # v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
-        # v[e0] = v[e4] + dw[i]
-        # v[e3] = v[e1] - dw[i]
+        # vertices[i,e0] += dq
+        # vertices[i,e3] -= dq
+        # vertices[i,before] = vertices[i,after] + np.array([dq, -dp, -dq, dp])
+
+        # # (A) previous version
+        dp = 0.5*(dv[i]+dw[i])
+        dq = 0.5*(dv[i]-dw[i])
+        v = vertices[i] # (A) i-th component of all the vertices (array) -- changing its entries changes 'vertices' !!
+        v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
+        v[e0] = v[e4] + dw[i]
+        v[e3] = v[e1] - dw[i]
 
     #
     #   DEBUG
     #
     # vertices after T1
-    Ap = vertices[:,np.array([e0,e1,e2])]
-    Bp = vertices[:,np.array([e3,e4,e5])]
-    An1p = vertices[:,reverse[e1]]
-    An2p = vertices[:,reverse[e2]]
-    Bn4p = vertices[:,reverse[e4]]
-    Bn5p = vertices[:,reverse[e5]]
-    print("A' = \n", Ap,"\n")
-    print("B' = \n", Bp,"\n")
-    print("A'n1 = \n", An1p,"\n")
-    print("A'n2 = \n", An2p,"\n")
-    print("B'n4 = \n", Bn4p,"\n")
-    print("B'n5 = \n", Bn5p,"\n")
-    #
-    import matplotlib.pyplot as plt
-    plt.gca().set_aspect('equal', adjustable='box')
-    A = A[:,0]
-    B = B[:,0]
-    Ap = Ap[:,0]
-    Bp = Bp[:,0]
-    plt.plot([A[0],B[0]],[A[1],B[1]],color="orange")
-    plt.plot([An1[0],A[0],An2[0]],[An1[1],A[1],An2[1]],color="orange")
-    plt.plot([Bn4[0],B[0],Bn5[0]],[Bn4[1],B[1],Bn5[1]],color="orange")
-    plt.plot([Ap[0],Bp[0]],[Ap[1],Bp[1]],color="blue")
-    plt.plot([An1p[0],Ap[0],An2p[0]],[An1p[1],Ap[1],An2p[1]],color="blue")
-    plt.plot([Bn4p[0],Bp[0],Bn5p[0]],[Bn4p[1],Bp[1],Bn5p[1]],color="blue")
-    plt.savefig("testT1.png")
-    plt.show()
-    exit()
+    # Ap = vertices[:,np.array([e0,e1,e2])]
+    # Bp = vertices[:,np.array([e3,e4,e5])]
+    # An1p = vertices[:,reverse[e1]]
+    # An2p = vertices[:,reverse[e2]]
+    # Bn4p = vertices[:,reverse[e4]]
+    # Bn5p = vertices[:,reverse[e5]]
+    # print("A' = \n", Ap,"\n")
+    # print("B' = \n", Bp,"\n")
+    # print("A'n1 = \n", An1p,"\n")
+    # print("A'n2 = \n", An2p,"\n")
+    # print("B'n4 = \n", Bn4p,"\n")
+    # print("B'n5 = \n", Bn5p,"\n")
+    # #
+    # import matplotlib.pyplot as plt
+    # plt.gca().set_aspect('equal', adjustable='box')
+    # A = A[:,0]
+    # B = B[:,0]
+    # Ap = Ap[:,0]
+    # Bp = Bp[:,0]
+    # plt.plot([A[0],B[0]],[A[1],B[1]],color="orange")
+    # plt.plot([An1[0],A[0],An2[0]],[An1[1],A[1],An2[1]],color="orange")
+    # plt.plot([Bn4[0],B[0],Bn5[0]],[Bn4[1],B[1],Bn5[1]],color="orange")
+    # plt.plot([Ap[0],Bp[0]],[Ap[1],Bp[1]],color="blue")
+    # plt.plot([An1p[0],Ap[0],An2p[0]],[An1p[1],Ap[1],An2p[1]],color="blue")
+    # plt.plot([Bn4p[0],Bp[0],Bn5p[0]],[Bn4p[1],Bp[1],Bn5p[1]],color="blue")
+    # plt.savefig("testT1.png")
+    # plt.show()
+    # exit()
     #
     #
     #
