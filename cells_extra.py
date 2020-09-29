@@ -30,7 +30,6 @@ lifespan=100.0
 
 force=TargetArea()+Pressure()+Perimeter()+Tension()
 
-
 def property_update(cells, ready):
     """
     Updates the cells object's properties after division. 
@@ -94,14 +93,11 @@ def property_update(cells, ready):
             properties['family'] = np.append(properties['family'],fill)
     return properties #properties for the new cells object
 
-
 #offspring[k] = [-1,-1] if cell k has not divided.
 #If offspring[k]=[a,b], a,b>0 if cell k has divided and a,b are the ids of the
 #daughter cells.
 #The point of this is to allow us to work backwards and find out a cell's
 #family tree if we want.
-
-
 
 def physical_property_update(cells):
     """
@@ -181,7 +177,6 @@ def divide2_cells2(cells,ready):
     cells2 = Cells(mesh,props) #form a new cells object with the updated properties. WHen we update properties, change to cells2 =Cells(mesh,prop)
     return cells2
 
-
 def ready_to_divide(cells):
     """
     Args:
@@ -195,7 +190,6 @@ def ready_to_divide(cells):
     else:#~cells.empty()[i] is True iff cell i is alive, it's False otherwise
         ready = np.where(~cells.empty() & (cells.mesh.area>=0.95*A_c))[0]
     return ready
-    
     
 def build_cells(size=None, grid_type=None , source_width=None,age=None,parent=None,left= None):
     """
@@ -260,9 +254,7 @@ def build_cells_simple(size=None, grid_type=None): #used in Neural_Tube2_setup, 
         mesh=_modified_toroidal_random_mesh(size[0], size[1],noise=0.2,rand=np.random)
     cells = Cells(mesh)
     return cells
-                
-    
-        
+                   
 def set_edge_parameters(cells,prop_name,default,prop_vector=None,param=None):
     """
     prop_name is a string
@@ -307,7 +299,7 @@ def set_face_parameters(cells,prop_name,default,prop_vector=None,param=None):
         for i in range(n_face):
             if prop_vector[i]==1:
                 cells.properties[prop_name][i]=param[1]
-    
+
 def set_physical_properties(cells, prop=None,K=None,A0=None,Gamma=None,Lambda=None,Lambda_bdy=None,P=None,boundary_P=None):
     """
     Sets the properties for the cells object according to their type.  The 'type'
@@ -342,90 +334,7 @@ def set_physical_properties(cells, prop=None,K=None,A0=None,Gamma=None,Lambda=No
     set_edge_parameters(cells,'boundary_P',P,prop,boundary_P)
     return cells              
         
-def setup_source(FE, width, parameters):
-    """
-    FE is a finite element object
-    width is approximately the number of cells wide the source is.
-    parameters is a vector of floats
-    parameters[0] is K for the source faces
-    parameters[1] is A0 for the source faces
-    parameters[2] is Gamma for the source faces
-    parameters[3] is Lambda for the edges of the source faces
-    parameters[4] is P for the edges of the source faces
-    parameters[5] is boundary_P for the edges of the source faces
-    """  
-    approx_cell_width = 2*np.mean(FE.cells.mesh.length)
-    cents=FE.centroids
-    n_face = cells.mesh.n_face
-    FE.cells.properties['source']=np.zeros(n_face)
-    for k in FE.living_faces:
-        if (centoids[k][0] > -0.5*width*approx_cell_width):
-            if (centoids[k][0] < 0.5*width*approx_cell_width):
-                FE.cells.properties['source'][k]=1.0
-
-def setup_source2(cells, width=None, parameters=None):
-    """
-    Defines the faces which are morphogen producers as a vertical strip.
-    The default width of the strip is approximately two cells.
-    Physical parameters for the strip can be specified if desired.
-    Works for cell grids where no cells have died.
-    Args:
-    width is approximately the number of cells wide the source is.
-    parameters is a vector of floats
-    parameters[0] is K for the source faces
-    parameters[1] is A0 for the source faces
-    parameters[2] is Gamma for the source faces
-    parameters[3] is Lambda for the edges of the source faces
-    parameters[4] is P for the edges of the source faces
-    parameters[5] is boundary_P for the edges of the source faces
-    """  
-    approx_cell_width = 2*np.mean(cells.mesh.length)
-    cents=centroids2(cells)
-    n_face = cells.mesh.n_face
-    cells.properties['source']=np.zeros(n_face)
-    if width is None:
-        width=2
-    for k in range(n_face):
-        if (cents[k][0] > -0.5*width*approx_cell_width):
-            if (cents[k][0] < 0.5*width*approx_cell_width):
-                cells.properties['source'][k]=1.0
-    if parameters is not None:
-        cells.properties['source_parameters']=parameters
-
-def setup_source3(cells, width=None, parameters=None):
-    """
-    Defines the faces which are morphogen producers as a vertical strip.
-    The default width of the strip is approximately two cells.
-    Physical parameters for the strip can be specified if desired.
-    Works for cell grids where no cells have died.
-    Args:
-    width is approximately the number of cells wide the source is.
-    parameters is a vector of floats
-    parameters[0] is K for the source faces
-    parameters[1] is A0 for the source faces
-    parameters[2] is Gamma for the source faces
-    parameters[3] is Lambda for the edges of the source faces
-    parameters[4] is P for the edges of the source faces
-    parameters[5] is boundary_P for the edges of the source faces
-    Also defines a property 'left' for the faces which are in the source strip,
-    or on the left of it.
-    """  
-    approx_cell_width = 2*np.mean(cells.mesh.length)
-    cents=centroids2(cells)
-    n_face = cells.mesh.n_face
-    cells.properties['source']=np.zeros(n_face)
-    cells.properties['left']=np.zeros(n_face)
-    if width is None:
-        width=2
-    for k in range(n_face):
-        if (cents[k][0] < 0.5*width*approx_cell_width):
-                cells.properties['left'][k]=1.0
-                if (cents[k][0] > -0.5*width*approx_cell_width):
-                    cells.properties['source'][k]=1.0
-    if parameters is not None:
-        cells.properties['source_parameters']=parameters
-        
-def setup_source4(cells, width=None): #used in NT_full_sim_seq
+def setup_source(cells, width=None): #used in NT_full_sim_seq
     """
     Defines the faces which are morphogen producers as a vertical strip.
     The default width of the strip is approximately two cells.
@@ -691,7 +600,6 @@ def set_group_properties2(cells,group_name, group_parameters): #used in NT_full_
     cells.properties['P'][group_ids]=group_parameters[5]
     #cells.properties['boundary_P'][group_ids]=group_parameters[6]        
                
-
 def randomize(cells, N, dt):
     """
     Hacked up version of simulation_with_division (Pilar)
@@ -828,10 +736,6 @@ def update_age(cells,dt):
     """
     cells.properties['age'] = cells.properties['age']+dt*cells.properties['ageingrate']
     
-
-   
-        
-    
 def colour_offsp(cells):
     cells2=cells.copy()
     cells2.properties['color']=np.ones((cells2.mesh.n_face, 3)) #to store RGB number for each face
@@ -841,16 +745,6 @@ def colour_offsp(cells):
         #print "just a number", cells2.mesh.n_face
         cells2.properties['color'][np.where(cells2.properties['parent'] == k)] = rgb_value
     return cells2
-
-def colour_offsp2(cells):
-    n_face=cells.mesh.n_face
-    cells.properties['color']=np.ones((n_face, 3)) #to store RGB number for each face
-    for s in range(1,7): #we will go through 6 colours
-        rgb_value = int_to_rgb(s) #set the rgv value for this loop
-        for k in range(n_face):
-            if cells.properties['parent'][k]==s: #if cell k has ancestor s, it gets the colour rgb_value
-                cells.properties['color'][k]=rgb_value
-    return cells                
 
 def colour_source(cells , rgb_value):
     """
@@ -895,20 +789,6 @@ def int_to_rgb(v):
     if v==6:
         return np.array([1,1,1])
     
-
-
-
-def rand_split():
-    """
-    Returns a realisation of a N(0.5, 0.16) variable which lies in  [0.001, 0.999]
-    """
-    dummy = np.random.normal(0.5,0.16)
-    while (dummy< 0.001 or dummy > 0.999):
-        dummy = np.random.normal(0.5,0.16)
-    return dummy
-
-
-
 def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None):
     """
     Args:
@@ -944,9 +824,9 @@ def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None
     set_physical_properties2(cells, vm_parameters) #sets the vm parameters for each cell as specified
     cells.properties['parent'] = np.array(list(range(cells.mesh.n_face))) #to track descendents
     if source_data is None:
-        setup_source4(cells) #defines the 'source' and 'left' properties 
+        setup_source(cells) #defines the 'source' and 'left' properties 
     else:
-        setup_source4(cells,source_data[0]) #sets width of source if specified
+        setup_source(cells,source_data[0]) #sets width of source if specified
         if len(source_data ==2): #if vm parameters are input, this sets them
             set_group_properties2(cells,'source', source_data[1]) 
     if cluster_data is not None:
@@ -957,97 +837,6 @@ def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None
             if len(cluster_data)==3: #set up cluster properties if specified
                 set_group_properties2(cells,'cluster', cluster_data[2]) 
     return cells 
-    
-    
-    
-def cells_simulate2(cells, N_step, dt,transitions=None,IKNM=None):
-        """
-        Args:
-            cells is a cells object
-            N_step is the number of steps we wish to perform
-            diff_coeff is the diffusion coefficient for the morphogen flow
-            dt is the time step
-        Returns:
-            A list 'history' of cells objects.
-            history[i] is the cells object at step i of the simulation.  
-        """
-        history=[]
-        history.append(copy.deepcopy(cells))
-        counter=0
-        #time=0
-        if IKNM is not None:#set the age, ageing rate and compute zposn and A0
-            cells.properties['age']=np.random.normal(0.8,0.15,len(cells)) #create age property
-            cells.properties['ageingrate'] = np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)) #create ageing_rate property
-            set_zposn_A0(cells) #sets zposn and AO properties
-        while counter <N_step+1:
-            if transitions is not None:
-                cells=divide2_cells(cells)
-                cells=T1_cells(cells)
-                cells=rem_collapsed_cells(cells) #add in some 
-            cells = move_basic_grow_cells(cells,dt)    
-            #time = time+dt
-            if IKNM is not None:
-                update_age(cells,dt) #update 'age' property
-                set_zposn_A0(cells) #update z position and A0 values    
-            history.append(copy.deepcopy(cells))
-            #fe_history.append(fe_new)
-            #fe = fe_new
-            #print "NNNNNNNNNNNNNNNNNNNNN_FFFFFFFFFFFace", NT.FE.cells.mesh.n_face
-            counter+=1
-            #current=current_new
-        return history
-
-def cells_simulate(cells, N_step, dt,transitions=None,IKNM=None):
-        """
-        Args:
-            cells is a cells object
-            N_step is the number of steps we wish to perform
-            diff_coeff is the diffusion coefficient for the morphogen flow
-            dt is the time step
-        Returns:
-            A list 'history' of cells objects.
-            history[i] is the cells object at step i of the simulation.  
-        """
-        history=[]
-        history.append(copy.deepcopy(cells))
-        counter=0
-        #time=0
-        if IKNM is not None:#set the age, ageing rate and compute zposn and A0
-            cells.properties['age']=np.random.normal(0.8,0.15,len(cells)) #create age property
-            cells.properties['ageingrate'] = np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)) #create ageing_rate property
-            set_zposn_A0(cells) #sets zposn and AO properties
-        while counter <N_step+1:
-            if transitions is not None:
-                cells=divide2_cells(cells)
-                cells=T1_cells(cells)
-                cells=rem_collapsed_cells(cells)
-            #print 'K len', len(cells.properties['K'])   
-            #print 'A0 len', len(cells.properties['A0'])
-            #print 'area len', len(cells.mesh.area)
-            print(counter)
-            cells = move_grow_cells(cells,dt)    
-            #time = time+dt
-            if IKNM is not None:
-                update_age(cells,dt) #update 'age' property
-                set_zposn_A0(cells) #update z position and A0 values    
-            history.append(copy.deepcopy(cells))
-            #fe_history.append(fe_new)
-            #fe = fe_new
-            #print "NNNNNNNNNNNNNNNNNNNNN_FFFFFFFFFFFace", NT.FE.cells.mesh.n_face
-            counter+=1
-            #current=current_new
-        return history    
-
-
-
-def cells_simulator(N_step,size=None, vm_parameters=None,source_data=None,cluster_data=None,transitions=None,IKNM=None):
-    """
-    Creates a cells object and simultates it for the input number N_step of steps.
-    
-    """
-    cells=cells_setup(size, vm_parameters,source_data,cluster_data)
-    history = cells_simulate(cells, N_step, dt,transitions,IKNM)
-    return history
 
 def divide_ready(cells, ready):  
     """
@@ -1068,7 +857,6 @@ def divide_ready(cells, ready):
     props = property_update(cells, ready) #update cells.properties
     cells2 = Cells(mesh,props) #form a new cells object with the updated properties. WHen we update properties, change to cells2 =Cells(mesh,prop)
     return cells2
-
 
 def T1_and_T2_transitions(cells):
     """
@@ -1148,21 +936,6 @@ def cells_evolve(cells,dt,expansion=None,vertex=True):
         update_zposn_and_A0(cells)
     return cells #, expansion
 
-def cell_dynamics(cells, N_step, dt, expansion=None):
-    history=[]
-    history.append(cells)
-    for k in range(N_step):
-        ready = ready_to_divide(cells) #test which cells are about to divide
-        #print len(ready)
-        cells = divide_ready(cells, ready) #perform divisions
-        #cells.properties = property_update(cells, ready) #update properties dictionary
-        cells = T1_and_T2_transitions(cells) #perform T1 and T2 transitions
-        cells = evolve(cells,dt,expansion)[0] #perform one step of movement and growth
-        update_age(cells, dt) #update the age property
-        update_zposn_and_A0(cells) #set the nucleus position and preferred area A0.
-        colour_source(cells , np.array([1,0,0]))
-        history.append(cells) #add cells object to the history
-    return history
         
 
 def living_not_source(cells):
@@ -1174,9 +947,3 @@ def living_not_source(cells):
     else:
         return ~cells.empty()
     
-
-            
-        
-
-
-             

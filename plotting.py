@@ -155,6 +155,25 @@ def set_colour_poni_state(cells,poni_state):
         elif m==3:
             cells.properties['color'][k] = np.array([0,1,1]) # ?, Irx high 
 
+def drawShh(nodes,alpha,z_high, z_low, ax=None, size=None):
+    l=[]
+    r=[]
+    if not size:
+        d_size=10.0
+    else:
+        d_size = size
+    for i in range(len(nodes)):
+        l.append(nodes[i][0])
+        r.append(nodes[i][1])
+    if not ax:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+    ax.cla()
+    ax.set_xlim([-0.55*d_size,0.55*d_size])
+    ax.set_ylim([-0.55*d_size,0.55*d_size])
+    ax.set_zlim([z_low -0.1 , z_high])
+    Axes3D.plot_trisurf(ax,l,r,alpha)
+    plt.draw()  
 
 def morphogen_video(nodes_array,alpha_array, outputdir, name_file, zmin=None, zmax=None):    
     #v_max = np.max((np.max(cells_array[0].mesh.vertices), np.max(cells_array[-1].mesh.vertices)))
@@ -184,8 +203,7 @@ def morphogen_video(nodes_array,alpha_array, outputdir, name_file, zmin=None, zm
     i=0
     frames=[]
     for i in range(len(nodes_array)):
-        #drawShh(nodes_array[i],alpha_array[i],27.0, ax , size)
-        drawShh2(nodes_array[i],alpha_array[i],z_high, z_low,ax,size)
+        drawShh(nodes_array[i],alpha_array[i],z_high, z_low,ax,size)
         i=i+1
         frame=outputdir+"/image%03i.png" % i
         fig.savefig(frame,dpi=500)
