@@ -6,6 +6,17 @@
 4. `fe_cy{,_omp}.pyx`: cython implementation of finite element methods {, with openMP} 
 5. Unused routines inside `evolution_routines.py`
 
+#### Usage
+
+```bash
+python neuraltube.py [-t <tot time> | --every <time b/w frames> --init <initialization time --dt <time step>]
+```
+
+To show all possible options:
+```bash
+python neuraltube.py -h
+```
+
 
 ### Comments/Questions
 
@@ -108,17 +119,17 @@ Possible ways to cure this:
 
 Commented 
 New code for changing the coordinates of the edge's extremes
-'''python
+```python
 for i in [0, 1]:
     dp = 0.5*(dv[i]+dw[i])
     dq = 0.5*(dv[i]-dw[i])
     vertices[i,e0] += dq
     vertices[i,e3] -= dq
     vertices[i,before] = vertices[i,after]  + np.array([dq, -dp, -dq, dp])
-'''
+```
 
 Old code
-'''python
+```python
 for i in [0, 1]:
     dp = 0.5*(dv[i]+dw[i])
     dq = 0.5*(dv[i]-dw[i])
@@ -126,6 +137,6 @@ for i in [0, 1]:
     v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
     v[e0] = v[e4] + dw[i]
     v[e3] = v[e1] - dw[i]
-'''
+```
 
 The old code was changing the indices in the correct way (correct topological change), but it was swapping the coordinates of the two extremes of the short edge. Now it seems fine. **How was this not causing problems? Why were cells printed fine at the end?**

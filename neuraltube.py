@@ -7,7 +7,7 @@ import time
 import dill
 import numpy as np
 from NT_vtx import build_NT_vtx_from_scratch
-from plotting import animate_surf_video_mpg, cells_state_video
+from plotting import morphogen_video, cells_state_video
 from options import *
 
 
@@ -149,6 +149,6 @@ if __name__ == "__main__":
         cells_list = [nt.FE_vtx.cells   for nt in NT_list]
         verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
 
-        cells_state_video(cells_list, ponis_list, path, path+"/state-vid")
-        animate_surf_video_mpg(nodes_list,concs_list, path, path+"/surface-video")#,zmin=0)#,zmax=10)
+        cells_state_video(cells_list, ponis_list, path, path+"/video_cells")
+        morphogen_video(nodes_list,concs_list, path, path+"/video_morphogen")#,zmin=0)#,zmax=10)
     

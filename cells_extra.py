@@ -18,7 +18,6 @@ from Finite_Element import *
 from Finite_Element import _add_edges
 from run_select import division_axis, mod_division_axis
 from scipy.integrate import odeint
-from plotting import _modified_animate_video_mpg
 import sys
 
 #rand=np.random
@@ -1165,51 +1164,6 @@ def cell_dynamics(cells, N_step, dt, expansion=None):
         history.append(cells) #add cells object to the history
     return history
         
-        
-
-    
-    
-    
-def prop_video_cells(cells_array, prop_name, rgb_value, name_file):
-    """
-    TESTED: WORKS
-    Args:
-        cells_array is a list of cells objects
-        props is a list of property names.
-        Each property name is a string
-        rgb_value is a an array
-        [i,j,k] where i,j,k in {0,1}.
-        rgb_values[i] is the colour of the cells which have property props[i] in
-        the video.
-        name_file (string) is the name of the file which will store the video
-    Returns:
-        Makes a video in which cells with property props[i] have colour
-        rgb_values[i]
-        
-    Only works when props has 1 element
-    """
-    dummy=[]
-    default_rgb_value=np.array([1,1,1])
-    for cells in cells_array:
-        cells2=colour_group(cells, prop_name , rgb_value)
-        dummy.append(cells2)   
-    _modified_animate_video_mpg(dummy,name_file)   
-    
-
-#cellsEg = cells_setup(cluster_data=[[2,2],[2,2]])
-#print cellsEg.mesh.boundary(1), type(cellsEg.mesh.boundary(1))
-#print cellsEg.mesh.length, type(cellsEg.mesh.length)
-#print cellsEg.empty()
-#print type(cellsEg.empty())
-#print ~cellsEg.empty()
-#print np.where(~cellsEg.empty()==True)
-
-#print cellsEg.by_edge('P','boundary_P')
-#cellsEg = colour_group(cellsEg, 'cluster' , np.array([0,1,0]))
-#draw(cellsEg)
-#
-#hist=cells_simulator(10, cluster_data=[[2,2],[2,2], 2*default_vm_parameters], IKNM='ON', transitions='ON')
-#prop_video_cells(hist, 'source', np.array([1,0,0]), 'doris_day')
 
 def living_not_source(cells):
     """
