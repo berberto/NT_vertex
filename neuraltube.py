@@ -6,14 +6,10 @@ import sys
 import time
 import dill
 import numpy as np
-from NT_vtx import build_NT_vtx_from_scratch
+from NT_vtx import build_NT_vtx, load_NT_vtx
 from plotting import morphogen_video, cells_state_video
 from options import *
 
-
-def load (filename):
-    with open(filename, "rb") as f:
-        return dill.load(f)
 
 
 if __name__ == "__main__":
@@ -97,21 +93,29 @@ if __name__ == "__main__":
 
     if simulate:
         os.system("mkdir -p "+path)
-        print("building NT")
-        neural_tube=build_NT_vtx_from_scratch(size = [xsize,ysize])
 
-        # initialization
-        print("Initialization: simulation of the vertex model only")
-        for k in range(int(T_init/dt)):
-            if k%N_skip == 0:
-                print("%2.1f/100   t = %.4f   frame = %d"%(k*dt/T_init*100., k*dt, int(k/N_skip)), end="\r")
-                with open (path+"/%06d_NT_init.pkl"%(k), "wb") as f:
-                    dill.dump(neural_tube, f)
+        if restart_file is None:
+            print("Building NT object from scratch")
+            neural_tube=build_NT_vtx(size = [xsize,ysize])
+        
+            # initialization
+            print("Initialization: simulation of the vertex model only")
+            for k in range(int(T_init/dt)):
+                if k%N_skip == 0:
+                    print("%2.1f/100   t = %.4f   frame = %d"%(k*dt/T_init*100., k*dt, int(k/N_skip)), end="\r")
+                    with open (path+"/%06d_NT_init.pkl"%(k), "wb") as f:
+                        dill.dump(neural_tube, f)
 
-            neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                grn=False, morphogen=False)
-            neural_tube.transitions(division=division)
-        print("")
+                neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
+                    grn=False, morphogen=False)
+                neural_tube.transitions(division=division)
+            print("")
+        else:
+            # load from file
+            print("Load from restart file: "+restart_file)
+            neural_tube=load_NT_vtx(restart_file)
+            print("")
+
         
         if not init_only:
             # simulation
@@ -137,8 +141,8 @@ if __name__ == "__main__":
 
         allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
         # allNTinit = sorted([x for x in allfiles if "_NT_init.pkl" in x])
-        NT_list = [load(path+"/"+file) for file in allNT]
-        # NTinit_list = [load(path+"/"+file) for file in allNTinit]
+        NT_list = [load_NT_vtx(path+"/"+file) for file in allNT]
+        # NTinit_list = [load_NT_vtx(path+"/"+file) for file in allNTinit]
         nodes_list = [
                     np.vstack([
                         nt.FE_vtx.cells.mesh.vertices.T[::3],

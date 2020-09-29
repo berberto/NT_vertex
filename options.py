@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 parser = ArgumentParser(description='Neural tube simulation')
 parser.add_argument('--prefix', dest='file_prefix', metavar='<name>', type=str, default=None, help='Set prefix name (name of the simulation). Default: None')
 parser.add_argument('--dry', dest='test_output', action='store_true', default=False, help='Dry run. Test output path and options')
+parser.add_argument('--restart','-r', dest='restart_file', metavar='<file>', type=str, default=None, help='Restart from dill file storing a NT_vtx object: these are saved via "dill.dump(<NT obj>, <file>)"; NT object loaded as "<NT obj> = dill.dump(<file>)". The loaded NT object is used as initial condition for the full simulation (vertex + FE), and "thermalization" phase is skipped.')
 
 SIMpars = parser.add_argument_group(title='Simulation parameters')
 SIMpars.add_argument('--dt', '-d', dest='dt', metavar='<val>', type=float, default=.001, help='Time step (float). Default: 0.001')
@@ -42,6 +43,7 @@ args = parser.parse_args()
 
 file_prefix = args.file_prefix
 test_output = args.test_output
+restart_file = args.restart_file
 
 T_sim = args.T
 T_init = args.T_init

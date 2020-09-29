@@ -123,8 +123,16 @@ class NT_vtx(object):
     self.FE_vtx.edges_to_nodes = self.FE_vtx.cells.mesh.edges.ids//3
     self.FE_vtx.faces_to_nodes = cTn
   
-def build_NT_vtx_from_scratch(size=None, vm_parameters=None,source_data=None,cluster_data=None):
+def build_NT_vtx(size=None, vm_parameters=None,source_data=None,cluster_data=None):
   fe_vtx  = build_FE_vtx_from_scratch(size, vm_parameters,source_data,cluster_data)
   n_face = fe_vtx.cells.mesh.n_face
   grn=build_GRN_full_basic(n_face)
   return NT_vtx(fe_vtx,grn)
+
+
+def load_NT_vtx (filename):
+  with open(filename, "rb") as f:
+    content = dill.load(f)
+  if not isinstance(content,NT_vtx):
+    raise ValueError("load_NT_vtx: content of loaded file not corresponding to a NT_vtx object.")
+  return content
