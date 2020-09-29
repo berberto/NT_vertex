@@ -154,14 +154,19 @@ def T1(cells,eps=None):
             edge = short_edges.pop()    # (A) picks the last element of 'short_edges' and removes it from list
             if edge in boundary_edges:
                 edge = reverse[edge]
-            neighbours = _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge)
+
+            # (A) _T1 returns all the half-edges adjacent to the one being rotated
+            (neighbours,_) = _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge)
+            # (A) these are excluded from list of short edges
             for x in neighbours:
                 short_edges.discard(x)
         mesh = mesh.copy() # copy mesh 
-        mesh.edges = Edges(reverse) # set attributes
-        mesh.vertices = vertices    
-        mesh.face_id_by_edge = face_id_by_edge        
-        cells = Cells(mesh, props) #make a cells object
+        
+        # set attributes of cells
+        mesh.edges = Edges(reverse) # (A) why the reverse edges?
+        mesh.vertices = vertices
+        mesh.face_id_by_edge = face_id_by_edge
+        cells = Cells(mesh, props) # make a cells object
         # T1 transitions do not change the concentration_by_edge or concentration_by_centroid
         # (A) and this is wrong, isn't it?
         return cells

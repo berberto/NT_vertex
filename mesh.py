@@ -310,11 +310,11 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
 
 
     e0 = edge           # edge to be rotated by 90 deg and rescaled
-    e1 = rotate[edge]   #  ''  found CCW from e0 around origin of e0
-    e2 = rotate[e1]     #  ''  found CCW from e1 around origin of e0
+    e1 = rotate[edge]   #  ''  found CW from e0 around origin of e0
+    e2 = rotate[e1]     #  ''  found CW from e1 around origin of e0
     e3 = reverse[edge]  #  ''  anti-parallel to e0
-    e4 = rotate[e3]     #  ''  found CCW from e3 around origin of e3
-    e5 = rotate[e4]     #  ''  found CCW from e4 around origin of e3
+    e4 = rotate[e3]     #  ''  found CW from e3 around origin of e3
+    e5 = rotate[e4]     #  ''  found CW from e4 around origin of e3
 
     #
     #   DEBUG
@@ -372,7 +372,7 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
     #
     #   DEBUG
     #
-    # vertices after T1
+    # # vertices after T1
     # Ap = vertices[:,np.array([e0,e1,e2])]
     # Bp = vertices[:,np.array([e3,e4,e5])]
     # An1p = vertices[:,reverse[e1]]
@@ -409,7 +409,7 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
     face_id_by_edge[e0] = face_id_by_edge[e4]
     face_id_by_edge[e3] = face_id_by_edge[e1]
 
-    return np.hstack([before, after_r])
+    return np.hstack([before, after_r]), vertices[:,[e0,e3]]
 
 
 def _transition(mesh, eps):
@@ -432,7 +432,7 @@ def _transition(mesh, eps):
         edge = short_edges.pop()
         if edge in boundary_edges:
             edge = reverse[edge]
-        neighbours = _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge)
+        (neighbours,_) = _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge)
         for x in neighbours:
             short_edges.discard(x)
 
