@@ -321,6 +321,8 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
     #
     # print([e0,e1,e2,e3,e4,e5])
     # # vertices before T1
+    # print("")
+    # print("T1 at edge ", edge)
     # A = vertices[:,np.array([e0,e1,e2])]
     # B = vertices[:,np.array([e3,e4,e5])]
     # An1 = vertices[:,reverse[e1]]
@@ -347,7 +349,11 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
     reverse[after_r] = before     # (A) the reverse of the (new) reverse takes the value of before
 
     # (A) 'vertices' is a numpy array indexed by (component [0,1], index)
-    dv = vertices[:, e4]-vertices[:, e0]            # (A) any reason why not e3 or e5?
+    # (A) any reason why not e3 or e5? PERIODICITY
+    # (A) e4 is the edge continuing from e0 along the border of the same cell,
+    # (A) so their roots must be close! Instead, we can only say that
+    # (A) vertices associated to e3 and e5 differ from e0 by 'dv' modulo a periodicity.
+    dv = vertices[:, e4]-vertices[:, e0]
     # (A) isn't there a problem if the edge is on the boundary? 
     #     are vertices labelled like this always nearby?
     l = 1.01*eps/np.sqrt(dv[0]*dv[0]+dv[1]*dv[1])   # (A) new length of edge to be 1.01 eps
@@ -355,19 +361,19 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
 
     # (A) change the coordinates of the vertices
     for i in [0, 1]:
-        # dp = 0.5*(dv[i]+dw[i])
-        # dq = 0.5*(dv[i]-dw[i])
-        # vertices[i,e0] += dq
-        # vertices[i,e3] -= dq
-        # vertices[i,before] = vertices[i,after] + np.array([dq, -dp, -dq, dp])
-
-        # # (A) previous version
         dp = 0.5*(dv[i]+dw[i])
         dq = 0.5*(dv[i]-dw[i])
-        v = vertices[i] # (A) i-th component of all the vertices (array) -- changing its entries changes 'vertices' !!
-        v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
-        v[e0] = v[e4] + dw[i]
-        v[e3] = v[e1] - dw[i]
+        vertices[i,before] = vertices[i,after] + np.array([dq, -dp, -dq, dp])
+        vertices[i,e0] = vertices[i,e4] - dw[i] # e4 = next[e0]
+        vertices[i,e3] = vertices[i,e1] + dw[i] # e1 = next[e3]
+
+        # # (A) previous version
+        # dp = 0.5*(dv[i]+dw[i])
+        # dq = 0.5*(dv[i]-dw[i])
+        # v = vertices[i] # (A) i-th component of all the vertices (array) -- changing its entries changes 'vertices' !!
+        # v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
+        # v[e0] = v[e4] + dw[i]
+        # v[e3] = v[e1] - dw[i]
 
     #
     #   DEBUG
