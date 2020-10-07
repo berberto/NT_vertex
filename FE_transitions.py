@@ -135,7 +135,7 @@ def T1(cells,eps=None):
             
         # if the set is empty (no T1 transition occurring), then return the cells as they are
         if not short_edges:
-            return cells
+            return cells, ids_t1
 
         # make a copy of the lists to be changed
         reverse, vertices, face_id_by_edge = edges.reverse.copy(), mesh.vertices.copy(), mesh.face_id_by_edge.copy()
@@ -169,7 +169,7 @@ def T1(cells,eps=None):
         cells = Cells(mesh, props) # make a cells object
         # T1 transitions do not change the concentration_by_edge or concentration_by_centroid
         # (A) and this is wrong, isn't it?
-        return cells
+        return cells, ids_t1
  
        
 def rem_collapsed(cells,c_by_e):

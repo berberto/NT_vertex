@@ -291,7 +291,7 @@ def _remove(edges, reverse, vertices, face_id_by_edge):
     Returns:
         A tuple of reverse,vertex,cell arrays with the edges removed.
     """
-    es = np.unique(edges/3*3)
+    es = np.unique(edges//3*3)
     to_del = np.dstack([es, es+1, es+2]).ravel()  # orbit of the given edges under rotation
     reverse = np.delete(reverse, to_del)
     reverse = (np.cumsum(np.bincount(reverse))-1)[reverse]  # relabel to get a perm of [0,...,N-1]
@@ -445,9 +445,16 @@ def _transition(mesh, eps):
     # Remove collapsed (ie two-sided) faces.
     while True:
         nxt = rotate[reverse]
+        # (A) identify two-sided cells:
+        # (A) this happens when one side of a triangular cell performs a T1:
+        # (A) the adjacent edge along the boundary of the cell corresponds to its reverse
+        # (A) WHY IS EDGES.IDS CUT AT LEN(NXT)? SHOULDN'T THE TWO ARRAYS BE EQUAL IN LENGTH?
         two_sided = np.where(nxt[nxt] == edges.ids[:len(nxt)])[0]
+
+        # (A) if none are two sided, do nothing
         if not len(two_sided):
             break
+        # (A) what the hell does this do?
         while np.any(reverse[reverse[rotate[two_sided]]] != reverse[rotate[nxt[two_sided]]]):
             reverse[reverse[rotate[two_sided]]] = reverse[rotate[nxt[two_sided]]]
         prev_face_id_by_edge = face_id_by_edge
@@ -484,7 +491,7 @@ def _add_edges(mesh, edge_pairs):
         v[[n+3, n+4, n+5]] = v2
 
         a = [n, n+1, n+2, n+3, n+5]
-        b = [e1, n+4, reverse[e1], e2, reverse[e2]]
+        b =  [e1, n+4, reverse[e1], e2, reverse[e2]]
         reverse[a], reverse[b] = b, a
 
         for j, edge in enumerate((e1, e2)):

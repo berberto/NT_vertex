@@ -71,7 +71,7 @@ class NT_vtx(object):
       self.GRN.division(ready)
 
     # perform T1 transitions - "neighbour exchange"
-    self.FE_vtx.cells = T1(self.FE_vtx.cells)
+    self.FE_vtx.cells,_ = T1(self.FE_vtx.cells)
     # performe T2 transitions-"leaving the tissue"
     # by removing small edges from cells through T1 transitions, some cells will become triangular and collapse to a point, which becomes a new node
     # c_by_e is the vector of concentrations given the index of the edge: only that is affected by the T1 transitions, while centroids are untouched 

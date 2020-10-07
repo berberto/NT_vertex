@@ -32,8 +32,6 @@ python neuraltube.py -h
 
 1. From `_T1` one should get information about the new positions of the extremes and the indices of the half-edges that are rotated. At the moment, it only returns a numpy array with the edges pointing to (and coming from) the neighbouring vertices, in order to avoid performing T1 transitions on those.
 
-1. **Check the velocities at the nodes which are involved in T1 and T2 transitions. Might be that they explode there.**
-
 1. `FE_vtx.py`:
 	- maybe make the `build_FE_vtx`/`build_FE_vtx_from_scratch` routines members of the `FE_vtx` class?
 
@@ -45,8 +43,8 @@ python neuraltube.py -h
 	- maybe SIMD enable some of the functions? how does that work with the `gil` stuff?
 
 3. `plotting`:
-	- move functions to produce videos there?
 	- `try...except` for `ffmpeg` first
+	- **make video with the animation function**, to make it faster and avoid the creation of so many pictures.
 
 6. **Everywhere** (all the necessary classes):
 	- add constructors that take info from files
@@ -54,13 +52,9 @@ python neuraltube.py -h
 1. `forces.py`:
 	- check forces (comment for MAC?) `by_face`, check mesh objects? `cells_extra` update property methods
 
-2. setup `expansion`.. why does it become negative? (see `run_select`)
-
 3. check `add_IKNM_properties`, random age initialization
 
-4. run "thermalization" phase of vm before initializing FE object (`build_FE_vtx`)
-
-5. `source_data` in `cells_setup`, includes width of shh producing strip
+5. `source_data` in `cells_setup`, includes width of shh producing strip (**note to self**: what should I do here?)
 
 6. check how to delete property from cells (like 'age', so cells divide only based on area and not on time -- for testing)
 
