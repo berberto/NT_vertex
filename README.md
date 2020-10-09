@@ -17,6 +17,10 @@ To show all possible options:
 python neuraltube.py -h
 ```
 
+### Currently doing
+
+Reverted `_T1` function in mesh to its buggy version, and reproducing error in `rem_collapsed` (see below in issues).
+
 
 ### Comments/Questions
 
