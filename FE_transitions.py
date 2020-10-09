@@ -203,9 +203,19 @@ def rem_collapsed(cells,c_by_e):
     while True:
         nxt = rotate[reverse]
         two_sided = np.where(nxt[nxt] == edges.ids[:len(nxt)])[0]
+        print("two_sided = ", two_sided, "\n")
+        exit()
         if not len(two_sided):
             break
         while np.any(reverse[reverse[rotate[two_sided]]] != reverse[rotate[nxt[two_sided]]]):
+            print("rotate[two_sided] =", rotate[two_sided])
+            print("reverse[rotate[two_sided]] =", reverse[reverse[rotate[two_sided]]])
+            print("reverse[reverse[rotate[two_sided]]] =", reverse[reverse[rotate[two_sided]]])
+            print("")
+            print("nxt[two_sided] = ", nxt[two_sided])
+            print("rotate[nxt[two_sided]] = ", rotate[nxt[two_sided]])
+            print("reverse[rotate[nxt[two_sided]]] = ", reverse[rotate[nxt[two_sided]]])
+            print("")
             reverse[reverse[rotate[two_sided]]] = reverse[rotate[nxt[two_sided]]]
             prev_face_id_by_edge = face_id_by_edge
             reverse, vertices, face_id_by_edge,c_by_e = _remove(two_sided, reverse, vertices, face_id_by_edge, c_by_e)

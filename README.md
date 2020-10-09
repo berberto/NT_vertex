@@ -21,6 +21,20 @@ python neuraltube.py -h
 
 Reverted `_T1` function in mesh to its buggy version, and reproducing error in `rem_collapsed` (see below in issues).
 
+Ran first
+```bash
+python neuraltube.py --prefix debugT2 --init 10. -t 50. --every 0.1 --dt 0.005
+```
+
+Than started from the most recent frame
+```bash
+python neuraltube.py --prefix debugT2-continue --init 10. -t 50. --every 0.1 --dt 0.005 -r outputs/debugT2_20x10_T5e+01_dt5e-03/003540_NT.pkl
+```
+
+Luckily this shows the same error as in Issues
+
+**Caution**: the random seed is chosen at the beginning of the FULL (thermalization + FE sim) dynamics; when the `restart` option is used from an intermediate snapshot, the behaviour is unpredictable. Best to save every snapshot for debugging and always pick the most recent one for less "unpredictability"
+
 
 ### Comments/Questions
 
