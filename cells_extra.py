@@ -690,6 +690,8 @@ def update_zposn_and_A0(cells):
     cells.properties['zposn'] = np.minimum(1.0,np.maximum(N_G1,np.maximum(N_S,N_G2)))
     """Target area function depending age and z nuclei position"""
     cells.properties['A0'] = (cells.properties['age']+1.0)*0.5*(1.0+cells.properties['zposn']**2)
+    if 'leaving' in cells.properties:
+        cells.properties['A0'] *= 1 - cells.properties['leaving']
 
 def update_age(cells,dt):
     """

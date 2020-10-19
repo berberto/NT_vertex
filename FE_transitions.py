@@ -25,7 +25,6 @@ def plot_edge(edges, vertices, reverse, ax=plt, **kwargs):
         a = vertices[:,edge]
         b = vertices[:,reverse[edge]]
         pts = np.array([a,b]).T
-        print(pts)
         ax.plot(pts[0],pts[1],**kwargs)
 
 def _remove(edges, reverse, vertices, face_id_by_edge , concentration_by_edge):
@@ -236,40 +235,41 @@ def rem_collapsed(cells,c_by_e):
             print("reverse[rotate[nxt[two_sided]]] = ", reverse[rotate[nxt[two_sided]]])
             print("")
             fig, ax = plt.subplots(1,2)
-            segments = np.array([
-                    reverse[two_sided],
-                    reverse[rotate[two_sided]],
-                    reverse[nxt[two_sided]],
-                    reverse[rotate[nxt[two_sided]]]
-                ]).T
-            segments_nxt = np.array([
-                    nxt[reverse[two_sided]],
-                    nxt[reverse[rotate[two_sided]]],
-                    nxt[reverse[nxt[two_sided]]],
-                    nxt[reverse[rotate[nxt[two_sided]]]]
-                ])
             ax[0].set_title("Before")
             for i in [0,1]:
+                segments = np.array([
+                        reverse[two_sided[i]],
+                        # reverse[rotate[two_sided[i]]],
+                        # reverse[nxt[two_sided[i]]],
+                        reverse[rotate[nxt[two_sided[i]]]]
+                    ]).T
+                segments_nxt = np.array([
+                        nxt[reverse[two_sided[i]]],
+                        # nxt[reverse[rotate[two_sided[i]]]],
+                        # nxt[reverse[nxt[two_sided[i]]]],
+                        nxt[reverse[rotate[nxt[two_sided[i]]]]]
+                    ])
                 plot_edge(segments, vertices, reverse, ax=ax[0], **styles['seg'][i])
                 plot_edge(segments_nxt, vertices, reverse, ax=ax[0], **styles['nxt'][i])
             count += 1
             print("Do something here...")
             reverse[reverse[rotate[two_sided]]] = reverse[rotate[nxt[two_sided]]]
 
-            segments = np.array([
-                    reverse[two_sided],
-                    reverse[rotate[two_sided]],
-                    reverse[nxt[two_sided]],
-                    reverse[rotate[nxt[two_sided]]]
-                ]).T
-            segments_nxt = np.array([
-                    nxt[reverse[two_sided]],
-                    nxt[reverse[rotate[two_sided]]],
-                    nxt[reverse[nxt[two_sided]]],
-                    nxt[reverse[rotate[nxt[two_sided]]]]
-                ])
             ax[1].set_title("After")
+            nxt = rotate[reverse]
             for i in [0,1]:
+                segments = np.array([
+                        reverse[two_sided[i]],
+                        # reverse[rotate[two_sided[i]]],
+                        # reverse[nxt[two_sided[i]]],
+                        reverse[rotate[nxt[two_sided[i]]]]
+                    ]).T
+                segments_nxt = np.array([
+                        nxt[reverse[two_sided[i]]],
+                        # nxt[reverse[rotate[two_sided[i]]]],
+                        # nxt[reverse[nxt[two_sided[i]]]],
+                        nxt[reverse[rotate[nxt[two_sided[i]]]]]
+                    ])
                 plot_edge(segments, vertices, reverse, ax=ax[1], **styles['seg'][i])
                 plot_edge(segments_nxt, vertices, reverse, ax=ax[1], **styles['nxt'][i])
             plt.show()

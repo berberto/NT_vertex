@@ -363,16 +363,17 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
     for i in [0, 1]:
         dp = 0.5*(dv[i]+dw[i])
         dq = 0.5*(dv[i]-dw[i])
-        # # (A) new version
-        # vertices[i,before] = vertices[i,after] + np.array([dq, -dp, -dq, dp])
-        # vertices[i,e0] = vertices[i,e4] - dw[i] # e4 = next[e0]
-        # vertices[i,e3] = vertices[i,e1] + dw[i] # e1 = next[e3]
+        vertices[i,before] = vertices[i,after] + np.array([dq, -dp, -dq, dp])
+        vertices[i,e0] = vertices[i,e4] - dw[i] # e4 = next[e0]
+        vertices[i,e3] = vertices[i,e1] + dw[i] # e1 = next[e3]
 
-        # (A) previous version
-        v = vertices[i] # (A) i-th component of all the vertices (array) -- changing its entries changes 'vertices' !!
-        v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
-        v[e0] = v[e4] + dw[i]
-        v[e3] = v[e1] - dw[i]
+        # # (A) previous version
+        # dp = 0.5*(dv[i]+dw[i])
+        # dq = 0.5*(dv[i]-dw[i])
+        # v = vertices[i] # (A) i-th component of all the vertices (array) -- changing its entries changes 'vertices' !!
+        # v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
+        # v[e0] = v[e4] + dw[i]
+        # v[e3] = v[e1] - dw[i]
 
     #
     #   DEBUG
