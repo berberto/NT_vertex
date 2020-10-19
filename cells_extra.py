@@ -300,39 +300,6 @@ def set_face_parameters(cells,prop_name,default,prop_vector=None,param=None):
             if prop_vector[i]==1:
                 cells.properties[prop_name][i]=param[1]
 
-def set_physical_properties(cells, prop=None,K=None,A0=None,Gamma=None,Lambda=None,Lambda_bdy=None,P=None,boundary_P=None):
-    """
-    Sets the properties for the cells object according to their type.  The 'type'
-    of cells is specifed by the input 'prop.'  The input 'prop' is either None 
-    or a vector of length n_face.  
-    If prop is None, all faces and edges get the same parameters.  These will 
-    either be set by input values (which must be 1-d) of K,A0,... or they will
-    be given default values.
-    
-    Suppose that prop is a vector of length n_face >0.
-    prop[i]=1 means cell i is of type 1
-    and prop[i]=0 means cell i is of type 0.  Note that the dimension of
-    K,A0,... equals 2 when prop is specified.
-    
-    
-    Consider K.  This is a face parameter.
-    
-    If a cell is of type i, it gets K[i] as its K parameter.
-    
-    Consider Lambda.
-    
-    If a cell is of type i, its edges (given by cells.mesh.boundary(i)) get
-    parameter Lambda[i]
-    
-    
-    """
-    set_face_parameters(cells,'K',1.0,prop,K)
-    set_face_parameters(cells,'A0',1.0,prop,A0)
-    set_face_parameters(cells,'Gamma',0.04,prop,Gamma)
-    set_edge_parameters(cells,'Lambda',0.075,prop,Lambda)
-    set_edge_parameters(cells,'P',P,prop,0.0)
-    set_edge_parameters(cells,'boundary_P',P,prop,boundary_P)
-    return cells              
         
 def setup_source(cells, width=None): #used in NT_full_sim_seq
     """
@@ -522,7 +489,7 @@ def set_group_properties(cells,group_name, group_parameters):
             cells.properties['boundary_P']=np.ones(n_edge)   
         cells.properties['boundary_P'][cells.mesh.boundary(k)]=group_parameters[6]
 
-def set_physical_properties2(cells, physical_parameters=None): #used in NT_full_sim_seq
+def set_physical_properties(cells, physical_parameters=None): #used in NT_full_sim_seq
     """
     Creates physical property vectors for the cells object.  Sets the values 
     for all cells to those input in group parameters.
@@ -546,17 +513,12 @@ def set_physical_properties2(cells, physical_parameters=None): #used in NT_full_
     dummy = np.zeros(n_face)
     if physical_parameters is None:
         physical_parameters = [1.0,1.0,0.04,0.075,0.0,0.5,0.0] #check values 
-    cells.properties['K'] = np.zeros(n_face)  
-    cells.properties['K'].fill(physical_parameters[0])
-    cells.properties['A0'] = np.zeros(n_face)
-    cells.properties['A0'].fill(physical_parameters[1])
-    cells.properties['Gamma'] = np.zeros(n_face) 
-    cells.properties['Gamma'].fill(physical_parameters[2])
-    cells.properties['Lambda'] = np.zeros(n_face) 
-    cells.properties['Lambda'].fill(physical_parameters[3])
-    cells.properties['Lambda_boundary']=physical_parameters[4] #bdy properties are scalars?
-    cells.properties['P'] = np.zeros(n_face) 
-    cells.properties['P'].fill(physical_parameters[5])
+    cells.properties['K'] = physical_parameters[0] * np.ones(n_face)
+    cells.properties['A0'] = physical_parameters[1] * np.ones(n_face)
+    cells.properties['Gamma'] = physical_parameters[2] * np.ones(n_face)
+    cells.properties['Lambda'] = physical_parameters[3] * np.ones(n_face)
+    cells.properties['Lambda_boundary'] = physical_parameters[4] #bdy properties are scalars?
+    cells.properties['P'] = physical_parameters[5] * np.ones(n_face)
     cells.properties['boundary_P']=physical_parameters[6] #bdy properties are scalars?
     
 
@@ -821,7 +783,7 @@ def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None
     #cells.properties['all']=np.ones(cells.mesh.n_face)
     if vm_parameters is None:
         vm_parameters = default_vm_parameters
-    set_physical_properties2(cells, vm_parameters) #sets the vm parameters for each cell as specified
+    set_physical_properties(cells, vm_parameters) #sets the vm parameters for each cell as specified
     cells.properties['parent'] = np.array(list(range(cells.mesh.n_face))) #to track descendents
     if source_data is None:
         setup_source(cells) #defines the 'source' and 'left' properties 
