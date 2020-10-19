@@ -15,7 +15,7 @@ from Finite_Element import centroids2
 from FE_transitions import T1, rem_collapsed, divide
 from _fe_cy import ev_cy, ev_cy_sparse, ev_cy_trivial
 # from _fe_cy_omp import ev_cy
-from cent_test import cen2
+from centroids_cy import cen2
 import concurrent.futures
 from multiprocessing import Array ,Process
 import matplotlib.pyplot as plt

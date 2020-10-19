@@ -11,7 +11,7 @@ from GeneRegulatoryNetwork import GRN_full_basic, build_GRN_full_basic
 from FE_transitions import divide, T1, rem_collapsed
 from Finite_Element import centroids2
 from cells_extra import ready_to_divide
-from cent_test import cen2
+from centroids_cy import cen2
 import matplotlib.pyplot as plt
 import numpy as np
 import time

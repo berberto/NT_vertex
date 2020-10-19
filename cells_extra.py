@@ -837,31 +837,6 @@ def add_IKNM_properties(cells):
     cells.properties['ageingrate'] = np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)) #create ageing_rate property
     set_zposn_A0(cells)
     
-def evolve(cells,dt,expansion=None):
-    """
-    taken a piece from run select and made it into a code.
-    dt is the time step
-    force is the force function for the motion
-    ADAPT FOR IKNM.
-    """
-    force= TargetArea()+Perimeter()+Tension()+Pressure()
-    F = force(cells)/viscosity #viscosity is from Global_Constant
-    dv = dt*sum_vertices(cells.mesh.edges,F)
-    if expansion is None:
-        expansion=np.array([0.0,0.0]) #initialise
-        if hasattr(cells.mesh.geometry,'width'):
-            expansion[0] = 0.00015
-        if hasattr(cells.mesh.geometry,'height'): #Cylinder mesh doesn't have 'height' argument
-            expansion[1] = 0.00015
-        expansion[0] = np.abs(expansion[0])
-        expansion[1] = np.abs(expansion[1])
-        #print "Expansion turns out to be " , expansion
-    cells.mesh = cells.mesh.moved(dv).scaled(1.0+expansion) #expansion a global constant
-    if 'age' in cells.properties:
-        update_age(cells,dt)
-    if 'zposn' in cells.properties:
-        update_zposn_and_A0(cells)
-    return cells, expansion
 
 def cells_evolve(cells,dt,expansion=None,vertex=True):
     """
