@@ -12,6 +12,22 @@ from cells_extra import property_update
 from Global_Constant import *
 from run_select import division_axis, mod_division_axis
 
+import matplotlib.pyplot as plt
+# 2d array with a and b as columns 0 and 1, respectively
+styles = {
+        'seg': [{'color': 'blue'},
+                {'color': 'red', 'dashes': [5,5]}],
+        'nxt': [{'color': 'green'},
+                {'color': 'orange', 'dashes': [5,5]}]
+    }
+def plot_edge(edges, vertices, reverse, ax=plt, **kwargs):
+    for edge in edges:
+        a = vertices[:,edge]
+        b = vertices[:,reverse[edge]]
+        pts = np.array([a,b]).T
+        print(pts)
+        ax.plot(pts[0],pts[1],**kwargs)
+
 def _remove(edges, reverse, vertices, face_id_by_edge , concentration_by_edge):
     """
     Mostly a direct copy of fn in mesh.  Removes edges in edges from the mesh
@@ -198,32 +214,75 @@ def rem_collapsed(cells,c_by_e):
     vertices = cells.mesh.vertices
     face_id_by_edge = cells.mesh.face_id_by_edge
     rotate=cells.mesh.edges.rotate
-    reverse=cells.mesh.edges.reverse
-    reverse.setflags(write = True)
+    try:
+        reverse = cells.mesh.edges.reverse
+        reverse.setflags(write = True)
+    except ValueError:
+        reverse=cells.mesh.edges.reverse.copy()
     while True:
         nxt = rotate[reverse]
         two_sided = np.where(nxt[nxt] == edges.ids[:len(nxt)])[0]
-        print("two_sided = ", two_sided, "\n")
-        exit()
         if not len(two_sided):
             break
+        count = 0
         while np.any(reverse[reverse[rotate[two_sided]]] != reverse[rotate[nxt[two_sided]]]):
+            print("two_sided = ", two_sided, "    reverse[two_sided] = ", reverse[two_sided], "    nxt[two_sided] = ", nxt[two_sided], "\n")
             print("rotate[two_sided] =", rotate[two_sided])
-            print("reverse[rotate[two_sided]] =", reverse[reverse[rotate[two_sided]]])
+            print("reverse[rotate[two_sided]] =", reverse[rotate[two_sided]])
             print("reverse[reverse[rotate[two_sided]]] =", reverse[reverse[rotate[two_sided]]])
             print("")
             print("nxt[two_sided] = ", nxt[two_sided])
             print("rotate[nxt[two_sided]] = ", rotate[nxt[two_sided]])
             print("reverse[rotate[nxt[two_sided]]] = ", reverse[rotate[nxt[two_sided]]])
             print("")
+            fig, ax = plt.subplots(1,2)
+            segments = np.array([
+                    reverse[two_sided],
+                    reverse[rotate[two_sided]],
+                    reverse[nxt[two_sided]],
+                    reverse[rotate[nxt[two_sided]]]
+                ]).T
+            segments_nxt = np.array([
+                    nxt[reverse[two_sided]],
+                    nxt[reverse[rotate[two_sided]]],
+                    nxt[reverse[nxt[two_sided]]],
+                    nxt[reverse[rotate[nxt[two_sided]]]]
+                ])
+            ax[0].set_title("Before")
+            for i in [0,1]:
+                plot_edge(segments, vertices, reverse, ax=ax[0], **styles['seg'][i])
+                plot_edge(segments_nxt, vertices, reverse, ax=ax[0], **styles['nxt'][i])
+            count += 1
+            print("Do something here...")
             reverse[reverse[rotate[two_sided]]] = reverse[rotate[nxt[two_sided]]]
-            prev_face_id_by_edge = face_id_by_edge
-            reverse, vertices, face_id_by_edge,c_by_e = _remove(two_sided, reverse, vertices, face_id_by_edge, c_by_e)
-            ids_removed = np.setdiff1d(prev_face_id_by_edge,face_id_by_edge)
+
+            segments = np.array([
+                    reverse[two_sided],
+                    reverse[rotate[two_sided]],
+                    reverse[nxt[two_sided]],
+                    reverse[rotate[nxt[two_sided]]]
+                ]).T
+            segments_nxt = np.array([
+                    nxt[reverse[two_sided]],
+                    nxt[reverse[rotate[two_sided]]],
+                    nxt[reverse[nxt[two_sided]]],
+                    nxt[reverse[rotate[nxt[two_sided]]]]
+                ])
+            ax[1].set_title("After")
+            for i in [0,1]:
+                plot_edge(segments, vertices, reverse, ax=ax[1], **styles['seg'][i])
+                plot_edge(segments_nxt, vertices, reverse, ax=ax[1], **styles['nxt'][i])
+            plt.show()
+            plt.savefig("T2_step-%d.png"%(count))
+        prev_face_id_by_edge = face_id_by_edge
+        reverse, vertices, face_id_by_edge,c_by_e = _remove(two_sided, reverse, vertices, face_id_by_edge, c_by_e)
+        ids_removed = np.setdiff1d(prev_face_id_by_edge,face_id_by_edge)
+        exit()
             #print "ids_removed", ids_removed
     # if ~(ids_t1==np.delete(ids_t1,ids_removed)):
     #     print 'Ids T1 to remove:', ids_t1, ids_removed, np.delete(ids_t1,ids_removed)
-    reverse.setflags(write = False)
+    # reverse.setflags(write = False)
+    # cells.mesh.edges.reverse.setflags(write = False)
     mesh = cells.mesh.copy()
     mesh.edges = Edges(reverse)
     mesh.vertices = vertices
