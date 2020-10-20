@@ -13,6 +13,8 @@ from Global_Constant import *
 from run_select import division_axis, mod_division_axis
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.use('GTK3Cairo')
 # 2d array with a and b as columns 0 and 1, respectively
 styles = {
         'seg': [{'color': 'blue'},
@@ -24,8 +26,35 @@ def plot_edge(edges, vertices, reverse, ax=plt, **kwargs):
     for edge in edges:
         a = vertices[:,edge]
         b = vertices[:,reverse[edge]]
-        pts = np.array([a,b]).T
-        ax.plot(pts[0],pts[1],**kwargs)
+        if np.linalg.norm(a - b) < .5:
+            pts = np.array([a,b]).T
+            ax.plot(pts[0],pts[1],**kwargs)
+
+def plot_T2(two_sided, vertices, reverse, rotate, nxt, ax=plt, ex=[], styles=styles, title=None):
+
+    ax.set_title(title)
+    print(ex)
+    for i in [0,1]:
+        segments =  np.array([
+            reverse[two_sided[i]],
+            reverse[rotate[two_sided[i]]],
+            reverse[nxt[rotate[two_sided[i]]]],
+            reverse[rotate[two_sided[i]]],
+            reverse[nxt[two_sided[i]]],
+            reverse[rotate[nxt[two_sided[i]]]]
+        ])
+        #
+        segments_nxt = np.array([
+            nxt[reverse[two_sided[i]]],
+            nxt[reverse[rotate[two_sided[i]]]],
+            nxt[reverse[nxt[rotate[two_sided[i]]]]],
+            nxt[reverse[rotate[two_sided[i]]]],
+            nxt[reverse[nxt[two_sided[i]]]],
+            nxt[reverse[rotate[nxt[two_sided[i]]]]]
+        ])
+        #
+        plot_edge(segments, vertices, reverse, ax=ax, **styles['seg'][i])
+        plot_edge(segments_nxt, vertices, reverse, ax=ax, **styles['nxt'][i])
 
 def _remove(edges, reverse, vertices, face_id_by_edge , concentration_by_edge):
     """
@@ -235,49 +264,20 @@ def rem_collapsed(cells,c_by_e):
             print("reverse[rotate[nxt[two_sided]]] = ", reverse[rotate[nxt[two_sided]]])
             print("")
             fig, ax = plt.subplots(1,2)
-            ax[0].set_title("Before")
-            for i in [0,1]:
-                segments = np.array([
-                        reverse[two_sided[i]],
-                        # reverse[rotate[two_sided[i]]],
-                        # reverse[nxt[two_sided[i]]],
-                        reverse[rotate[nxt[two_sided[i]]]]
-                    ]).T
-                segments_nxt = np.array([
-                        nxt[reverse[two_sided[i]]],
-                        # nxt[reverse[rotate[two_sided[i]]]],
-                        # nxt[reverse[nxt[two_sided[i]]]],
-                        nxt[reverse[rotate[nxt[two_sided[i]]]]]
-                    ])
-                plot_edge(segments, vertices, reverse, ax=ax[0], **styles['seg'][i])
-                plot_edge(segments_nxt, vertices, reverse, ax=ax[0], **styles['nxt'][i])
+            plot_T2(two_sided, vertices, reverse, rotate, nxt, ax=ax[0], title="Before")
             count += 1
+
             print("Do something here...")
             reverse[reverse[rotate[two_sided]]] = reverse[rotate[nxt[two_sided]]]
-
-            ax[1].set_title("After")
             nxt = rotate[reverse]
-            for i in [0,1]:
-                segments = np.array([
-                        reverse[two_sided[i]],
-                        # reverse[rotate[two_sided[i]]],
-                        # reverse[nxt[two_sided[i]]],
-                        reverse[rotate[nxt[two_sided[i]]]]
-                    ]).T
-                segments_nxt = np.array([
-                        nxt[reverse[two_sided[i]]],
-                        # nxt[reverse[rotate[two_sided[i]]]],
-                        # nxt[reverse[nxt[two_sided[i]]]],
-                        nxt[reverse[rotate[nxt[two_sided[i]]]]]
-                    ])
-                plot_edge(segments, vertices, reverse, ax=ax[1], **styles['seg'][i])
-                plot_edge(segments_nxt, vertices, reverse, ax=ax[1], **styles['nxt'][i])
-            plt.show()
+            plot_T2(two_sided, vertices, reverse, rotate, nxt, ax=ax[1], title="During")
+            # plt.show()
             plt.savefig("T2_step-%d.png"%(count))
         prev_face_id_by_edge = face_id_by_edge
         reverse, vertices, face_id_by_edge,c_by_e = _remove(two_sided, reverse, vertices, face_id_by_edge, c_by_e)
         ids_removed = np.setdiff1d(prev_face_id_by_edge,face_id_by_edge)
-        exit()
+        # plot_T2(two_sided, vertices, reverse, rotate, nxt, ex=ids_removed, ax=ax[2], title="After")
+        # exit()
             #print "ids_removed", ids_removed
     # if ~(ids_t1==np.delete(ids_t1,ids_removed)):
     #     print 'Ids T1 to remove:', ids_t1, ids_removed, np.delete(ids_t1,ids_removed)
