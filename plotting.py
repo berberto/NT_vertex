@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import os
 from permutations import cycles
 from mpl_toolkits.mplot3d import Axes3D #Added by me
+from matplotlib.tri import Triangulation, TriAnalyzer, UniformTriRefiner
 #from matplotlib import animation
 
 
@@ -155,7 +156,7 @@ def set_colour_poni_state(cells,poni_state):
         elif m==3:
             cells.properties['color'][k] = np.array([0,1,1]) # ?, Irx high 
 
-def drawShh(nodes,alpha,z_high, z_low, ax=None, size=None):
+def drawShh(nodes, alpha, z_high, z_low, ax=None, size=None, heatmap=True):
     l=[]
     r=[]
     if not size:
@@ -167,16 +168,53 @@ def drawShh(nodes,alpha,z_high, z_low, ax=None, size=None):
         r.append(nodes[i][1])
     if not ax:
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        if heatmap:
+            ax = fig.add_subplot(111)
+        else:
+            ax = fig.add_subplot(111, projection='3d')
     ax.cla()
     ax.set_xlim([-0.55*d_size,0.55*d_size])
     ax.set_ylim([-0.55*d_size,0.55*d_size])
-    ax.set_zlim([z_low -0.1 , z_high])
-    Axes3D.plot_trisurf(ax,l,r,alpha)
+    if heatmap:
+        tri = Triangulation(nodes[:,0],nodes[:,1])
+        # mask out elongated triangles at the borders
+        mask = TriAnalyzer(tri).get_flat_tri_mask(.1)
+        tri.set_mask(mask)
+        # ax.tricontourf(tri, alpha)
+        refiner = UniformTriRefiner(tri)
+        tri_refi, z_test_refi = refiner.refine_field(alpha, subdiv=3)
+        ax.tricontourf(tri_refi, z_test_refi, levels=np.linspace(z_low,z_high,20))
+
+    else:
+        ax.set_zlim([z_low -0.1 , z_high])
+        Axes3D.plot_trisurf(ax,l,r,alpha)
     plt.draw()  
 
-def morphogen_video(nodes_array,alpha_array, outputdir, name_file, zmin=None, zmax=None):    
-    #v_max = np.max((np.max(cells_array[0].mesh.vertices), np.max(cells_array[-1].mesh.vertices)))
+def morphogen_video(cells_history, nodes_array, alpha_array, outputdir, name_file, zmin=None, zmax=None):
+
+    # fig, ax = plt.subplots()
+
+    # # create Delaunay triangulation
+    # tri = Triangulation(nodes_array[0][:,0],nodes_array[0][:,1])
+
+    # # print(len(nodes_array[0][:,0]))
+    # # print(len(tri.x))
+    # # print(len(alpha_array[0]))
+    # # exit()
+    
+    # # mask out elongated triangles at the borders
+    # mask = TriAnalyzer(tri).get_flat_tri_mask(.1)
+    # tri.set_mask(mask)
+    # # ax.tricontourf(tri, alpha_array[0])
+    
+    # # refining the data
+    # refiner = UniformTriRefiner(tri)
+    # tri_refi, z_test_refi = refiner.refine_field(alpha_array[0], subdiv=3)
+    # ax.tricontourf(tri_refi, z_test_refi)
+
+    # plt.show()
+
+    # exit()
     v_max = np.max((np.max(nodes_array[0]) , np.max(nodes_array[-1])))
     size = 2*v_max
     if zmax is None:
@@ -193,38 +231,10 @@ def morphogen_video(nodes_array,alpha_array, outputdir, name_file, zmin=None, zm
         z_low = min(dummy_min)
     else:
         z_low = zmin
-    #size = 10.0
-    # outputdir="images"
-    # if not os.path.exists(outputdir): # if the folder doesn't exist create it
-    #     os.makedirs(outputdir)
-    fig = plt.figure(); 
-    ax = fig.add_subplot(111, projection='3d'); 
-    fig.set_size_inches(6,6); 
-    i=0
-    frames=[]
-    for i in range(len(nodes_array)):
-        drawShh(nodes_array[i],alpha_array[i],z_high, z_low,ax,size)
-        i=i+1
-        frame=outputdir+"/image%03i.png" % i
-        fig.savefig(frame,dpi=500)
-        frames.append(frame)  
-    os.system("ffmpeg -framerate 5/1 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+"surf.mp4") #for Mac computer
-    # print(os.system("pwd"))
-    #os.system("cd ")
-    #os.system("cd Desktop/vertex_model/images")
-    #os.system("cd images")
-    for frame in frames: os.remove(frame)  
 
-
-def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
-    #time = 0
-    #history=[tissue.cells]
-    # outputdir="images"
-    # if not os.path.exists(outputdir): # if the folder doesn't exist create it
-    #     os.makedirs(outputdir)
-    fig = plt.figure(); 
-    ax = fig.add_subplot(111); 
-    fig.set_size_inches(6,6); 
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    # fig.set_size_inches(6,6)
     i=0
     frames=[]
     final_width = cells_history[-1].mesh.geometry.width
@@ -233,22 +243,36 @@ def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
     else:
         final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
     for k in range(len(cells_history)):
-        #tissue = normalised_simulate_tissue_step(surface_function,tissue,bind_rate,time,dt,expansion)
-        set_colour_poni_state(cells_history[k],poni_state_history[k])
-        draw_cells(cells_history[k],final_width,final_height, ax) #draw_cells(cells,final_width=None,final_height=None, ax=None)
-        #drawShh4(nodes_array[i],alpha_array[i], z_low,z_high,final_length, height,ax) #drawShh4(nodes,alpha,z_low,z_high,final_length,width, ax=None):
+        drawShh(nodes_array[i],alpha_array[i],z_high, z_low,ax,size, heatmap=True)
+        _draw_edges(cells_history[k].mesh, ax)
         i=i+1
         frame=outputdir+"/image%03i.png" % i
-        fig.savefig(frame,dpi=500)
+        fig.savefig(frame,dpi=500,bbox_inches="tight")
         frames.append(frame)  
-        #print tissue.cells.properties['color']
-        #history.append(copy.deepcopy(tissue))
-        #print tissue.cells.mesh.geometry.width
     os.system("cd ")
-    #os.system("cd /opt")
+    os.system("ffmpeg -framerate 5/1 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer  
+
+def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    # fig.set_size_inches(6,6)
+    i=0
+    frames=[]
+    final_width = cells_history[-1].mesh.geometry.width
+    if hasattr(cells_history[-1].mesh.geometry,'height'):
+        final_height = cells_history[-1].mesh.geometry.height
+    else:
+        final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
+    for k in range(len(cells_history)):
+        set_colour_poni_state(cells_history[k],poni_state_history[k])
+        draw_cells(cells_history[k],final_width,final_height, ax) #draw_cells(cells,final_width=None,final_height=None, ax=None)
+        i=i+1
+        frame=outputdir+"/image%03i.png" % i
+        fig.savefig(frame,dpi=500,bbox_inches="tight")
+        frames.append(frame)
+
+    os.system("cd ")
     os.system("ffmpeg -framerate 5/1 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
-    print((os.system("pwd")))
-    #os.system("cd ")
-    #os.system("cd Desktop/vertex_model/images")
-    #os.system("cd images")
-    #for frame in frames: os.remove(frame)  
+
+    for frame in frames: os.remove(frame)  

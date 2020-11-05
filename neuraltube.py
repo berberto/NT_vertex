@@ -163,5 +163,5 @@ if __name__ == "__main__":
         verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
 
         cells_state_video(cells_list, ponis_list, path, path+"/video_cells")
-        morphogen_video(nodes_list,concs_list, path, path+"/video_morphogen")#,zmin=0)#,zmax=10)
+        morphogen_video(cells_list, nodes_list, concs_list, path, path+"/video_morphogen")#,zmin=0)#,zmax=10)
     
