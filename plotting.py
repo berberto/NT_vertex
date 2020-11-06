@@ -13,8 +13,20 @@ import os
 from permutations import cycles
 from mpl_toolkits.mplot3d import Axes3D #Added by me
 from matplotlib.tri import Triangulation, TriAnalyzer, UniformTriRefiner
+import matplotlib.colors as mcol
 #from matplotlib import animation
 
+color = {
+    "Shh":"#000000",    # black
+    "Ptch": "#8D8D8D",  # grey
+    "GliFL": "#8900FF", # purple
+    "GliA": "#00AD2F",  # green
+    "GliR": "#D02B09",  # red
+    "Pax": "#0040FF",   # blue
+    "Olig": "#FF00EB",  # magenta
+    "Nkx": "#02DDD3",   # cyan
+    "Irx": "#DDB002"    # gold
+}
 
 def _draw_edges(mesh, ax):
     w = mesh.vertices - mesh.vertices.take(mesh.edges.rotate, 1)  # winding
@@ -26,7 +38,7 @@ def _draw_edges(mesh, ax):
     x = np.dstack([start[0], end[0], n]).ravel()
     y = np.dstack([start[1], end[1], n]).ravel()
 
-    ax.plot(x, y, 'k-', linewidth=1.0)
+    ax.plot(x, y, 'k-', linewidth=0.5)
 
 def _draw_edges_non(mesh, ax):
     w = mesh.vertices - mesh.vertices.take(mesh.edges.rotate, 1)  # winding
@@ -71,8 +83,7 @@ def _draw_faces(mesh, ax, facecolors, edgecolor='k'):
         faces.append(vs[c-i:c])
         face_ids.append(cell_ids[c-i])
 
-    coll = PolyCollection(faces, facecolors=facecolors[face_ids], edgecolors=edgecolor,
-                          linewidths=2.0)
+    coll = PolyCollection(faces, facecolors=facecolors[face_ids], edgecolors=edgecolor, linewidths=0.5)
     ax.add_collection(coll)
 
 def _draw_faces_no_edge(mesh, ax, facecolors):
@@ -148,21 +159,21 @@ def set_colour_poni_state(cells,poni_state):
         if source[k]==1:
             cells.properties['color'][k] = np.array([1,1,1]) #source
         elif m==0:
-            cells.properties['color'][k] = np.array([0,0,1]) #Blue, pax high
+            cells.properties['color'][k] = mcol.to_rgb(color['Pax'])# np.array([0,0,1]) #Blue, pax high
         elif m==1:
-            cells.properties['color'][k] = np.array([1,0,0]) #Red, Olig2 high
+            cells.properties['color'][k] = mcol.to_rgb(color['Olig'])# np.array([1,0,0]) #Red, Olig2 high
         elif m==2:
-            cells.properties['color'][k] = np.array([0,0,1]) #Green, NKx22 high
+            cells.properties['color'][k] = mcol.to_rgb(color['Nkx'])# np.array([0,0,1]) #Green, NKx22 high
         elif m==3:
-            cells.properties['color'][k] = np.array([0,1,1]) # ?, Irx high 
+            cells.properties['color'][k] = mcol.to_rgb(color['Irx'])# np.array([0,1,1]) # ?, Irx high 
 
-def drawShh(nodes, alpha, z_high, z_low, ax=None, size=None, heatmap=True):
+def drawShh(nodes, alpha, z_high, z_low, ax=None, final_width=None, final_height=None, size=None, heatmap=True):
     l=[]
     r=[]
-    if not size:
-        d_size=10.0
-    else:
-        d_size = size
+    # if not size:
+    #     d_size=10.0
+    # else:
+    #     d_size = size
     for i in range(len(nodes)):
         l.append(nodes[i][0])
         r.append(nodes[i][1])
@@ -172,49 +183,30 @@ def drawShh(nodes, alpha, z_high, z_low, ax=None, size=None, heatmap=True):
             ax = fig.add_subplot(111)
         else:
             ax = fig.add_subplot(111, projection='3d')
+
     ax.cla()
-    ax.set_xlim([-0.55*d_size,0.55*d_size])
-    ax.set_ylim([-0.55*d_size,0.55*d_size])
+    ax.set_xlim([-0.55*final_width,0.55*final_width])
+    ax.set_ylim([-0.55*final_height,0.55*final_height])
+    ax.set_xticks([])
+    ax.set_yticks([])
+    # ax.set_xlim([-0.55*d_size,0.55*d_size])
+    # ax.set_ylim([-0.55*d_size,0.55*d_size])
     if heatmap:
         tri = Triangulation(nodes[:,0],nodes[:,1])
         # mask out elongated triangles at the borders
-        mask = TriAnalyzer(tri).get_flat_tri_mask(.1)
+        mask = TriAnalyzer(tri).get_flat_tri_mask(.3)
         tri.set_mask(mask)
-        # ax.tricontourf(tri, alpha)
-        refiner = UniformTriRefiner(tri)
-        tri_refi, z_test_refi = refiner.refine_field(alpha, subdiv=3)
-        ax.tricontourf(tri_refi, z_test_refi, levels=np.linspace(z_low,z_high,20))
-
+        ax.tricontourf(tri, alpha, levels=np.linspace(0.,z_high, 20), cmap=plt.get_cmap('Greens'))
+        # refiner = UniformTriRefiner(tri)
+        # tri_refi, z_test_refi = refiner.refine_field(alpha, subdiv=3)
+        # ax.tricontourf(tri_refi, z_test_refi, levels=np.linspace(0.,z_high, 20))
     else:
         ax.set_zlim([z_low -0.1 , z_high])
         Axes3D.plot_trisurf(ax,l,r,alpha)
     plt.draw()  
 
-def morphogen_video(cells_history, nodes_array, alpha_array, outputdir, name_file, zmin=None, zmax=None):
+def morphogen_video(cells_history, nodes_array, alpha_array, outputdir, name_file, zmin=None, zmax=None, heatmap=True):
 
-    # fig, ax = plt.subplots()
-
-    # # create Delaunay triangulation
-    # tri = Triangulation(nodes_array[0][:,0],nodes_array[0][:,1])
-
-    # # print(len(nodes_array[0][:,0]))
-    # # print(len(tri.x))
-    # # print(len(alpha_array[0]))
-    # # exit()
-    
-    # # mask out elongated triangles at the borders
-    # mask = TriAnalyzer(tri).get_flat_tri_mask(.1)
-    # tri.set_mask(mask)
-    # # ax.tricontourf(tri, alpha_array[0])
-    
-    # # refining the data
-    # refiner = UniformTriRefiner(tri)
-    # tri_refi, z_test_refi = refiner.refine_field(alpha_array[0], subdiv=3)
-    # ax.tricontourf(tri_refi, z_test_refi)
-
-    # plt.show()
-
-    # exit()
     v_max = np.max((np.max(nodes_array[0]) , np.max(nodes_array[-1])))
     size = 2*v_max
     if zmax is None:
@@ -233,7 +225,7 @@ def morphogen_video(cells_history, nodes_array, alpha_array, outputdir, name_fil
         z_low = zmin
 
     fig = plt.figure()
-    ax = fig.add_subplot(111)
+    ax = fig.add_subplot(nrows=2)
     # fig.set_size_inches(6,6)
     i=0
     frames=[]
@@ -243,14 +235,17 @@ def morphogen_video(cells_history, nodes_array, alpha_array, outputdir, name_fil
     else:
         final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
     for k in range(len(cells_history)):
-        drawShh(nodes_array[i],alpha_array[i],z_high, z_low,ax,size, heatmap=True)
-        _draw_edges(cells_history[k].mesh, ax)
+        drawShh(nodes_array[i], alpha_array[i], z_high, z_low, ax, size, heatmap=heatmap)
+        if heatmap:
+            _draw_edges(cells_history[k].mesh, ax)
         i=i+1
         frame=outputdir+"/image%03i.png" % i
         fig.savefig(frame,dpi=500,bbox_inches="tight")
         frames.append(frame)  
     os.system("cd ")
     os.system("ffmpeg -framerate 5/1 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer  
+
+    # for frame in frames: os.remove(frame)  
 
 def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
 
@@ -266,7 +261,7 @@ def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
         final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
     for k in range(len(cells_history)):
         set_colour_poni_state(cells_history[k],poni_state_history[k])
-        draw_cells(cells_history[k],final_width,final_height, ax) #draw_cells(cells,final_width=None,final_height=None, ax=None)
+        draw_cells(cells_history[k],final_width,final_height, ax)
         i=i+1
         frame=outputdir+"/image%03i.png" % i
         fig.savefig(frame,dpi=500,bbox_inches="tight")
@@ -275,4 +270,54 @@ def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
     os.system("cd ")
     os.system("ffmpeg -framerate 5/1 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
 
-    for frame in frames: os.remove(frame)  
+    # for frame in frames: os.remove(frame)  
+
+
+def combined_video(cells_history, nodes_array, alpha_array, poni_state_history, outputdir, name_file, zmin=None, zmax=None, heatmap=True):
+
+    v_max = np.max((np.max(nodes_array[0]) , np.max(nodes_array[-1])))
+    size = 2*v_max
+    if zmax is None:
+        dummy_max=[]
+        for i in range(len(alpha_array)):
+            dummy_max.append(np.max(alpha_array[i]))
+        z_high = max(dummy_max)
+    else:
+        z_high = zmax
+    if zmin is None:
+        dummy_min=[]
+        for i in range(len(alpha_array)):
+            dummy_min.append(np.min(alpha_array[i]))
+        z_low = min(dummy_min)
+    else:
+        z_low = zmin
+
+    fig, ax = plt.subplots(nrows=2)
+    for a in ax:
+        for side in ['top', 'bottom', 'left', 'right']:
+            a.spines[side].set_visible(False)
+
+    i=0
+    frames=[]
+    final_width = cells_history[-1].mesh.geometry.width
+    if hasattr(cells_history[-1].mesh.geometry,'height'):
+        final_height = cells_history[-1].mesh.geometry.height
+    else:
+        final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
+    for k in range(len(cells_history)):
+        # plot morphogen on 
+        drawShh(nodes_array[i], alpha_array[i], z_high, z_low, ax[0], final_width=final_width,final_height=final_height, heatmap=heatmap)
+        if heatmap:
+            _draw_edges(cells_history[k].mesh, ax[0])
+        set_colour_poni_state(cells_history[k],poni_state_history[k])
+        draw_cells(cells_history[k], final_width, final_height, ax[1])
+        # plt.show()
+        # exit()
+        i=i+1
+        frame=outputdir+"/image%03i.png" % i
+        fig.savefig(frame,dpi=500,bbox_inches="tight")
+        frames.append(frame)  
+    os.system("cd ")
+    os.system("ffmpeg -framerate 30 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer  
+
+    # for frame in frames: os.remove(frame)  

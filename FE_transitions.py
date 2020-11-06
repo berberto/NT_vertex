@@ -13,8 +13,8 @@ from Global_Constant import *
 from run_select import division_axis, mod_division_axis
 
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-mpl.use('GTK3Cairo')
+# import matplotlib as mpl
+# mpl.use('GTK3Cairo')
 # 2d array with a and b as columns 0 and 1, respectively
 styles = {
         'seg': [{'color': 'blue'},
@@ -254,31 +254,30 @@ def rem_collapsed(cells,c_by_e):
             break
         count = 0
         while np.any(reverse[reverse[rotate[two_sided]]] != reverse[rotate[nxt[two_sided]]]):
-            print("two_sided = ", two_sided, "    reverse[two_sided] = ", reverse[two_sided], "    nxt[two_sided] = ", nxt[two_sided], "\n")
-            print("rotate[two_sided] =", rotate[two_sided])
-            print("reverse[rotate[two_sided]] =", reverse[rotate[two_sided]])
-            print("reverse[reverse[rotate[two_sided]]] =", reverse[reverse[rotate[two_sided]]])
-            print("")
-            print("nxt[two_sided] = ", nxt[two_sided])
-            print("rotate[nxt[two_sided]] = ", rotate[nxt[two_sided]])
-            print("reverse[rotate[nxt[two_sided]]] = ", reverse[rotate[nxt[two_sided]]])
-            print("")
-            fig, ax = plt.subplots(1,2)
-            plot_T2(two_sided, vertices, reverse, rotate, nxt, ax=ax[0], title="Before")
-            count += 1
+            # print("two_sided = ", two_sided, "    reverse[two_sided] = ", reverse[two_sided], "    nxt[two_sided] = ", nxt[two_sided], "\n")
+            # print("rotate[two_sided] =", rotate[two_sided])
+            # print("reverse[rotate[two_sided]] =", reverse[rotate[two_sided]])
+            # print("reverse[reverse[rotate[two_sided]]] =", reverse[reverse[rotate[two_sided]]])
+            # print("")
+            # print("nxt[two_sided] = ", nxt[two_sided])
+            # print("rotate[nxt[two_sided]] = ", rotate[nxt[two_sided]])
+            # print("reverse[rotate[nxt[two_sided]]] = ", reverse[rotate[nxt[two_sided]]])
+            # print("")
+            # fig, ax = plt.subplots(1,2)
+            # plot_T2(two_sided, vertices, reverse, rotate, nxt, ax=ax[0], title="Before")
+            # count += 1
 
-            print("Do something here...")
+            # print("Do something here...")
             reverse[reverse[rotate[two_sided]]] = reverse[rotate[nxt[two_sided]]]
             nxt = rotate[reverse]
-            plot_T2(two_sided, vertices, reverse, rotate, nxt, ax=ax[1], title="During")
+            # plot_T2(two_sided, vertices, reverse, rotate, nxt, ax=ax[1], title="During")
             # plt.show()
-            plt.savefig("T2_step-%d.png"%(count))
+            # plt.savefig("T2_step-%d.png"%(count))
         prev_face_id_by_edge = face_id_by_edge
         reverse, vertices, face_id_by_edge,c_by_e = _remove(two_sided, reverse, vertices, face_id_by_edge, c_by_e)
         ids_removed = np.setdiff1d(prev_face_id_by_edge,face_id_by_edge)
         # plot_T2(two_sided, vertices, reverse, rotate, nxt, ex=ids_removed, ax=ax[2], title="After")
         # exit()
-            #print "ids_removed", ids_removed
     # if ~(ids_t1==np.delete(ids_t1,ids_removed)):
     #     print 'Ids T1 to remove:', ids_t1, ids_removed, np.delete(ids_t1,ids_removed)
     # reverse.setflags(write = False)

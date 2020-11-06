@@ -7,7 +7,7 @@ import time
 import dill
 import numpy as np
 from NT_vtx import build_NT_vtx, load_NT_vtx
-from plotting import morphogen_video, cells_state_video
+from plotting import morphogen_video, cells_state_video, combined_video
 from options import *
 
 
@@ -118,13 +118,13 @@ if __name__ == "__main__":
 
         # selecting a random cell to leave the tissue (set its target area to 0)
         # "poisoned" is the idiotic name that should mean "differentiating"
-        if not 'poisoned' in neural_tube.FE_vtx.cells.properties:
-            n_cells = neural_tube.FE_vtx.cells.mesh.n_face
-            cell_leaving = np.random.randint(n_cells)
-            leaving = np.zeros(n_cells).astype(int)
-            leaving[cell_leaving] = 1
-            print("cell %d leaves the tissue"%(cell_leaving))
-            neural_tube.FE_vtx.cells.properties['poisoned'] = leaving
+        # if not 'poisoned' in neural_tube.FE_vtx.cells.properties:
+        #     n_cells = neural_tube.FE_vtx.cells.mesh.n_face
+        #     cell_leaving = np.random.randint(n_cells)
+        #     leaving = np.zeros(n_cells).astype(int)
+        #     leaving[cell_leaving] = 1
+        #     print("cell %d leaves the tissue"%(cell_leaving))
+        #     neural_tube.FE_vtx.cells.properties['poisoned'] = leaving
         
         if not init_only:
             # simulation
@@ -162,6 +162,7 @@ if __name__ == "__main__":
         cells_list = [nt.FE_vtx.cells   for nt in NT_list]
         verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
 
-        cells_state_video(cells_list, ponis_list, path, path+"/video_cells")
-        morphogen_video(cells_list, nodes_list, concs_list, path, path+"/video_morphogen")#,zmin=0)#,zmax=10)
+        # cells_state_video(cells_list, ponis_list, path, path+"/video_cells")
+        # morphogen_video(cells_list, nodes_list, concs_list, path, path+"/video_morphogen")#,zmin=0)#,zmax=10)
+        combined_video(cells_list, nodes_list, concs_list, ponis_list, path, path+"/video_combined")#,zmin=0)#,zmax=10)
     
