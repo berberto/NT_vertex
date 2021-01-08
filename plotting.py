@@ -315,7 +315,7 @@ def combined_video(cells_history, nodes_array, alpha_array, poni_state_history, 
         # exit()
         i=i+1
         frame=outputdir+"/image%03i.png" % i
-        fig.savefig(frame,dpi=500,bbox_inches="tight")
+        fig.savefig(frame,dpi=100,bbox_inches="tight")
         frames.append(frame)  
     os.system("cd ")
     os.system("ffmpeg -framerate 30 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer  
