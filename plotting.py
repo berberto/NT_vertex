@@ -14,6 +14,7 @@ from permutations import cycles
 from mpl_toolkits.mplot3d import Axes3D #Added by me
 from matplotlib.tri import Triangulation, TriAnalyzer, UniformTriRefiner
 import matplotlib.colors as mcol
+from matplotlib.animation import FuncAnimation
 #from matplotlib import animation
 
 color = {
@@ -66,7 +67,7 @@ _PALETTES = {name: np.array([clr.split()[0]]*4+clr.split()[1:])
              for name, clr in _PALETTES.items()}
 
 
-def _draw_faces(mesh, ax, facecolors, edgecolor='k'):
+def _draw_faces(mesh, ax, facecolors, edgecolor='k',alpha=1.):
     order, labels = cycles(mesh.edges.next)
     counts = np.bincount(labels)
 
@@ -83,7 +84,7 @@ def _draw_faces(mesh, ax, facecolors, edgecolor='k'):
         faces.append(vs[c-i:c])
         face_ids.append(cell_ids[c-i])
 
-    coll = PolyCollection(faces, facecolors=facecolors[face_ids], edgecolors=edgecolor, linewidths=0.5)
+    coll = PolyCollection(faces, facecolors=facecolors[face_ids], edgecolors=edgecolor, linewidths=0.5, alpha=alpha)
     ax.add_collection(coll)
 
 def _draw_faces_no_edge(mesh, ax, facecolors):
@@ -112,15 +113,14 @@ def _draw_geometry(geometry, ax=None):
         w, h = geometry.width, geometry.height
         # ax.add_patch(plt.Rectangle((-0.5*w, -0.5*h), w, h, fill=False, linewidth=2.0))
 
-def draw_cells(cells,final_width=None,final_height=None, ax=None):
+def draw_cells(cells,final_width=None,final_height=None, ax=None, colored=True):
     """
     Modified version of draw from plotting.
     
     """
     if not ax:
         fig = plt.figure()
-        ax = fig.gca()  
-    ax.cla()
+        ax = fig.gca()
     facecolors = cells.properties.get('color', None)
     
     if final_width is None:
@@ -130,23 +130,22 @@ def draw_cells(cells,final_width=None,final_height=None, ax=None):
             final_height = cells.mesh.geometry.height
         else:
             final_height =max(np.abs( cells.mesh.vertices[1]))
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim([-0.55*final_width,0.55*final_width])
+    ax.set_ylim([-0.55*final_height,0.55*final_height])
         
     mesh = cells.mesh.recentre()
 
-    if facecolors is None:
+    if facecolors is None or not colored:
         _draw_edges(mesh, ax)
     else:
         _draw_faces(mesh, ax, facecolors)
-# _draw_midpoints(cells,ax)
-    _draw_geometry(mesh.geometry, ax)
-
-    ax.set_xticks([])
-    ax.set_yticks([])
+    # _draw_midpoints(cells,ax)
+    # _draw_geometry(mesh.geometry, ax)
 
     #size = size or 2.0*np.max(mesh.vertices[0])
 
-    ax.set_xlim([-0.55*final_width,0.55*final_width])
-    ax.set_ylim([-0.55*final_height,0.55*final_height])
     plt.draw()
 
 
@@ -184,7 +183,7 @@ def drawShh(nodes, alpha, z_high, z_low, ax=None, final_width=None, final_height
         else:
             ax = fig.add_subplot(111, projection='3d')
 
-    ax.cla()
+    ax.cla() # clear the axis
     ax.set_xlim([-0.55*final_width,0.55*final_width])
     ax.set_ylim([-0.55*final_height,0.55*final_height])
     ax.set_xticks([])
@@ -194,7 +193,7 @@ def drawShh(nodes, alpha, z_high, z_low, ax=None, final_width=None, final_height
     if heatmap:
         tri = Triangulation(nodes[:,0],nodes[:,1])
         # mask out elongated triangles at the borders
-        mask = TriAnalyzer(tri).get_flat_tri_mask(.3)
+        mask = TriAnalyzer(tri).get_flat_tri_mask(.05)
         tri.set_mask(mask)
         ax.tricontourf(tri, alpha, levels=np.linspace(0.,z_high, 20), cmap=plt.get_cmap('Greens'))
         # refiner = UniformTriRefiner(tri)
@@ -273,7 +272,10 @@ def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
     # for frame in frames: os.remove(frame)  
 
 
-def combined_video(cells_history, nodes_array, alpha_array, poni_state_history, outputdir, name_file, zmin=None, zmax=None, heatmap=True):
+def combined_video(cells_history, nodes_array, alpha_array, poni_state_history, outputdir, name_file,
+            zmin=None, zmax=None, heatmap=True, ffmpeg=False):
+
+    # setup
 
     v_max = np.max((np.max(nodes_array[0]) , np.max(nodes_array[-1])))
     size = 2*v_max
@@ -297,27 +299,45 @@ def combined_video(cells_history, nodes_array, alpha_array, poni_state_history, 
         for side in ['top', 'bottom', 'left', 'right']:
             a.spines[side].set_visible(False)
 
-    i=0
-    frames=[]
     final_width = cells_history[-1].mesh.geometry.width
     if hasattr(cells_history[-1].mesh.geometry,'height'):
         final_height = cells_history[-1].mesh.geometry.height
     else:
         final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
-    for k in range(len(cells_history)):
-        # plot morphogen on 
-        drawShh(nodes_array[i], alpha_array[i], z_high, z_low, ax[0], final_width=final_width,final_height=final_height, heatmap=heatmap)
+    
+    def plot_frame(k):
+        plt.cla()
+        # top panel
+        drawShh(nodes_array[k], alpha_array[k], z_high, z_low, ax[0],
+            final_width=final_width,final_height=final_height, heatmap=heatmap)
         if heatmap:
-            _draw_edges(cells_history[k].mesh, ax[0])
+            draw_cells(cells_history[k], final_width, final_height, ax[0], colored=False)
+
+        # bottom panel
         set_colour_poni_state(cells_history[k],poni_state_history[k])
         draw_cells(cells_history[k], final_width, final_height, ax[1])
-        # plt.show()
-        # exit()
-        i=i+1
-        frame=outputdir+"/image%03i.png" % i
-        fig.savefig(frame,dpi=100,bbox_inches="tight")
-        frames.append(frame)  
-    os.system("cd ")
-    os.system("ffmpeg -framerate 30 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer  
 
-    # for frame in frames: os.remove(frame)  
+    if ffmpeg:
+        i=0
+        frames=[]
+        for k in range(len(cells_history)):
+            plot_frame(k)
+            plt.show()
+            exit()
+            i=i+1
+            frame=outputdir+"/image%03i.png" % i
+            fig.savefig(frame,dpi=100,bbox_inches="tight")
+            frames.append(frame)  
+        os.system("cd ")
+        os.system("ffmpeg -framerate 30 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer  
+
+        # for frame in frames: os.remove(frame)  
+
+    else:
+        frames=range(len(cells_history))
+        dt = 60000./len(cells_history)
+        ani = FuncAnimation(fig, plot_frame,
+                            interval=dt,
+                            frames=frames,
+                            blit=False)
+        ani.save(f'{name_file}.mp4')
