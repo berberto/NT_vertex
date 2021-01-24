@@ -146,7 +146,7 @@ if __name__ == "__main__":
             allfiles = os.listdir(path)
 
         except FileNotFoundError:
-            print("path not found: ", path)
+            raise FileNotFoundError("path not found: ", path)
 
         allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
         # allNTinit = sorted([x for x in allfiles if "_NT_init.pkl" in x])
