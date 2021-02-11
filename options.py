@@ -16,7 +16,6 @@ SIMpars.add_argument('--init-only', dest='init_only', action='store_true', defau
 SIMpars.add_argument('-s', dest='size', metavar=('<nX>','<nY>'), type=int, nargs=2, default=(20,10), help='Initial tissue size (width and height) in cell numbers. Default: (20 10)')
 SIMpars.add_argument('--frames', dest='frames', metavar='<num>', type=int, default=100, help='Number of frames to save and plot (int). Overwritten by "--every". Default: 100')
 SIMpars.add_argument('--every', dest='frame_every', metavar='<val>', type=float, default=-1, help='Simulation time between consecutive frames (float). Default: set by number of frames')
-SIMpars.add_argument('--expand', dest='expand', action='store_true', default=False, help='Set expansion manually. Default is expansion through drag.')
 SIMpars.add_argument('--no-sim', dest='simulate', action='store_false', default=True, help='Do not simulate. Skip to plotting if target path and files exist')
 SIMpars.add_argument('--no-plot', dest='plotting', action='store_false', default=True, help='Do not perform plot')
 SIMpars.add_argument('--no-move', dest='move', action='store_false', default=True, help='Do not move cells at all, ie solve with static mesh.')
@@ -58,7 +57,6 @@ plotting = args.plotting
 vertex = args.vertex
 morphogen = args.morphogen
 cython = args.cython
-expand = args.expand
 move = args.move
 division = args.division
 
@@ -74,8 +72,14 @@ Gamma = args.Gamma # default: 0.04
 Lambda = args.Lambda # default: 0.075
 
 
-if test_output:
+def print_options (filename=None):
 	print("---- optional argument values ----")
 	for key, val in vars(args).items():
-		print(key, "=", val)
+		print(f'{key} = {val}')
 	print("----------------------------------")
+
+	if filename is not None:
+		with open(filename, 'w') as file:
+			for key, val in vars(args).items():
+				file.write(f'{key} = {val}')
+			file.close()

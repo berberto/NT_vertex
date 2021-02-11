@@ -6,10 +6,19 @@ import sys
 import time
 import dill
 import numpy as np
+from datetime import datetime
+
 from NT_vtx import build_NT_vtx, load_NT_vtx
 from plotting import morphogen_video, cells_state_video, combined_video
-from options import *
-
+from options import (file_prefix, test_output, restart_file,
+                T_sim, T_init, frame_every, init_only, dt, N_frames,
+                simulate, plotting, cython,
+                vertex, morphogen, move, division,
+                xsize,ysize, 
+                degr_rate, prod_rate, diff_coef, bind_rate,
+                Kappa, Gamma, Lambda,
+                print_options
+                )
 
 
 if __name__ == "__main__":
@@ -18,64 +27,47 @@ if __name__ == "__main__":
 
     N_step = int(T_sim/dt)
 
-    if expand: # default: False; change with --expand flag
-        # expansion set to fixed values
-        print("expansion set manually")
-        expansion = np.ones(2)
-        expansion *= 100.*np.log(5.)/2./(200./dt) # (1 + ex)**(200./dt) ~ sqrt(5) (area 5x biger after 2e5 steps)
-        anisotropy=0.   # must be in [0,1] -> 0 = isotropy, 1 = expansion only on x
-        expansion *= np.array([1.+anisotropy, 1.-anisotropy])
-    else:
-        # expansion through drag formula
-        print("expansion set automatically")
-        expansion = None
 
-
-    # SET OUTPUT
-    path = "outputs/"
-    if not file_prefix is None: # default is None
-        path += file_prefix+"_"
-
-    path += "%dx%d_T%.0e_dt%.0e"%(xsize, ysize, T_sim, dt)
-
+    # number of frames
     if frame_every > 0.: # default: frame_every < 0; changed with --every flag
         N_skip = int(frame_every/dt)
         N_frames = int(T_sim/frame_every)
     else:
         N_skip = max(N_step//N_frames, 1)
-    
     N_frames = min(N_frames,N_step)
 
-    if move: # default: move=True, vertex=True, division=True, expansion=None
-        if not expansion is None:
-            if anisotropy != 0.:
-                path += "_anis_%.1e_%.1e"%tuple(expansion)
-            else:
-                path += "_E%.1e"%(expansion[0])
+    time_id = datetime.now().strftime('%Y_%m_%d_%H:%M:%S')
 
+    # SET OUTPUT
+    if file_prefix is not None: # default is None
+        path = f"outputs/{file_prefix}_"
+    else:
+        path = f"outputs/{time_id}_"
+
+    if morphogen:
+        path += f'D:{diff_coef}_k:{degr_rate}_f:{prod_rate}_b:{bind_rate}'
+
+    # debugging options (selectively remove part of the dynamics)
+    if move: # default: move=True, vertex=True, division=True
         if not vertex:
             path += "_novtx"
         
         if not division:
             path += "_nodiv"
-
-    elif not move:
+    else:
         path += "_static"
-
 
     if cython:
         path += "_cy"
 
 
-    if simulate:
-      print("performing simulation")
+    print(f"\nsaving in / retrieving from  \"{path}\"")
+    if os.path.exists(path):
+        print("(path alread exists)\n")
     else:
-      print("skip simulation")
+        os.system("mkdir -p "+path)
 
-    if plotting:
-      print("plotting stuff")
-    else:
-      print("don't bother plotting")
+    print_options(f"{path}/parameters.txt")
 
     print("starting size = ", xsize, ysize, "\n")
 
@@ -83,16 +75,11 @@ if __name__ == "__main__":
     print("      ''       frames = ", int(T_init/frame_every))
     print("simulation time   = ", T_sim)
     print("   ''      frames = ", N_frames)
-
-    print("\nsaving in / retrieving from  \"%s\"\n"%(path))
-    if os.path.exists(path):
-        print("path exists\n")
-
+    
     if test_output:
-        sys.exit()
+        exit(0)
 
     if simulate:
-        os.system("mkdir -p "+path)
 
         if restart_file is None:
             print("Building NT object from scratch")

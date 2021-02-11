@@ -231,9 +231,6 @@ class FE_vtx(object):
     self.faces_to_nodes = faces_to_nodes
 
     self.nNodes = len(self.concentration)
-    print("nodes = ", self.nNodes)
-    print("cells = ", self.cells.__len__())
-    print("verts = ", len(self.cells.mesh.vertices.T)//3)
     if self.nNodes != self.cells.__len__() + len(self.cells.mesh.vertices.T)//3:
       raise Exception("Wrong number of nodes.")
     self.nEdges = len(self.cells.mesh.edges.ids)
