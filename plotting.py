@@ -15,7 +15,8 @@ from mpl_toolkits.mplot3d import Axes3D #Added by me
 from matplotlib.tri import Triangulation, TriAnalyzer, UniformTriRefiner
 import matplotlib.colors as mcol
 from matplotlib.animation import FuncAnimation
-#from matplotlib import animation
+from matplotlib import use
+use('Agg')
 
 color = {
     "Shh":"#000000",    # black
