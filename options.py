@@ -83,5 +83,5 @@ def print_options (filename=None):
 	if filename is not None:
 		with open(filename, 'w') as file:
 			for key, val in vars(args).items():
-				file.write(f'{key} = {val}')
+				file.write(f'{key} = {val}\n')
 			file.close()

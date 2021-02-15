@@ -87,7 +87,10 @@ if __name__ == "__main__":
     #   in the name of the last saved file
     k_start = 0
     if from_last:
-        last_file = [file for file in os.listdir(path) if '_NT.pkl' in file][-1]
+        last_file = [file for file in os.listdir(path) if '_NT.pkl' in file]
+        last_file.sort()
+        # print(last_file)
+        last_file = last_file[-1]
         k_start = int(last_file.split('_')[0])
         restart_file = f'{path}/{last_file}'
         print(f'initial configuration from {restart_file}\n')

@@ -17,7 +17,7 @@ import copy
 from initialisationEd import (_modified_toroidal_hex_mesh,
                               _modified_toroidal_random_mesh,
                               _modified_toroidal_voronoi_mesh)
-from Finite_Element import _add_edges
+from Finite_Element import _add_edges, centroids2
 from run_select import division_axis, mod_division_axis
 from scipy.integrate import odeint
 import sys
