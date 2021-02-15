@@ -12,7 +12,7 @@ from NT_vtx import build_NT_vtx, load_NT_vtx
 from plotting import morphogen_video, cells_state_video, combined_video
 from options import (file_prefix, test_output, restart_file,
                 T_sim, T_init, frame_every, init_only, dt, N_frames,
-                simulate, plotting, cython,
+                simulate, plotting, cython, from_last,
                 vertex, morphogen, move, division,
                 xsize,ysize, 
                 degr_rate, prod_rate, diff_coef, bind_rate,
@@ -26,6 +26,7 @@ if __name__ == "__main__":
     np.random.seed(1984)
 
     N_step = int(T_sim/dt)
+    N_step_init = int(T_init/dt)
 
 
     # number of frames
@@ -79,15 +80,27 @@ if __name__ == "__main__":
     if test_output:
         exit(0)
 
+    # start from the last saved step when option --continue is passed.
+    #
+    # note: different from --restart <file> option, where configuration
+    #   file is used as initial condition at time 0, not at time contained
+    #   in the name of the last saved file
+    k_start = 0
+    if from_last:
+        last_file = [file for file in os.listdir(path) if '_NT.pkl' in file][-1]
+        k_start = int(last_file.split('_')[0])
+        restart_file = f'{path}/{last_file}'
+        print(f'initial configuration from {restart_file}\n')
+
     if simulate:
 
         if restart_file is None:
-            print("Building NT object from scratch")
+            print('Building NT object from scratch')
             neural_tube=build_NT_vtx(size = [xsize,ysize])
         
             # initialization
-            print("Initialization: simulation of the vertex model only")
-            for k in range(int(T_init/dt)):
+            print('Initialization: simulation of the vertex model only')
+            for k in range(N_step_init):
                 if k%N_skip == 0:
                     print("%2.1f/100   t = %.4f   frame = %d"%(k*dt/T_init*100., k*dt, int(k/N_skip)), end="\r")
                     with open (path+"/%06d_NT_init.pkl"%(k), "wb") as f:
@@ -96,34 +109,32 @@ if __name__ == "__main__":
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
                     grn=False, morphogen=False)
                 neural_tube.transitions(division=division)
-            print("")
+            print('')
         else:
-            # load from file
-            print("Load from restart file: "+restart_file)
+            print(f'Load restart file \"{restart_file}\"')
             neural_tube=load_NT_vtx(restart_file)
-            print("")
+            print('')
 
         # selecting a random cell to leave the tissue (set its target area to 0)
-        # "poisoned" is the idiotic name that should mean "differentiating"
-        # if not 'poisoned' in neural_tube.FE_vtx.cells.properties:
+        # if 'leaving' not in neural_tube.FE_vtx.cells.properties:
         #     n_cells = neural_tube.FE_vtx.cells.mesh.n_face
         #     cell_leaving = np.random.randint(n_cells)
         #     leaving = np.zeros(n_cells).astype(int)
         #     leaving[cell_leaving] = 1
         #     print("cell %d leaves the tissue"%(cell_leaving))
-        #     neural_tube.FE_vtx.cells.properties['poisoned'] = leaving
+        #     neural_tube.FE_vtx.cells.properties['leaving'] = leaving
         
         if not init_only:
             # simulation
             print("Simulation of the full model")
-            for k in range(N_step+1):
+            for k in range(k_start,N_step+1):
                 if k%N_skip == 0:
                     print("%2.1f/100   t = %.4f   frame = %d"%(k*dt/T_sim*100., k*dt, int(k/N_skip)), end="\r")
                     with open (path+"/%06d_NT.pkl"%(k), "wb") as f:
                         dill.dump(neural_tube, f)
 
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                    expansion=expansion,vertex=vertex,move=move,morphogen=morphogen)
+                    vertex=vertex,move=move,morphogen=morphogen)
                 neural_tube.transitions(division=division)
             print("")
 

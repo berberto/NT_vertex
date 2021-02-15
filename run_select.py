@@ -228,7 +228,7 @@ def simulation_with_division_clone_differenciation_3stripes(cells,force,dt=dt,T1
     properties = cells.properties
     properties['parent'] = cells.mesh.face_ids #save the ids to control division parents-daugthers 
     properties['ageingrate'] = np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)) #degradation rate per each cell
-    properties['poisoned'] = np.zeros(len(cells)) ### to add diferenciation rate in PMN
+    properties['leaving'] = np.zeros(len(cells)) ### to add diferenciation rate in PMN
     # properties['differentiation_rate']= np.zeros(len(cells),dtype=int)
     expansion = np.array([0.0,0.0])
     while True:
@@ -239,12 +239,12 @@ def simulation_with_division_clone_differenciation_3stripes(cells,force,dt=dt,T1
             properties['age'] = np.append(properties['age'],np.zeros(2*len(ready)))
             properties['parent'] = np.append(properties['parent'],np.repeat(properties['parent'][ready],2))  # Daugthers and parent have the same ids
             properties['parent_group'] = np.append(properties['parent_group'],np.repeat(properties['parent_group'][ready],2)) #use to draw clones
-            properties['poisoned'] = np.append(properties['poisoned'], np.zeros(2*len(ready))) ### to add diferenciation rate in PMN
+            properties['leaving'] = np.append(properties['leaving'], np.zeros(2*len(ready))) ### to add diferenciation rate in PMN
             edge_pairs = [division_axis(cells.mesh,cell_id,rand) for cell_id in ready] #New edges after division 
             cells.mesh = cells.mesh.add_edges(edge_pairs) #Add new edges in the mesh
         ###### Defferentiation rate
         properties['differentiation_rate'] = 0.5*time_hours*dt*(np.array([0.0,diff_rate_hours,0.0]))[properties['parent_group']] #Used 0.02, 0.0002 & 1/13
-        properties['poisoned'] = properties['poisoned'] - (properties['poisoned']-1) * (~(cells.empty()) & (rand.rand(len(cells)) < properties['differentiation_rate']))
+        properties['leaving'] = properties['leaving'] - (properties['leaving']-1) * (~(cells.empty()) & (rand.rand(len(cells)) < properties['differentiation_rate']))
         properties['age'] = properties['age']+dt*properties['ageingrate'] #add time step depending of the degradation rate 
         
         N_G1=1-1.0/t_G1*properties['age'] #nuclei position in G1 phase
@@ -254,7 +254,7 @@ def simulation_with_division_clone_differenciation_3stripes(cells,force,dt=dt,T1
         
         
         """Target area function depending age and z nuclei position"""
-        properties['A0'] = (properties['age']+1.0)*0.5*(1.0+properties['zposn']**2)*(1.0-cells.properties['poisoned'])
+        properties['A0'] = (properties['age']+1.0)*0.5*(1.0+properties['zposn']**2)*(1.0-cells.properties['leaving'])
         
         cells.mesh , number_T1= cells.mesh.transition(T1_eps)
         F = force(cells)/viscosity  #force per each cell force= targetarea+Tension+perimeter+pressure_boundary 
@@ -271,7 +271,7 @@ def simulation_with_division_clone_whole_tissue_differenciation(cells,force,dt=d
     properties = cells.properties
     properties['parent'] = cells.mesh.face_ids #save the ids to control division parents-daugthers 
     properties['ageingrate'] = np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)) #degradation rate per each cell
-    properties['poisoned'] = np.zeros(len(cells)) ### to add diferenciation rate in PMN
+    properties['leaving'] = np.zeros(len(cells)) ### to add diferenciation rate in PMN
 
     expansion = np.array([0.0,0.0])
     while True:
@@ -282,12 +282,12 @@ def simulation_with_division_clone_whole_tissue_differenciation(cells,force,dt=d
             properties['age'] = np.append(properties['age'],np.zeros(2*len(ready)))
             properties['parent'] = np.append(properties['parent'],np.repeat(properties['parent'][ready],2))  # Daugthers and parent have the same ids
             properties['parent_group'] = np.append(properties['parent_group'],np.repeat(properties['parent_group'][ready],2)) #use to draw clones
-            properties['poisoned'] = np.append(properties['poisoned'], np.zeros(2*len(ready))) ### to add diferenciation rate in PMN
+            properties['leaving'] = np.append(properties['leaving'], np.zeros(2*len(ready))) ### to add diferenciation rate in PMN
             edge_pairs = [division_axis(cells.mesh,cell_id,rand) for cell_id in ready] #New edges after division 
             cells.mesh = cells.mesh.add_edges(edge_pairs) #Add new edges in the mesh
         ###### Defferentiation rate
         properties['differentiation_rate'] = 0.5*time_hours*dt*(np.array([diff_rate_hours,diff_rate_hours,diff_rate_hours]))[properties['parent_group']] #Used 0.02, 0.0002 & 1/13
-        properties['poisoned'] = properties['poisoned'] - (properties['poisoned']-1) * (~(cells.empty()) & (rand.rand(len(cells)) < properties['differentiation_rate']))
+        properties['leaving'] = properties['leaving'] - (properties['leaving']-1) * (~(cells.empty()) & (rand.rand(len(cells)) < properties['differentiation_rate']))
         properties['age'] = properties['age']+dt*properties['ageingrate'] #add time step depending of the degradation rate 
         
         N_G1=1-1.0/t_G1*properties['age'] #nuclei position in G1 phase
@@ -297,7 +297,7 @@ def simulation_with_division_clone_whole_tissue_differenciation(cells,force,dt=d
         
         
         """Target area function depending age and z nuclei position"""
-        properties['A0'] = (properties['age']+1.0)*0.5*(1.0+properties['zposn']**2)*(1.0-cells.properties['poisoned'])
+        properties['A0'] = (properties['age']+1.0)*0.5*(1.0+properties['zposn']**2)*(1.0-cells.properties['leaving'])
         
         cells.mesh , number_T1= cells.mesh.transition(T1_eps)
         F = force(cells)/viscosity  #force per each cell force= targetarea+Tension+perimeter+pressure_boundary 

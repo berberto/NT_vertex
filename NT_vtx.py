@@ -27,20 +27,24 @@ class NT_vtx(object):
     self.GRN = GRN
     
   def evolve(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt,
-          expansion=None, vertex=True, move=True, grn=True, morphogen=True):
+          vertex=True, move=True, grn=True, morphogen=True, differentiation=True):
     sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-    self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, expansion=expansion, vertex=vertex, move=move, dynamics=morphogen)
+    self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, vertex=vertex, move=move, dynamics=morphogen)
     if grn:
-      self.GRN.evolve(time , dt , sig_input , bind_rate)
+      self.GRN.evolve_ugly(time , dt , sig_input , bind_rate)
       self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source
       self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
     neg = np.where(self.FE_vtx.concentration < 0)[0]
     self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
+    if differentiation:
+      # for each cell, set the probability of differentiate in the next time-step dt
+      # 
+      pass
     
   def evolve_fast(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt,
-          expansion=None, vertex=True, move=True, grn=True, morphogen=True):
+          vertex=True, move=True, grn=True, morphogen=True):
     sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-    self.FE_vtx.evolve_cy(diff_coeff,prod_rate,dt, expansion=expansion, vertex=vertex, move=move, dynamics=morphogen)
+    self.FE_vtx.evolve_cy(diff_coeff,prod_rate,dt, vertex=vertex, move=move, dynamics=morphogen)
     if grn:
       self.GRN.evolve_ugly(time , dt , sig_input , bind_rate)
       self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source

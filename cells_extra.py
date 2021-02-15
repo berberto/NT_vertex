@@ -6,15 +6,17 @@ Created on Fri Apr 17 18:38:32 2020
 @author: andrewg
 """
 
-from mesh import *
+from mesh import sum_vertices
 import numpy as np
-from Global_Constant import *
+from Global_Constant import (expansion_constant,
+                            t_G1, t_G2, t_S,
+                            T1_eps, viscosity, A_c)
 from cells import Cells
-from forces import *
+from forces import (TargetArea, Pressure, Perimeter, Tension)
 import copy
-from initialisationEd import *
-from initialisationEd import _modified_toroidal_hex_mesh, _modified_toroidal_random_mesh#, _modified_toroidal_voronoi_mesh
-from Finite_Element import *
+from initialisationEd import (_modified_toroidal_hex_mesh,
+                              _modified_toroidal_random_mesh,
+                              _modified_toroidal_voronoi_mesh)
 from Finite_Element import _add_edges
 from run_select import division_axis, mod_division_axis
 from scipy.integrate import odeint
@@ -77,8 +79,8 @@ def property_update(cells, ready):
         properties['age'] = np.append(properties['age'],np.zeros(2*len(ready)))#extend
     if 'A0' in properties:    
         properties['A0']=np.append(properties['A0'],np.repeat(properties['A0'][ready],2))
-    if 'poisoned' in properties: #not sure what this is for.  To make poisoned cells shrink and die.
-        properties['poisoned'] = np.append(properties['poisoned'], np.zeros(2*len(ready)))  
+    if 'leaving' in properties: #not sure what this is for.  To make leaving cells shrink and die.
+        properties['leaving'] = np.append(properties['leaving'], np.zeros(2*len(ready)))  
     if 'offspring' in properties: #trace family tree.  NOT IN USE ANYMORE
         properties['offspring'] = np.append(properties['offspring'],-1*np.ones(2*len(ready))) #extend (MAKES INTO 1-D ARRAY)
         for k in range(len(ready)):

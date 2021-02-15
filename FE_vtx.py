@@ -389,7 +389,7 @@ class FE_vtx(object):
     return scipy.linalg.solve(self.matrix, self.vector)
 
 
-  def evolve_new(self, diff_coeff, prod_rate, degr_rate, dt, expansion=None, vertex=True, move=True, refinement=1):
+  def evolve_new(self, diff_coeff, prod_rate, degr_rate, dt, vertex=True, move=True, refinement=1):
     self.parameters["diff_coeff"] = diff_coeff
     self.parameters["prod_rate"] = prod_rate
     self.parameters["degr_rate"] = degr_rate
@@ -399,7 +399,7 @@ class FE_vtx(object):
     old_cents = self.centroids
 
     if move:
-      new_cells = cells_evolve(self.cells,dt,expansion=expansion,vertex=vertex)
+      new_cells = cells_evolve(self.cells,dt,vertex=vertex)
       new_verts = new_cells.mesh.vertices.T
       new_cents = centroids2(new_cells)
       verts_vel = new_cells.mesh.velocities.T
@@ -430,7 +430,7 @@ class FE_vtx(object):
   #
 
 
-  def evolve(self,v,prod_rate,degr_rate,dt,expansion=None,vertex=True,move=True,dynamics=True):
+  def evolve(self,v,prod_rate,degr_rate,dt,vertex=True,move=True,dynamics=True):
     """
     Performs one step of the FE method. Computes the new cells object itself.
     Uses np.linalg.solve
@@ -450,7 +450,7 @@ class FE_vtx(object):
     old_cents = self.centroids
     
     if move: # move: use vertex model forces if True, else only expansion
-      new_cells = cells_evolve(self.cells,dt,expansion=expansion,vertex=vertex)
+      new_cells = cells_evolve(self.cells,dt,vertex=vertex)
       new_verts = new_cells.mesh.vertices.T
       new_cents = centroids2(new_cells)
       verts_vel = new_cells.mesh.velocities.T
@@ -490,7 +490,7 @@ class FE_vtx(object):
     self.centroids = new_cents
 
 
-  def evolve_cy(self,v,prod_rate,degr_rate,dt,expansion=None,vertex=True):
+  def evolve_cy(self,v,prod_rate,degr_rate,dt,vertex=True):
     """
     Performs one step of the FE method. Computes the new cells object itself.
     Uses np.linalg.solve
@@ -507,7 +507,7 @@ class FE_vtx(object):
     old_cents = self.centroids
     
     if vertex:
-      new_cells = cells_evolve(self.cells,dt,expansion=expansion)
+      new_cells = cells_evolve(self.cells,dt)
       new_verts = new_cells.mesh.vertices.T
       new_cents = cen2(new_cells)#centroids2(new_cells)
     else:

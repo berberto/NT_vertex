@@ -316,100 +316,33 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
     e4 = rotate[e3]     #  ''  found CW from e3 around origin of e3
     e5 = rotate[e4]     #  ''  found CW from e4 around origin of e3
 
-    #
-    #   DEBUG
-    #
-    # print([e0,e1,e2,e3,e4,e5])
-    # # vertices before T1
-    # print("")
-    # print("T1 at edge ", edge)
-    # A = vertices[:,np.array([e0,e1,e2])]
-    # B = vertices[:,np.array([e3,e4,e5])]
-    # An1 = vertices[:,reverse[e1]]
-    # An2 = vertices[:,reverse[e2]]
-    # Bn4 = vertices[:,reverse[e4]]
-    # Bn5 = vertices[:,reverse[e5]]
-    # print("A = \n", A,"\n")
-    # print("B = \n", B,"\n")
-    # print("An1 = \n", An1,"\n")
-    # print("An2 = \n", An2,"\n")
-    # print("Bn4 = \n", Bn4,"\n")
-    # print("Bn5 = \n", Bn5,"\n")
-    #
-    #
-    #
-
-    # (A) permutation of indices (0 and 3 remain the same)
-    # (A) changing the topology of the mesh
+    # permutation of indices (0 and 3 remain the same)
+    # changing the topology of the mesh
     before = np.array([e1, e2, e4, e5]) # edges indicated by 'before' indices
     after = np.array([e2, e4, e5, e1])  # are now indicated by the corresponding 'after' indices
 
-    after_r = reverse.take(after) # (A) select the reverse of the new labels
-    reverse[before] = after_r     # (A) the reverse of the 'after' edges become the reverse of the 'before' edges
-    reverse[after_r] = before     # (A) the reverse of the (new) reverse takes the value of before
+    after_r = reverse.take(after) # select the reverse of the new labels
+    reverse[before] = after_r     # the reverse of the 'after' edges become the reverse of the 'before' edges
+    reverse[after_r] = before     # the reverse of the (new) reverse takes the value of before
 
-    # (A) 'vertices' is a numpy array indexed by (component [0,1], index)
-    # (A) any reason why not e3 or e5? PERIODICITY
-    # (A) e4 is the edge continuing from e0 along the border of the same cell,
-    # (A) so their roots must be close! Instead, we can only say that
-    # (A) vertices associated to e3 and e5 differ from e0 by 'dv' modulo a periodicity.
+    # 'vertices' is a numpy array indexed by (component [0,1], index)
+    # any reason why not e3 or e5? PERIODICITY
+    # e4 is the edge continuing from e0 along the border of the same cell,
+    # so their roots must be close! Instead, we can only say that
+    # vertices associated to e3 and e5 differ from e0 by 'dv' modulo a periodicity.
     dv = vertices[:, e4]-vertices[:, e0]
-    # (A) isn't there a problem if the edge is on the boundary? 
+    # isn't there a problem if the edge is on the boundary? 
     #     are vertices labelled like this always nearby?
-    l = 1.01*eps/np.sqrt(dv[0]*dv[0]+dv[1]*dv[1])   # (A) new length of edge to be 1.01 eps
-    dw = [dv[1]*l, -dv[0]*l]    # (A) dw = dv rotated by 90 deg CW (rot -90 deg)
+    l = 1.01*eps/np.sqrt(dv[0]*dv[0]+dv[1]*dv[1])   # new length of edge to be 1.01 eps
+    dw = [dv[1]*l, -dv[0]*l]    # dw = dv rotated by 90 deg CW (rot -90 deg)
 
-    # (A) change the coordinates of the vertices
+    # change the coordinates of the vertices
     for i in [0, 1]:
         dp = 0.5*(dv[i]+dw[i])
         dq = 0.5*(dv[i]-dw[i])
         vertices[i,before] = vertices[i,after] + np.array([dq, -dp, -dq, dp])
         vertices[i,e0] = vertices[i,e4] - dw[i] # e4 = next[e0]
         vertices[i,e3] = vertices[i,e1] + dw[i] # e1 = next[e3]
-
-        # # (A) previous version
-        # dp = 0.5*(dv[i]+dw[i])
-        # dq = 0.5*(dv[i]-dw[i])
-        # v = vertices[i] # (A) i-th component of all the vertices (array) -- changing its entries changes 'vertices' !!
-        # v[before] = v.take(after) + np.array([dp, -dq, -dp, dq])
-        # v[e0] = v[e4] + dw[i]
-        # v[e3] = v[e1] - dw[i]
-
-    #
-    #   DEBUG
-    #
-    # # vertices after T1
-    # Ap = vertices[:,np.array([e0,e1,e2])]
-    # Bp = vertices[:,np.array([e3,e4,e5])]
-    # An1p = vertices[:,reverse[e1]]
-    # An2p = vertices[:,reverse[e2]]
-    # Bn4p = vertices[:,reverse[e4]]
-    # Bn5p = vertices[:,reverse[e5]]
-    # print("A' = \n", Ap,"\n")
-    # print("B' = \n", Bp,"\n")
-    # print("A'n1 = \n", An1p,"\n")
-    # print("A'n2 = \n", An2p,"\n")
-    # print("B'n4 = \n", Bn4p,"\n")
-    # print("B'n5 = \n", Bn5p,"\n")
-    # #
-    # import matplotlib.pyplot as plt
-    # plt.gca().set_aspect('equal', adjustable='box')
-    # A = A[:,0]
-    # B = B[:,0]
-    # Ap = Ap[:,0]
-    # Bp = Bp[:,0]
-    # plt.plot([A[0],B[0]],[A[1],B[1]],color="orange")
-    # plt.plot([An1[0],A[0],An2[0]],[An1[1],A[1],An2[1]],color="orange")
-    # plt.plot([Bn4[0],B[0],Bn5[0]],[Bn4[1],B[1],Bn5[1]],color="orange")
-    # plt.plot([Ap[0],Bp[0]],[Ap[1],Bp[1]],color="blue")
-    # plt.plot([An1p[0],Ap[0],An2p[0]],[An1p[1],Ap[1],An2p[1]],color="blue")
-    # plt.plot([Bn4p[0],Bp[0],Bn5p[0]],[Bn4p[1],Bp[1],Bn5p[1]],color="blue")
-    # plt.savefig("testT1.png")
-    # plt.show()
-    # exit()
-    #
-    #
-    #
 
     face_id_by_edge[before] = face_id_by_edge.take(after)
     face_id_by_edge[e0] = face_id_by_edge[e4]
@@ -445,13 +378,13 @@ def _transition(mesh, eps):
     # Remove collapsed (ie two-sided) faces.
     while True:
         nxt = rotate[reverse]
-        # (A) identify two-sided cells:
-        # (A) this happens when one side of a triangular cell performs a T1:
-        # (A) the adjacent edge along the boundary of the cell corresponds to its reverse
+        # identify two-sided cells:
+        # this happens when one side of a triangular cell performs a T1:
+        # the adjacent edge along the boundary of the cell corresponds to its reverse
         # (A) WHY IS EDGES.IDS CUT AT LEN(NXT)? SHOULDN'T THE TWO ARRAYS BE EQUAL IN LENGTH?
         two_sided = np.where(nxt[nxt] == edges.ids[:len(nxt)])[0]
 
-        # (A) if none are two sided, do nothing
+        # if none are two sided, do nothing
         if not len(two_sided):
             break
         # (A) what the hell does this do?
