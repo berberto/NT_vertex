@@ -251,6 +251,14 @@ class FE_vtx(object):
     self.tria_vecs  = np.zeros((self.nEdges,3),dtype=float)    #    ''   FE vectors
     self.tria_mats  = np.zeros((self.nEdges,3,3),dtype=float)  #    ''   FE matrices
 
+  @property
+  def n_face(self):
+    return self.mesh.n_face
+
+  @property
+  def cell_properties(self):
+    return self.cells.properties
+
   #
   #   EDIT: NEW METHODS
   #
@@ -556,8 +564,8 @@ def build_FE_vtx(cells,concentration_by_edge=None,concentration_by_face=None):
     con = np.zeros(m)
   return FE_vtx(cells,cents,con,eTn,fTn)
 
-def build_FE_vtx_from_scratch(size=None, vm_parameters=None,source_data=None,cluster_data=None):
-  cells = cells_setup(size, vm_parameters,source_data,cluster_data)
+def build_FE_vtx_from_scratch(size=None, vm_parameters=None,source_data=None,cluster_data=None,differentiation=True):
+  cells = cells_setup(size, vm_parameters,source_data,cluster_data,differentiation=differentiation)
   add_IKNM_properties(cells)
   cents = centroids2(cells)
   eTn = cells.mesh.edges.ids//3

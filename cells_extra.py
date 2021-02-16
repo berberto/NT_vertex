@@ -9,7 +9,7 @@ Created on Fri Apr 17 18:38:32 2020
 from mesh import sum_vertices
 import numpy as np
 from Global_Constant import (expansion_constant,
-                            t_G1, t_G2, t_S,
+                            t_G1, t_G2, t_S, time_hours,
                             T1_eps, viscosity, A_c)
 from cells import Cells
 from forces import (TargetArea, Pressure, Perimeter, Tension)
@@ -701,6 +701,14 @@ def update_age(cells,dt):
     
     """
     cells.properties['age'] = cells.properties['age']+dt*cells.properties['ageingrate']
+
+def update_leaving(cells,dt,diff_rates=None):
+    if diff_rates is not None:
+        rates = diff_rates
+    else:
+        rates = .5 * time_hours * np.ones(len(cells))
+    cells.properties['leaving'] = cells.properties['leaving'] - (cells.properties['leaving']-1) * (~(cells.empty()) & (rand.rand(len(cells)) < dt*rates))
+
     
 def colour_offsp(cells):
     cells2=cells.copy()
@@ -755,7 +763,7 @@ def int_to_rgb(v):
     if v==6:
         return np.array([1,1,1])
     
-def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None):
+def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None,differentiation=True):
     """
     Args:
         size can be a list [a,b] where a and b are positive integers
@@ -802,6 +810,8 @@ def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None
             setup_cluster_cells(cells, cluster_data[0], cluster_data[1]) #create cluster as specified
             if len(cluster_data)==3: #set up cluster properties if specified
                 set_group_properties2(cells,'cluster', cluster_data[2]) 
+    if differentiation:
+        cells.properties['leaving'] = np.zeros(len(cells))
     return cells 
 
 def divide_ready(cells, ready):  
@@ -842,7 +852,7 @@ def add_IKNM_properties(cells):
     set_zposn_A0(cells)
     
 
-def cells_evolve(cells,dt,expansion=None,vertex=True):
+def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None):
     """
     Same as evolve, just renamed (for use in another method called 'evolve')
     """
@@ -871,6 +881,8 @@ def cells_evolve(cells,dt,expansion=None,vertex=True):
     new_verts = cells.mesh.vertices
     cells.mesh.velocities = (new_verts - old_verts)/dt
 
+    if 'leaving' in cells.properties:
+        update_leaving(cells,dt,diff_rates=diff_rates)
     if 'age' in cells.properties:
         update_age(cells,dt)
     if 'zposn' in cells.properties:

@@ -256,7 +256,11 @@ class GRN_full_basic(object):
         self.trans_grn = trans_grn #a GRN_basic object
         self.effector = effector
         self.lost_morphogen = lost_morphogen
-           
+        self.olig_timer = 0. # to be reset upon division
+
+    @property
+    def diff_rates(self):
+        return None
         
     def evolve(self, time , dt , sig_input , bind_rate): #bind_rate = k_ShhPtc from Cohen.  Make sure the scale is correct.
         """

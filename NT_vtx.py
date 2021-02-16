@@ -25,6 +25,26 @@ class NT_vtx(object):
   def __init__(self, FE_vtx, GRN):
     self.FE_vtx = FE_vtx
     self.GRN = GRN
+
+  @property
+  def mesh(self):
+    return self.FE_vtx.cells.mesh
+
+  @property
+  def concentration(self):
+    return self.FE_vtx.concentration
+
+  @property
+  def n_face(self):
+    return self.mesh.n_face
+
+  @property
+  def cell_state(self):
+    return self.GRN.poni_grn.state
+
+  @property
+  def properties(self):
+    return self.FE_vtx.cells.properties
     
   def evolve(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt,
           vertex=True, move=True, grn=True, morphogen=True, differentiation=True):
@@ -34,12 +54,9 @@ class NT_vtx(object):
       self.GRN.evolve_ugly(time , dt , sig_input , bind_rate)
       self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source
       self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
+      self.properties['diff_rates'] = self.GRN.diff_rates
     neg = np.where(self.FE_vtx.concentration < 0)[0]
     self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
-    if differentiation:
-      # for each cell, set the probability of differentiate in the next time-step dt
-      # 
-      pass
     
   def evolve_fast(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt,
           vertex=True, move=True, grn=True, morphogen=True):
@@ -127,8 +144,8 @@ class NT_vtx(object):
     self.FE_vtx.edges_to_nodes = self.FE_vtx.cells.mesh.edges.ids//3
     self.FE_vtx.faces_to_nodes = cTn
   
-def build_NT_vtx(size=None, vm_parameters=None,source_data=None,cluster_data=None):
-  fe_vtx  = build_FE_vtx_from_scratch(size, vm_parameters,source_data,cluster_data)
+def build_NT_vtx(size=None, vm_parameters=None,source_data=None,cluster_data=None,differentiation=True):
+  fe_vtx  = build_FE_vtx_from_scratch(size, vm_parameters,source_data,cluster_data,differentiation=differentiation)
   n_face = fe_vtx.cells.mesh.n_face
   grn=build_GRN_full_basic(n_face)
   return NT_vtx(fe_vtx,grn)

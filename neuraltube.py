@@ -88,17 +88,16 @@ if __name__ == "__main__":
     k_start = 0
     if from_last:
         last_file = [file for file in os.listdir(path) if '_NT.pkl' in file]
-        last_file.sort()
-        # print(last_file)
+        last_file.sort() # sort the list of files, as os.listdir gives random order
         last_file = last_file[-1]
         k_start = int(last_file.split('_')[0])
         restart_file = f'{path}/{last_file}'
-        print(f'initial configuration from {restart_file}\n')
+        print(f'\nInitial configuration from \"{restart_file}\"')
 
     if simulate:
 
         if restart_file is None:
-            print('Building NT object from scratch')
+            print('\nBuilding NT object from scratch')
             neural_tube=build_NT_vtx(size = [xsize,ysize])
         
             # initialization
@@ -114,7 +113,7 @@ if __name__ == "__main__":
                 neural_tube.transitions(division=division)
             print('')
         else:
-            print(f'Load restart file \"{restart_file}\"')
+            print(f'Loading restart file \"{restart_file}\"')
             neural_tube=load_NT_vtx(restart_file)
             print('')
 
