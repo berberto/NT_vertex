@@ -41,12 +41,12 @@ if __name__ == "__main__":
 
     # SET OUTPUT
     if file_prefix is not None: # default is None
-        path = f"outputs/{file_prefix}_"
+        path = f"outputs/{file_prefix}"
     else:
-        path = f"outputs/{time_id}_"
+        path = f"outputs/{time_id}"
 
     if morphogen:
-        path += f'D:{diff_coef}_k:{degr_rate}_f:{prod_rate}_b:{bind_rate}'
+        path += f'_D:{diff_coef}_k:{degr_rate}_f:{prod_rate}_b:{bind_rate}'
 
     # debugging options (selectively remove part of the dynamics)
     if move: # default: move=True, vertex=True, division=True

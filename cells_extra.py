@@ -813,6 +813,7 @@ def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None
                 set_group_properties2(cells,'cluster', cluster_data[2]) 
     if differentiation:
         cells.properties['leaving'] = np.zeros(len(cells))
+        cells.properties['diff_rates'] = None
     return cells 
 
 def divide_ready(cells, ready):  

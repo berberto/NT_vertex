@@ -261,12 +261,12 @@ class GRN_full_basic(object):
 
     @property
     def n_cells(self):
-        return len(self.poni_grn)
+        return len(self.poni_grn.state)
 
     @property
     def diff_rates(self):
         rates = 0.05 * time_hours * diff_rate_hours * np.ones(self.n_cells)
-        olig_high = np.where(poni_grn[:,1] > .7)[0]
+        olig_high = np.where(self.poni_grn.state[:,1] > .7)[0]
         rates[olig_high] = 0.5 * time_hours * diff_rate_hours
         return None
         
