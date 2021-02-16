@@ -458,7 +458,7 @@ class FE_vtx(object):
     old_cents = self.centroids
     
     if move: # move: use vertex model forces if True, else only expansion
-      new_cells = cells_evolve(self.cells,dt,vertex=vertex)
+      new_cells = cells_evolve(self.cells,dt,vertex=vertex,diff_rates=self.properties['diff_rates'])
       new_verts = new_cells.mesh.vertices.T
       new_cents = centroids2(new_cells)
       verts_vel = new_cells.mesh.velocities.T

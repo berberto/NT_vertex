@@ -24,3 +24,5 @@ simulation_cell_cycle = 100.0 #average step units
 time_hours = experimental_cell_cycle/simulation_cell_cycle 
 
 expansion_constant = 50
+
+diff_rate_hours = .1

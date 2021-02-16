@@ -115,6 +115,9 @@ if __name__ == "__main__":
         else:
             print(f'Loading restart file \"{restart_file}\"')
             neural_tube=load_NT_vtx(restart_file)
+            if 'leaving' not in neural_tube.properties:
+                neural_tube.properties['leaving'] = np.zeros(len(neural_tube))
+
             print('')
 
         # selecting a random cell to leave the tissue (set its target area to 0)

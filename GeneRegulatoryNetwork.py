@@ -7,6 +7,7 @@ Created on Fri Apr 17 18:26:22 2020
 """
 import numpy as np
 from scipy.integrate import odeint
+from Global_Constant import time_hours, diff_rate_hours
 import time
 
 
@@ -259,7 +260,14 @@ class GRN_full_basic(object):
         self.olig_timer = 0. # to be reset upon division
 
     @property
+    def n_cells(self):
+        return len(self.poni_grn)
+
+    @property
     def diff_rates(self):
+        rates = 0.05 * time_hours * diff_rate_hours * np.ones(self.n_cells)
+        olig_high = np.where(poni_grn[:,1] > .7)[0]
+        rates[olig_high] = 0.5 * time_hours * diff_rate_hours
         return None
         
     def evolve(self, time , dt , sig_input , bind_rate): #bind_rate = k_ShhPtc from Cohen.  Make sure the scale is correct.

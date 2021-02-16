@@ -10,6 +10,7 @@ from mesh import sum_vertices
 import numpy as np
 from Global_Constant import (expansion_constant,
                             t_G1, t_G2, t_S, time_hours,
+                            diff_rate_hours,
                             T1_eps, viscosity, A_c)
 from cells import Cells
 from forces import (TargetArea, Pressure, Perimeter, Tension)
@@ -706,7 +707,7 @@ def update_leaving(cells,dt,diff_rates=None):
     if diff_rates is not None:
         rates = diff_rates
     else:
-        rates = .5 * time_hours * np.ones(len(cells))
+        rates = .5 * time_hours * diff_rate_hours * np.ones(len(cells))
     cells.properties['leaving'] = cells.properties['leaving'] - (cells.properties['leaving']-1) * (~(cells.empty()) & (rand.rand(len(cells)) < dt*rates))
 
     

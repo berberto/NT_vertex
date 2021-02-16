@@ -26,9 +26,16 @@ class NT_vtx(object):
     self.FE_vtx = FE_vtx
     self.GRN = GRN
 
+  def __len__ (self):
+    return self.n_face
+
   @property
   def mesh(self):
     return self.FE_vtx.cells.mesh
+
+  @property
+  def cells(self):
+    return self.FE_vtx.cells
 
   @property
   def concentration(self):
