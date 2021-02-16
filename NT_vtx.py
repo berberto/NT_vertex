@@ -7,7 +7,7 @@ Created on Thu Jun  4 19:21:31 2020
 """
 
 from FE_vtx import  build_FE_vtx, build_FE_vtx_from_scratch
-from GeneRegulatoryNetwork import GRN_full_basic, build_GRN_full_basic
+from GeneRegulatoryNetwork import GRN, build_GRN
 from FE_transitions import divide, T1, rem_collapsed
 from Finite_Element import centroids2
 from cells_extra import ready_to_divide
@@ -50,18 +50,25 @@ class NT_vtx(object):
     return self.GRN.poni_grn.state
 
   @property
+  def not_empty(self):
+    return np.where( ~(self.cells.empty()) )[0]
+
+  @property
   def properties(self):
     return self.FE_vtx.cells.properties
     
   def evolve(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt,
-          vertex=True, move=True, grn=True, morphogen=True):
+          vertex=True, move=True, grn=True, morphogen=True, diff_rates=None):
     sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
-    self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, vertex=vertex, move=move, dynamics=morphogen)
+    # print(f'len(self.GRN.diff_rates) = {len(self.GRN.diff_rates)} vs not_empty {len(self.not_empty)}')
+
+    self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, vertex=vertex, move=move, dynamics=morphogen, diff_rates=diff_rates)
+    # print(f'self.GRN.n_cells, {self.GRN.n_cells}')
+    # print(f'self.n_face, {self.n_face}')
     if grn:
       self.GRN.evolve(time , dt , sig_input , bind_rate)
       self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source
       self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
-      self.properties['diff_rates'] = self.GRN.diff_rates
     neg = np.where(self.FE_vtx.concentration < 0)[0]
     self.FE_vtx.concentration[neg]=0 #reset any negative concentration values to zero.
     

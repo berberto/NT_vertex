@@ -192,33 +192,33 @@ class GRN(object):
             One time step dt from time to time+dt with Euler method
         
         """
-        self.lost_morphogen = bind_rate * sig_input*self.state[:,idx['Ptc']]
+        # print(f'\nshape GRN state before = {self.state.shape}')
+
+        self.lost_morphogen = bind_rate * sig_input * self.state[:,idx['Ptc']]
         f = np.array( list(map(self.GRN_function,self.state, np.repeat(time,self.n_cells), sig_input)) )
         self.state = self.state + dt * f
+        # print(f'shape GRN state after = {self.state.shape}')
     
     def divide(self,ready,factor=.5):
         '''
             Define gene expression in daughter cells
 
         '''
-        # # here the definition as for the property_update function
-        # old_state = self.state.copy()
-        # new_state = np.append( old_state, np.repeat(old_state[ready],2) )
-        # self.state = new_state
-
-        # here Graeme's original definition
+        # print(f'cells before divisions: {self.n_cells}')
+        # print(f'cells dividing: {len(ready)}')
         for k in ready:
             # gene expression in daughter is 'factor' times the one of the parent
-            daughter_state= factor*self.state[k] 
-            old_state = self.state
-            new_state = np.vstack((old_state,daughter_state))
-            self.state = np.vstack((new_state, daughter_state))
+            daughter_state = factor*self.state[k].copy() 
+            old_state = self.state.copy()
+            aux = np.vstack((old_state,daughter_state))
+            self.state = np.vstack((aux, daughter_state))
+        # print(f'cells after divisions: {self.n_cells}')
 
         
 def build_GRN(n, GRN_function=shh_gli_poni, state=None , sig_input=None):
     """
         Function to initialize the GRN_basic object
-        ..Why this was not included in the __init__ of the GRN_basic, is a mystery..
+        ..Why this was not included in the __init__ of the GRN, is a mystery..
     """
     if state is None:
         state= np.array([[1.,     1.,      1., .00001, 1.,

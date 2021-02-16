@@ -108,18 +108,25 @@ if __name__ == "__main__":
                     with open (path+"/%06d_NT_init.pkl"%(k), "wb") as f:
                         dill.dump(neural_tube, f)
 
+
+                # print("------------------ EVOLVE ----------------------")
+                diff_rates=neural_tube.GRN.diff_rates
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                    grn=False, morphogen=False)
+                    vertex=vertex,move=move,morphogen=False,
+                    diff_rates=diff_rates)
+                # print("------------------ TRANSITIONS ----------------------")
                 neural_tube.transitions(division=division)
+                # print("------------------ END OF LOOP ----------------------\n\n\n\n")
+
+                # leaving=neural_tube.properties['leaving']
+                # print(len(leaving), np.where(leaving==1)[0])
+
             print('')
         else:
             print(f'Loading restart file \"{restart_file}\"')
             neural_tube=load_NT_vtx(restart_file)
             if 'leaving' not in neural_tube.properties:
                 neural_tube.properties['leaving'] = np.zeros(len(neural_tube))
-            if 'diff_rates' not in neural_tube.properties:
-                neural_tube.properties['diff_rates'] = None
-
             print('')
 
         # selecting a random cell to leave the tissue (set its target area to 0)
@@ -140,8 +147,13 @@ if __name__ == "__main__":
                     with open (path+"/%06d_NT.pkl"%(k), "wb") as f:
                         dill.dump(neural_tube, f)
 
+                leaving=neural_tube.properties['leaving']
+                print(len(leaving), np.where(leaving==1)[0])
+
+                diff_rates=neural_tube.GRN.diff_rates
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                    vertex=vertex,move=move,morphogen=morphogen)
+                    vertex=vertex,move=move,morphogen=morphogen,
+                    diff_rates=diff_rates)
                 neural_tube.transitions(division=division)
             print("")
 

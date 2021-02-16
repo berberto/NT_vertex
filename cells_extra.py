@@ -704,11 +704,26 @@ def update_age(cells,dt):
     cells.properties['age'] = cells.properties['age']+dt*cells.properties['ageingrate']
 
 def update_leaving(cells,dt,diff_rates=None):
+    alive = np.where(~(cells.empty()))[0]
     if diff_rates is not None:
+        # print(f'len(cells) = {len(cells)}')
+        # print(f'len(alive) = {len(alive)}')
+        # print(f'len(diff_rates) = {len(diff_rates)}')
         rates = diff_rates
     else:
-        rates = .05 * time_hours * diff_rate_hours * np.ones(len(cells))
-    cells.properties['leaving'] = cells.properties['leaving'] - (cells.properties['leaving']-1) * (~(cells.empty()) & (rand.rand(len(cells)) < dt*rates))
+        rates = 0.5 * time_hours * diff_rate_hours * np.zeros(len(cells))
+
+    # print("\n",~(cells.empty()))
+    alive = np.where(~(cells.empty()))[0]
+    # print(f'{len(alive)} cells vs {len(cells)} total cells')
+    # exit()
+    # print(f'len(cells.properties["leaving"]) before, {len(cells.properties["leaving"])}')
+    # print(f'len(rates), {len(rates)}')
+    # print(f'len(cells), {len(cells)}')
+    # print(f'len(~(cells.empty())), {len(~(cells.empty()))}')
+    cells.properties['leaving'] = cells.properties['leaving'] + (1 - cells.properties['leaving']) * (~(cells.empty()) & (rand.rand(len(cells)) < dt*rates))
+    # print("cells.properties['leaving']")
+    # print(cells.properties['leaving'])
 
     
 def colour_offsp(cells):
@@ -813,7 +828,7 @@ def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None
                 set_group_properties2(cells,'cluster', cluster_data[2]) 
     if differentiation:
         cells.properties['leaving'] = np.zeros(len(cells))
-        cells.properties['diff_rates'] = None
+        cells.properties['diff_rates'] = np.zeros(len(cells))
     return cells 
 
 def divide_ready(cells, ready):  
