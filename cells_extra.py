@@ -707,7 +707,7 @@ def update_leaving(cells,dt,diff_rates=None):
     if diff_rates is not None:
         rates = diff_rates
     else:
-        rates = .5 * time_hours * diff_rate_hours * np.ones(len(cells))
+        rates = .05 * time_hours * diff_rate_hours * np.ones(len(cells))
     cells.properties['leaving'] = cells.properties['leaving'] - (cells.properties['leaving']-1) * (~(cells.empty()) & (rand.rand(len(cells)) < dt*rates))
 
     

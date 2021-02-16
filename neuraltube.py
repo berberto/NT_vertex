@@ -117,6 +117,8 @@ if __name__ == "__main__":
             neural_tube=load_NT_vtx(restart_file)
             if 'leaving' not in neural_tube.properties:
                 neural_tube.properties['leaving'] = np.zeros(len(neural_tube))
+            if 'diff_rates' not in neural_tube.properties:
+                neural_tube.properties['diff_rates'] = None
 
             print('')
 

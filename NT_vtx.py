@@ -54,7 +54,7 @@ class NT_vtx(object):
     return self.FE_vtx.cells.properties
     
   def evolve(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt,
-          vertex=True, move=True, grn=True, morphogen=True, differentiation=True):
+          vertex=True, move=True, grn=True, morphogen=True):
     sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
     self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, vertex=vertex, move=move, dynamics=morphogen)
     if grn:
