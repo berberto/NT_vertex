@@ -20,6 +20,10 @@ python neuraltube.py -h
 
 ### Comments/Questions
 
+1. Where should the daughters cells be added in GRN?
+
+2. `property_update` for `divide`: when more than 1 is ready, what happens with `np.repeat`?
+
 1. Added comments to 'FE_transitions' and to 'FE_vtx.transition': where is the interpolation to find concentrations at the new centroids upon cell division done? Is it in the `_add_edges` function?
 
 2. The random seed is chosen at the beginning of the FULL (thermalization + FE sim) dynamics; when the `restart` option is used from an intermediate snapshot, the behaviour is unpredictable.

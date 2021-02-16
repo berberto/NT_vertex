@@ -58,7 +58,7 @@ class NT_vtx(object):
     sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
     self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, vertex=vertex, move=move, dynamics=morphogen)
     if grn:
-      self.GRN.evolve_ugly(time , dt , sig_input , bind_rate)
+      self.GRN.evolve(time , dt , sig_input , bind_rate)
       self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source
       self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes] = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]-self.GRN.lost_morphogen
       self.properties['diff_rates'] = self.GRN.diff_rates
@@ -96,7 +96,7 @@ class NT_vtx(object):
       # interpolation at new nodes is done in the 'divide' function
       # CHECK!
       self.FE_vtx.cells,c_by_e, c_by_c = divide(self.FE_vtx.cells,c_by_e,c_by_c,ready)
-      self.GRN.division(ready)
+      self.GRN.divide(ready)
 
     # perform T1 transitions - "neighbour exchange"
     self.FE_vtx.cells,_ = T1(self.FE_vtx.cells)
@@ -138,7 +138,7 @@ class NT_vtx(object):
     c_by_e = self.FE_vtx.concentration[self.FE_vtx.edges_to_nodes]
     c_by_c = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
     self.FE_vtx.cells,c_by_e, c_by_c = divide(self.FE_vtx.cells,c_by_e,c_by_c,ready)
-    self.GRN.division(ready)
+    self.GRN.divide(ready)
     self.FE_vtx.cells = T1(self.FE_vtx.cells) #perform T1 transitions - "neighbour exchange"
     self.FE_vtx.cells,c_by_e = rem_collapsed(self.FE_vtx.cells,c_by_e) #T2 transitions-"leaving the tissue"
     self.FE_vtx.centroids = cen2(self.FE_vtx.cells)
@@ -153,8 +153,8 @@ class NT_vtx(object):
   
 def build_NT_vtx(size=None, vm_parameters=None,source_data=None,cluster_data=None,differentiation=True):
   fe_vtx  = build_FE_vtx_from_scratch(size, vm_parameters,source_data,cluster_data,differentiation=differentiation)
-  n_face = fe_vtx.cells.mesh.n_face
-  grn=build_GRN_full_basic(n_face)
+  n_face = fe_vtx.n_face
+  grn=build_GRN(n_face)
   return NT_vtx(fe_vtx,grn)
 
 

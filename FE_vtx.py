@@ -253,7 +253,7 @@ class FE_vtx(object):
 
   @property
   def n_face(self):
-    return self.mesh.n_face
+    return self.cells.mesh.n_face
 
   @property
   def properties(self):
