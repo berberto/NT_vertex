@@ -148,7 +148,6 @@ if __name__ == "__main__":
                         dill.dump(neural_tube, f)
 
                 leaving=neural_tube.properties['leaving']
-                print(len(leaving), np.where(leaving==1)[0])
 
                 diff_rates=neural_tube.GRN.diff_rates
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
@@ -166,6 +165,9 @@ if __name__ == "__main__":
             raise FileNotFoundError("path not found: ", path)
 
         allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
+
+        print(f'\n{len(allNT)} frames found')
+
         # allNTinit = sorted([x for x in allfiles if "_NT_init.pkl" in x])
         NT_list = [load_NT_vtx(path+"/"+file) for file in allNT]
         # NTinit_list = [load_NT_vtx(path+"/"+file) for file in allNTinit]
@@ -175,7 +177,7 @@ if __name__ == "__main__":
                         nt.FE_vtx.centroids[~nt.FE_vtx.cells.empty()]
                     ]) for nt in NT_list]
         concs_list = [nt.FE_vtx.concentration   for nt in NT_list]
-        ponis_list = [nt.GRN.poni_grn.state   for nt in NT_list]
+        ponis_list = [nt.GRN.state[:,-4:]   for nt in NT_list]
         cells_list = [nt.FE_vtx.cells   for nt in NT_list]
         verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
 

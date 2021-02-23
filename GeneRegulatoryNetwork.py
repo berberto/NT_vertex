@@ -11,15 +11,14 @@ from Global_Constant import time_hours, diff_rate_hours
 import time
 
 idx={
-    "PtcI": 0,
-    "Ptc":  1,
-    "GliF": 2,
-    "GliA": 3,
-    "GliR": 4,
-    "Pax":  5,
-    "Oli":  6,
-    "Nkx":  7,
-    "Irx":  8
+    "Ptc":  0,
+    "GliF": 1,
+    "GliA": 2,
+    "GliR": 3,
+    "Pax":  4,
+    "Oli":  5,
+    "Nkx":  6,
+    "Irx":  7
 }
 nSpecies = len(idx)
 
@@ -29,55 +28,56 @@ def Hill (x):
 f_A = 10.
 c_GliA = 10.
 
+
+# using parameter set 152 in shh_LAX_long
 def shh_gli_poni (X, t, shh,
       # Shh-Gli
-      K_Pol_Ptc=1.59687005e+00,
-      K_Pol_Gli=4.71752834e+01,
-      K_Gli_Ptc=8.99478929e-01,
-      Km_Ptc_Gli=3.38813445e+02,
-      w_Ptc_A=1.31959134e-01,
-      delta_PtcI=3.60923086e-02,
-      alpha_Ptc=1.31959134e-01,
-      alpha_GliF=9.00660795e-01,
-      w_Gli_A=1.56277655e+00,
-      w_Gli_R=2.10469474e-01,
-      delta_Ptc=3.60923086e-02,
-      delta_GliF=6.01546585e-01,
-      delta_GliA=3.53728598e-01,
-      delta_GliR=1.96965306e-01,
-      B_Shh_Ptc=1.37991521e+02,
+      K_Pol_Ptc=0.206020,
+      K_Pol_Gli=30.413137,
+      K_Gli_Ptc=0.354320,
+      Km_Ptc_Gli=293.792540,
+      alpha_Ptc=0.041105,
+      alpha_GliF=0.522472,
+      w_Gli_A=1.811713,
+      w_Gli_R=0.224316,
+      delta_Ptc=0.003679,
+      delta_GliF=0.143287,
+      delta_GliA=0.771230,
+      delta_GliR=0.223370,
+      B_Shh_Ptc=161.192033,
       # PONI
-      alpha_Pax=2.00000000e+00,
-      alpha_Oli=2.00000000e+00,
-      alpha_Nkx=2.00000000e+00,
-      alpha_Irx=2.00000000e+00,
-      delta=2.00000000e+00,
-      K_Pol_Pax=1.70887077e+00,
-      K_Oli_Pax=1.19444166e+00,
-      K_Nkx_Pax=2.52956598e+01,
-      K_Pol_Oli=8.42805553e+01,
-      K_Gli_Oli=3.50339091e+01,
-      K_Nkx_Oli=5.35565407e+01,
-      K_Irx_Oli=3.41567284e+01,
-      K_Pol_Nkx=2.12589420e+01,
-      K_Gli_Nkx=2.99506875e+02,
-      K_Pax_Nkx=5.76386046e+00,
-      K_Oli_Nkx=1.79875234e+01,
-      K_Irx_Nkx=6.54064389e+01,
-      K_Pol_Irx=2.02603123e+01,
-      K_Oli_Irx=5.95046336e+01,
-      K_Nkx_Irx=4.06288460e+01,
+      alpha_Pax=1.636826,
+      alpha_Oli=2.045280,
+      alpha_Nkx=2.365557,
+      alpha_Irx=2.192375,
+      delta=2.017940,
+      K_Pol_Pax=4.397879,
+      K_Oli_Pax=1.909479,
+      K_Nkx_Pax=26.534532,
+      K_Pol_Oli=56.228966,
+      K_Gli_Oli=16.200857,
+      K_Nkx_Oli=64.417153,
+      K_Irx_Oli=29.268699,
+      K_Pol_Nkx=25.486457,
+      K_Gli_Nkx=345.067599,
+      K_Pax_Nkx=4.883786,
+      K_Oli_Nkx=30.411750,
+      K_Irx_Nkx=56.370927,
+      K_Pol_Irx=24.712558,
+      K_Oli_Irx=59.936165,
+      K_Nkx_Irx=78.009027,
       # Feedback
-      K_Nkx_Gli=9.23547567e+01,
-      f_Nkx_Gli=1.77437736e-01,
-      K_Oli_Gli=3.49396264e+00,
-      f_Oli_Gli=6.14619675e-02
+      K_Nkx_Gli=8.241428,
+      f_Nkx_Gli=0.102894,
+      K_Oli_Gli=7.422326,
+      f_Oli_Gli=0.141334
      ):
     '''
     Dynamical system of the full model
     '''
     
-    ptcI, ptc, glif, glia, glir, pax, oli, nkx, irx = X
+    ptc,   glif,   glia,   glir,   pax,   oli,   nkx,   irx = X
+    f_ptc, f_glif, f_glia, f_glir, f_pax, f_oli, f_nkx, f_irx = np.zeros(X.shape)
     
     # feedback weights
     aux_1 = 1 + f_Oli_Gli * K_Oli_Gli * oli
@@ -88,15 +88,11 @@ def shh_gli_poni (X, t, shh,
     feedbackPtc = 1.
     feedbackGli = (aux_1/aux_2)*(aux_1/aux_2)
     
-    # intermediate Ptc
+    # Ptc
     aux_1 = 1. + c_GliA * K_Gli_Ptc * glia
     aux_2 = 1. + K_Gli_Ptc*(glia + glir)
     aux_3 = aux_1*aux_1 / ( aux_2*aux_2 ) * feedbackPtc
-    f_ptcI = alpha_Ptc * Hill( K_Pol_Ptc * aux_3 )
-    f_ptcI += - ( delta_PtcI + w_Ptc_A ) * ptcI
-
-    # Ptch
-    f_ptc = w_Ptc_A * ptcI 
+    f_ptc = alpha_Ptc * Hill( K_Pol_Ptc * aux_3 )
     f_ptc += - ( delta_Ptc + B_Shh_Ptc * shh ) * ptc
 
     # GliFL
@@ -161,7 +157,7 @@ def shh_gli_poni (X, t, shh,
     f_irx = alpha_Irx * Hill(K_Pol_Irx  * aux_1 * aux_2)
     f_irx += - delta * irx
         
-    return np.array([f_ptcI, f_ptc, f_glif, f_glia, f_glir, f_pax, f_oli, f_nkx, f_irx])
+    return np.array([f_ptc, f_glif, f_glia, f_glir, f_pax, f_oli, f_nkx, f_irx])
 
 
 class GRN(object):
@@ -221,8 +217,8 @@ def build_GRN(n, GRN_function=shh_gli_poni, state=None , sig_input=None):
         ..Why this was not included in the __init__ of the GRN, is a mystery..
     """
     if state is None:
-        state= np.array([[1.,     1.,      1., .00001, 1.,
-                          1., .00001, 0.00001,      1.]]*n)
+        state= np.array([[1.,      1., .00001,  1.,
+                          1., .00001, 0.00001,  1.]]*n)
     else: 
         state=state
 

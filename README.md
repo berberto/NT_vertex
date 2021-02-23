@@ -5,6 +5,18 @@ Main classes:
 2. `FE_vtx.py`: solving diffusion-degradation equation for morphogen with finite element method on a growing vertex model;
 3. `GeneRegulatoryNetwork.py`: signalling and grn dynamics for individual cells.
 
+## Notes for self
+
+Jobs running
+- `newgrn` (on CAMP under `vertex/tests_grn_only`) are simulations with the new GRN, but with homogeneous differentiation rate; `newgrn_s` is for lower values of production rate `f`
+- `grndiff` (on CAMP under `vertex/tests_diff_grn`) are the same simulations but with cell-state dependent differentiation rate (everywhere identical, 10x bigger for Olig2 > 0.7); `grndiff_s` is for lower values of production rate `f`
+- `diff` are with Graeme's GRN, but with finite (small) differentiation rate -- probably a total failure.
+- `F*_D*` are simulations with 0 differentiation rates (killed)
+- `noPtcI`, new grn, parameter set shh_LAX_long, 152, without PtchI
+- `noPtcI_h`, the same, but with 0 differentiation rate
+
+**still need to put reasonable parameters!!!!**
+
 
 #### Usage
 
