@@ -195,7 +195,7 @@ class GRN(object):
         self.state = self.state + dt * f
         # print(f'shape GRN state after = {self.state.shape}')
     
-    def divide(self,ready,factor=.5):
+    def divide(self,ready,factor=1.):
         '''
             Define gene expression in daughter cells
 
