@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
 
                 # print("------------------ EVOLVE ----------------------")
-                diff_rates=neural_tube.GRN.diff_rates
+                diff_rates=neural_tube.GRN.diff_rates.copy()
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
                     vertex=vertex,move=move,morphogen=False,
                     diff_rates=diff_rates)
@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
                 leaving=neural_tube.properties['leaving']
 
-                diff_rates=neural_tube.GRN.diff_rates
+                diff_rates=neural_tube.GRN.diff_rates.copy()
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
                     vertex=vertex,move=move,morphogen=morphogen,
                     diff_rates=diff_rates)

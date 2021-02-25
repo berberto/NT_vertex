@@ -178,9 +178,17 @@ class GRN(object):
 
     @property
     def diff_rates(self):
-        rates = 0.05 * time_hours * diff_rate_hours * np.ones(self.n_cells)
+
+        # print(f'time_hours = {time_hours}')
+        # print(f'diff_rate_hours = {diff_rate_hours}')
+        # print(f'diff_rate pmn = {time_hours * diff_rate_hours * 2.}')
+        # print(f'diff_rate oth = {time_hours * diff_rate_hours * .5}')
+        # print(1./(5. * time_hours * diff_rate_hours))
+        # exit()
+
+        rates = np.zeros(self.n_cells)
         olig_high = np.where(self.state[:,idx['Oli']] > .7)[0]
-        rates[olig_high] = 0.5 * time_hours * diff_rate_hours
+        rates[olig_high] = 1./15.
         return rates
         
     def evolve(self,time,dt,sig_input,bind_rate): #could put self.sig_input...
