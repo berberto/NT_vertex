@@ -167,6 +167,10 @@ def set_colour_poni_state(cells,poni_state):
         elif m==3:
             cells.properties['color'][k] = mcol.to_rgb(color['Irx'])# np.array([0,1,1]) # ?, Irx high 
 
+        if cells.properties['leaving'][k] == 1:
+            cells.properties['color'][k] = np.array([0,0,0]) # differentating cells
+
+
 def drawShh(nodes, alpha, z_high, z_low, ax=None, final_width=None, final_height=None, size=None, heatmap=True):
     l=[]
     r=[]
