@@ -24,7 +24,14 @@ from scipy.integrate import odeint
 import sys
 
 #rand=np.random
-default_vm_parameters = [1.0,1.0,0.04,0.075,0.5,0.0,0.0]
+default_vm_parameters = [1.0,   # K for the group_name faces
+                         1.0,   # A0 for the group_name faces
+                         0.04,  # Gamma for the group_name faces
+                         0.075, # Lambda for the edges of the group_name faces
+                         0.5,   # lambda_boundary
+                         0.0,   # P for the edges of the group_name faces
+                         0.0    # boundary_P for the edges of the group_name faces
+                        ]
 
 
 rand=np.random
@@ -869,15 +876,44 @@ def add_IKNM_properties(cells):
     set_zposn_A0(cells)
     
 
-def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None):
+def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesion=None):
     """
     Same as evolve, just renamed (for use in another method called 'evolve')
     """
     old_verts = cells.mesh.vertices
     if vertex: # move with forces
-        force= TargetArea()+Perimeter()+Tension()+Pressure()
-        F = force(cells)/viscosity #viscosity is from Global_Constant
-        dv = dt*sum_vertices(cells.mesh.edges,F)
+        force= TargetArea()+Perimeter()+Pressure() # +Tension()
+        F = force(cells)
+        
+        # if differential adhesion, it's convenient to compute the surface
+        # tension force explicitly here.
+        # since the Lambda parameter is a cell property (applying to all
+        # edges belonging to a given cell), rather than changing
+        # the line tension of the specific edges, we change the vector 
+        # of edges lengths that is used to compute the tension force
+        len_modified = cells.mesh.length.copy()
+
+        if diff_adhesion is not None:
+            # find indices of edges of the floor plate (FP) region
+            # 1. find the edges associated to FP cells
+            edges_fp = (cells.properties['source'][cells.mesh.face_id_by_edge]==1)
+            # 2. find the index of the edges whose REVERSE are NOT associated to FP cells
+            rev_not_fp = (cells.properties['source'][cells.mesh.face_id_by_edge[cells.mesh.edges.reverse]]==0)
+            # 3. the intersection between the two are the indices of the edges which are at the border between FP and other cells
+            bdr_fp = np.where(edges_fp & rev_not_fp)[0]
+            for n in bdr_fp:
+                # if the difference in area is greater than some number (IS THIS A SORT OF TRICK OR IS IT PHYSICS?)
+                if abs(cells.mesh.area[cells.mesh.face_id_by_edge[n]] - cells.mesh.area[cells.mesh.face_id_by_edge[cells.mesh.edges.reverse[n]]]) > 0.4:
+                    # we divide the length by a parameter larger than 1
+                    # that is equivalent to multiply
+                    len_modified[n] *= 1./diff_adhesion
+        
+        # compute the tension with the modified edges lengths
+        tension = (0.5*cells.by_edge('Lambda','Lambda_boundary')/len_modified)*cells.mesh.edge_vect
+        tension = tension - tension.take(cells.mesh.edges.prev, 1)
+
+        F += tension
+        dv = dt*sum_vertices(cells.mesh.edges,F/viscosity) #viscosity is from Global_Constant
         cells.mesh = cells.mesh.moved(dv)
         
     if expansion is None:
