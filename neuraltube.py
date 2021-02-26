@@ -20,6 +20,7 @@ from options import (file_prefix, test_output, restart_file,
                 print_options
                 )
 
+diff_adhesion=20.
 
 if __name__ == "__main__":
     
@@ -46,7 +47,7 @@ if __name__ == "__main__":
         path = f"outputs/{time_id}"
 
     if morphogen:
-        path += f'_D:{diff_coef}_k:{degr_rate}_f:{prod_rate}_b:{bind_rate}'
+        path += '_D:%.3f_k:%.3f_f:%.3f_b:%.3f'%(diff_coef, degr_rate, prod_rate, bind_rate)
 
     # debugging options (selectively remove part of the dynamics)
     if move: # default: move=True, vertex=True, division=True
@@ -113,7 +114,7 @@ if __name__ == "__main__":
                 diff_rates=neural_tube.GRN.diff_rates.copy()
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
                     vertex=vertex,move=move,morphogen=False,
-                    diff_rates=diff_rates)
+                    diff_rates=diff_rates,diff_adhesion=diff_adhesion)
                 # print("------------------ TRANSITIONS ----------------------")
                 neural_tube.transitions(division=division)
                 # print("------------------ END OF LOOP ----------------------\n\n\n\n")
@@ -152,7 +153,7 @@ if __name__ == "__main__":
                 diff_rates=neural_tube.GRN.diff_rates.copy()
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
                     vertex=vertex,move=move,morphogen=morphogen,
-                    diff_rates=diff_rates)
+                    diff_rates=diff_rates,diff_adhesion=diff_adhesion)
                 neural_tube.transitions(division=division)
             print("")
 

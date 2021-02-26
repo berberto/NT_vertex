@@ -438,7 +438,7 @@ class FE_vtx(object):
   #
 
 
-  def evolve(self,v,prod_rate,degr_rate,dt,vertex=True,move=True,dynamics=True,diff_rates=None):
+  def evolve(self,v,prod_rate,degr_rate,dt,vertex=True,move=True,dynamics=True,diff_rates=None,diff_adhesion=None):
     """
     Performs one step of the FE method. Computes the new cells object itself.
     Uses np.linalg.solve
@@ -458,7 +458,7 @@ class FE_vtx(object):
     old_cents = self.centroids
     
     if move: # move: use vertex model forces if True, else only expansion
-      new_cells = cells_evolve(self.cells,dt,vertex=vertex,diff_rates=diff_rates)
+      new_cells = cells_evolve(self.cells,dt,vertex=vertex,diff_rates=diff_rates,diff_adhesion=diff_adhesion)
       new_verts = new_cells.mesh.vertices.T
       new_cents = centroids2(new_cells)
       verts_vel = new_cells.mesh.velocities.T
