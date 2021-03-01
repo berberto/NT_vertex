@@ -16,11 +16,9 @@ from options import (file_prefix, test_output, restart_file,
                 vertex, morphogen, move, division,
                 xsize,ysize, 
                 degr_rate, prod_rate, diff_coef, bind_rate,
-                Kappa, Gamma, Lambda,
+                Kappa, Gamma, Lambda, diff_adhesion,
                 print_options
                 )
-
-diff_adhesion=20.
 
 if __name__ == "__main__":
     

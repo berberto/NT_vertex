@@ -38,6 +38,7 @@ VTXpars = parser.add_argument_group(title='Vertex model parameters (UNEFFECTIVE)
 VTXpars.add_argument('--kappa','-K', dest='Kappa', metavar='<val>', type=float, default=1.0, help='Area elastic modulus. Default: 1.0')
 VTXpars.add_argument('--gamma','-G', dest='Gamma', metavar='<val>', type=float, default=0.04, help='Global contractility parameter. Default: 0.04')
 VTXpars.add_argument('--lambda','-L', dest='Lambda', metavar='<val>', type=float, default=.075, help='Line tension. Default: 0.05')
+VTXpars.add_argument('--diff-adh', dest='diff_adhesion', metavar='<val>', type=float, default=None, help='Ratio between line tension at the boundary of floorplate region, and all the other line tensions (Lambda). Default: None (equivalent to 1., but skips the differential adhesion calculations)')
 
 args = parser.parse_args()
 
@@ -72,6 +73,7 @@ bind_rate = args.bind_rate # default: 0.
 Kappa = args.Kappa # default: 1.0
 Gamma = args.Gamma # default: 0.04
 Lambda = args.Lambda # default: 0.075
+diff_adhesion = args.diff_adhesion # default: None
 
 
 def print_options (filename=None):
