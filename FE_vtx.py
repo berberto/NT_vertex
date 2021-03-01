@@ -438,7 +438,7 @@ class FE_vtx(object):
   #
 
 
-  def evolve(self,v,prod_rate,degr_rate,dt,vertex=True,move=True,dynamics=True,diff_rates=None,diff_adhesion=None):
+  def evolve(self,v,prod_rate,degr_rate,dt,vertex=True,move=True,morphogen=True,diff_rates=None,diff_adhesion=None):
     """
     Performs one step of the FE method. Computes the new cells object itself.
     Uses np.linalg.solve
@@ -470,7 +470,8 @@ class FE_vtx(object):
       verts_vel = np.zeros(np.shape(old_verts))
       cents_vel = np.zeros(np.shape(old_cents))
 
-    if dynamics:
+    # perform the FE step if morphogen is True, otherwise set concentration to 0
+    if morphogen:
       f = self.cells.properties['source']*prod_rate #source
       count=0
       rows=[]
@@ -491,8 +492,9 @@ class FE_vtx(object):
           bv[node_id_tri[i]] += b(i,d,d_old,reduced_f,old_alpha,dt)
           for j in range(3):
             A[node_id_tri[i],node_id_tri[j]] += (1. + degr_rate*dt)*I(i,j,d)+ dt*K(i,j,d,nabla_Phi,v)+ W(i,j,d,nabla_Phi,new_nodes, prev_nodes)
-
       self.concentration = scipy.linalg.solve(A,bv)
+    else:
+      self.concentration = np.zeros(m)
 
     self.cells = new_cells
     self.centroids = new_cents

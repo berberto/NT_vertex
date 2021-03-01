@@ -912,7 +912,7 @@ def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesi
         tension = (0.5*cells.by_edge('Lambda','Lambda_boundary')/len_modified)*cells.mesh.edge_vect
         tension = tension - tension.take(cells.mesh.edges.prev, 1)
 
-        F += tension
+        F = F + tension
         dv = dt*sum_vertices(cells.mesh.edges,F/viscosity) #viscosity is from Global_Constant
         cells.mesh = cells.mesh.moved(dv)
         
