@@ -10,7 +10,7 @@ from FE_vtx import  build_FE_vtx, build_FE_vtx_from_scratch
 from GeneRegulatoryNetwork import GRN, build_GRN
 from FE_transitions import divide, T1, rem_collapsed
 from Finite_Element import centroids2
-from cells_extra import ready_to_divide
+from cells_extra import ready_to_divide, setup_source
 from centroids_cy import cen2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -56,6 +56,9 @@ class NT_vtx(object):
   @property
   def properties(self):
     return self.FE_vtx.cells.properties
+
+  def set_source_by_x(self, width=None):
+    setup_source(self.cells, width=width)
     
   def evolve(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt,
           vertex=True, move=True, grn=True, morphogen=True, diff_rates=None, diff_adhesion=None):

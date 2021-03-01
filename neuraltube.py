@@ -107,18 +107,14 @@ if __name__ == "__main__":
                     with open (path+"/%06d_NT_init.pkl"%(k), "wb") as f:
                         dill.dump(neural_tube, f)
 
-
-                # print("------------------ EVOLVE ----------------------")
                 diff_rates=neural_tube.GRN.diff_rates.copy()
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
                     vertex=vertex,move=move,morphogen=False,
-                    diff_rates=diff_rates,diff_adhesion=diff_adhesion)
-                # print("------------------ TRANSITIONS ----------------------")
+                    diff_rates=diff_rates,diff_adhesion=None)
                 neural_tube.transitions(division=division)
-                # print("------------------ END OF LOOP ----------------------\n\n\n\n")
-
-                # leaving=neural_tube.properties['leaving']
-                # print(len(leaving), np.where(leaving==1)[0])
+                
+                # set the source of morphogen to be few cells wide
+                neural_tube.set_source_by_x(width=4)
 
             print('')
         else:
