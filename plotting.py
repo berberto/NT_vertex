@@ -313,7 +313,8 @@ def combined_video(cells_history, nodes_array, alpha_array, poni_state_history, 
     def plot_frame(k):
         plt.cla()
         # top panel
-        drawShh(nodes_array[k], alpha_array[k], z_high, z_low, ax[0],
+        # 1., 0. to be replaced in general by z_high, z_low
+        drawShh(nodes_array[k], alpha_array[k], 1., 0., ax[0],
             final_width=final_width,final_height=final_height, heatmap=heatmap)
         if heatmap:
             draw_cells(cells_history[k], final_width, final_height, ax[0], colored=False)
