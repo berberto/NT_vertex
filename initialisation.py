@@ -89,8 +89,8 @@ def toroidal_voronoi_mesh(centres, width, height):
     centres_3x3 = np.vstack([centres+[dx, dy] for dx in [-width, 0, width] for dy in [-height, 0, height]])
     vor = voronoi(centres_3x3)
 
-    N_cell = len(vor.points)/9
-    region_id_pairs = vor.ridge_points/N_cell-4  # fundamental region is 0
+    N_cell = len(vor.points)//9
+    region_id_pairs = vor.ridge_points//N_cell-4  # fundamental region is 0
     face_id_pairs = vor.ridge_points % N_cell  # idx mapped to fundamental region
 
     return build_mesh(vor.vertices, Torus(width, height), face_id_pairs, vor.ridge_vertices, region_id_pairs)
@@ -113,12 +113,12 @@ def cylindrical_voronoi_mesh(centres, width, height):
     vor = voronoi(all_centres)
 
     N = len(centres)
-    region_id_pairs = ((vor.ridge_points / N) % 3) - 1
+    region_id_pairs = ((vor.ridge_points // N) % 3) - 1
     face_id_pairs = vor.ridge_points
     mask = face_id_pairs < 3*N
     face_id_pairs[mask] %= N
     # round to multiple of 3*N
-    face_id_pairs[~mask] /= 3*N
+    face_id_pairs[~mask] //= 3*N
     face_id_pairs[~mask] *= 3*N
 
     boundary_face_ids = [3*N, 6*N]
@@ -174,7 +174,7 @@ def hexagonal_centres(N_cell_across, N_cell_up, noise, rand):
     dx, dy = 1.0/N_cell_across, 1.0/(N_cell_up/2)
     x = np.arange(-0.5+dx/4, 0.5, dx)
     y = np.arange(-0.5+dy/4, 0.5, dy)
-    centres = np.zeros((N_cell_across, N_cell_up/2, 2, 2))
+    centres = np.zeros((N_cell_across, N_cell_up//2, 2, 2))
     centres[:, :, 0, 0] += x[:, np.newaxis]
     centres[:, :, 0, 1] += y[np.newaxis, :]
     x += dx/2
