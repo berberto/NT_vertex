@@ -18,7 +18,6 @@ import copy
 from initialisationEd import (_modified_toroidal_hex_mesh,
                               _modified_toroidal_random_mesh,
                               _modified_toroidal_voronoi_mesh)
-from Finite_Element import _add_edges, centroids2
 from run_select import division_axis, mod_division_axis
 from scipy.integrate import odeint
 import sys
@@ -227,7 +226,7 @@ def build_cells(size=None, grid_type=None , source_width=None,age=None,parent=No
     n_face=cells.mesh.n_face
     if source_width is not None:
         approx_cell_width = cells.mesh.geometry.width/float(size[0])
-        centroids = centroids2(cells)
+        centroids = cells.mesh.centres.T # centroids2(cells)
         source_vect=np.zeros(n_face)
         left_vect=np.zeros(n_face)
         left_xlim = -0.5*source_width*approx_cell_width 
@@ -321,7 +320,7 @@ def setup_source(cells, width=None): #used in NT_full_sim_seq
     or on the left of it.
     """  
     approx_cell_width = 2*np.mean(cells.mesh.length)
-    cents=centroids2(cells)
+    cents=cells.mesh.centres.T # centroids2(cells)
     n_face = cells.mesh.n_face
     cells.properties['source']=np.zeros(n_face)
     cells.properties['left']=np.zeros(n_face)
@@ -433,7 +432,7 @@ def setup_cluster_cells(cells, centre=None, size=None):
     size[1] is the approx number of cells vertically
     """  
     approx_cell_width = 2*np.mean(cells.mesh.length)
-    cents= centroids2(cells) #from FinElt4
+    cents= cells.mesh.centres.T # centroids2(cells) #from FinElt4
     n_face =cells.mesh.n_face
     cells.properties['cluster']=np.zeros(n_face)
     if centre is None:

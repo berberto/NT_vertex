@@ -11,7 +11,6 @@ import numpy as np
 import scipy
 from scipy.sparse import coo_matrix
 from cells_extra import cells_setup,add_IKNM_properties, ready_to_divide, cells_evolve
-from Finite_Element import centroids2
 from FE_transitions import T1, rem_collapsed, divide
 import concurrent.futures
 from multiprocessing import Array ,Process
@@ -170,7 +169,19 @@ class FE_vtx(object):
     if move: # move: use vertex model forces if True, else only expansion
       new_cells = cells_evolve(self.cells,dt,vertex=vertex,diff_rates=diff_rates,diff_adhesion=diff_adhesion)
       new_verts = new_cells.mesh.vertices.T
-      new_cents = centroids2(new_cells)
+      new_cents = new_cells.mesh.centres.T
+
+      # # CHECK THAT CENTROID CALCULATIONS CORRESPOND      
+      # new_cents_ = centroids2(new_cells)
+      # alive = np.where(~new_cells.empty())[0]
+      # gone = np.where(new_cells.empty())[0]
+      # empty = np.where(np.all(np.isnan(new_cents), axis=1))[0]
+      # empty_= np.where(np.all(new_cents_ == -1, axis=1))[0]
+      # print("good centroids correspond?        ", np.allclose( new_cents_[alive], new_cents[alive] ))
+      # print("void centroids correspond?        ", np.all(empty_ == empty))
+      # print("gone cells correspond (in either)?", np.all(empty == gone) and np.all(empty_ == gone))
+      # exit()
+
       verts_vel = new_cells.mesh.velocities.T
       cents_vel = (new_cents - old_cents)/dt
     else:
@@ -220,7 +231,7 @@ class FE_vtx(object):
     self.cells,c_by_e = rem_collapsed(self.cells,c_by_e) #T2 transitions-"leaving the tissue"
     if division:
       self.cells,c_by_e, c_by_c = divide(self.cells,c_by_e,c_by_c,ready)
-    self.centroids = centroids2(self.cells)
+    self.centroids = self.cells.mesh.centres.T # centroids2(self.cells)
     eTn = self.cells.mesh.edges.ids//3
     n = max(eTn)
     cTn=np.cumsum(~self.cells.empty())+n
@@ -233,7 +244,7 @@ class FE_vtx(object):
     
     
 def build_FE_vtx(cells,concentration_by_edge=None,concentration_by_face=None):
-  cents = centroids2(cells)
+  cents = cells.mesh.centres.T # centroids2(cells)
   eTn = cells.mesh.edges.ids/3
   n = max(eTn)
   fTn=np.cumsum(~cells.empty())+n #we just care about the living faces getting the correct node index
@@ -245,7 +256,7 @@ def build_FE_vtx(cells,concentration_by_edge=None,concentration_by_face=None):
 def build_FE_vtx_from_scratch(size=None, vm_parameters=None,source_data=None,cluster_data=None,differentiation=True):
   cells = cells_setup(size, vm_parameters,source_data,cluster_data,differentiation=differentiation)
   add_IKNM_properties(cells)
-  cents = centroids2(cells)
+  cents = cells.mesh.centres.T # centroids2(cells)
   eTn = cells.mesh.edges.ids//3
   n = max(eTn)
   fTn=np.cumsum(~cells.empty())+n #we just care about the living faces getting the correct node index

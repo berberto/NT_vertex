@@ -55,7 +55,7 @@ class Edges(object):
 
     def __len__(self):
         return len(self.reverse)
- 
+
     @cached_property
     def next(self):
         """An array of n_edge integers giving the ID of the next edge around the (left) face."""
@@ -128,10 +128,9 @@ class Mesh(object):
         n_face: total number of cells including 'dead' cells which are no longer in edges network.
     """
 
-    def __init__(self, edges, vertices, face_id_by_edge, geometry, n_face=None, boundary_faces=None, velocities=None):
+    def __init__(self, edges, vertices, face_id_by_edge, geometry, n_face=None, boundary_faces=None):
         self.edges = edges
         self.vertices = vertices
-        self.velocities = velocities
         self.face_id_by_edge = face_id_by_edge
         face_id_by_edge.setflags(write=False)
         self.n_face = n_face or np.max(face_id_by_edge) + 1
@@ -168,21 +167,16 @@ class Mesh(object):
     @cached_property
     def edge_vect(self):
         v = self.vertices
-        dv = v.take(self.edges.next, 1) - v #vector 
+        dv = v.take(self.edges.next, axis=1) - v
         if self.has_boundary():
             if np.any(self.boundary_edges==-1):
                 # print self.boundary_edges
                 os._exit(1)
-            dv[:, self.boundary_edges] = -dv.take(self.edges.reverse[self.boundary_edges], 1)
+            dv[:, self.boundary_edges] = -dv.take(self.edges.reverse[self.boundary_edges], axis=1)
         return dv
 
     @cached_property
     def length(self):
-        """
-        G.
-        returns a vector whose ith entry is the length of edge i
-        
-        """
         vect = self.edge_vect
         return np.sqrt(vect[0]**2 + vect[1]**2)
 
@@ -194,9 +188,9 @@ class Mesh(object):
 
     @cached_property
     def area(self):
-        """
-        Seems to calculate the area of a cell by the 'Shoelace' formula.  See Wikipedia.
-        """
+        '''
+        Calculation of the area using the shoelace formula (Green's theorem)
+        '''
         return np.bincount(self.face_id_by_edge, 0.5*np.cross(self.vertices.T, self.edge_vect.T), self.n_face)
 
     @cached_property
@@ -204,11 +198,112 @@ class Mesh(object):
         return np.bincount(self.face_id_by_edge, self.length, self.n_face)
 
     @cached_property
+    def neighbours (self):
+        '''
+        Returns the number of neighbours for each cell.
+        '''
+        return np.bincount(self.face_id_by_edge, minlength=self.n_face)
+
+    @cached_property
+    def centres(self):
+        '''
+        Centres of each face (polygonal cell).
+        '''
+        sides = self.neighbours
+        sides[sides==0.] = 1. # to have well defined division by number of sides
+        centres_x = np.bincount(self.face_id_by_edge, self.vertices[0], self.n_face)/sides
+        centres_y = np.bincount(self.face_id_by_edge, self.vertices[1], self.n_face)/sides
+        centres = np.vstack((centres_x, centres_y))
+        centres[:,np.where(self._edge_lookup == -1)] = np.nan
+        return centres
+
+    @cached_property
+    def cent_vect(self):
+        '''
+        Vectors joining each vertex (origin of an edge in the mesh)
+        to the centre of the corresponding cell
+        '''
+        return self.centres[:, self.face_id_by_edge] - self.vertices
+
+    @cached_property
+    def jacobians(self):
+        '''
+        Jacobians of the map from canonical triangles to the triangles
+        in the mesh formed by the faces' sides and centres.
+        That is, an array of shape (# edges = # triangles, 2, 2)
+        '''
+        inner_sides = self.cent_vect
+        outer_sides = self.edge_vect
+        jac_ = np.empty((len(self.face_id_by_edge), 2, 2))
+
+        jac_[:,0,:] = outer_sides.T
+        jac_[:,1,:] = inner_sides.T
+        return jac_
+
+    @cached_property
+    def determinants (self):
+        '''
+        Determinants of the Jacobians of the triangles
+        '''
+        return np.linalg.det(self.jacobians)
+
+    @cached_property
+    def triangles (self):
+        '''
+        Triangles formed by the cells and their centres. returns 2 arrays:
+        --  Coordinates of vertices, float, shape (# edges = # trangles, 3, 2);
+                axis 0 -> triangle/edge id
+                axis 1 -> vertex of the triangle
+                axis 2 -> component of the vertex
+        --  Ids of the vertices in the `node` property, int, shape (# edges = # trangles, 3)
+                axis 0 -> triangle/edge id
+                axis 1 -> vertex of the triangle
+        '''
+        tri_ = np.empty((len(self.face_id_by_edge), 3, 2))
+        tri_[:,0,:] = self.vertices
+        tri_[:,1,:] = self.vertices.take(self.edges.next, axis=1)
+        tri_[:,2,:] = self.centres
+        return tri_
+
+    @cached_property
+    def nodes(self):
+        '''
+        Returns all the nodes in the mesh, first the entries of 
+        the vertices of the cells, then their centres
+        '''
+        # face_ids = np.sort(np.unique(self.face_id_by_edge))
+        centres = self.centres[:,self.face_ids]
+
+
+        # correct only if the geometry has no boundary!! (on the torus)
+        vertices = self.vertices[:,::3]
+
+        # # this should work if there are no periodic boundary conditions
+        # vertices_ = np.unique(np.around(self.vertices, decimals=8), axis=1)
+
+        # print(vertices.shape)
+        # print(vertices_.shape)
+
+        # print("Vertices equal?         ", np.all(vertices == vertices_))
+        # print("If not where different? ", np.where(~np.isclose(vertices,vertices_)))
+
+        return np.hstack((vertices, centres))
+
+    @cached_property
+    def node_ids (self):
+        return np.arange(len(self.nodes))
+
+    @cached_property
+    def area_ (self):
+        '''
+        Calculation of the area that uses information about the centres of faces.
+        It sums areas of the triangles formed by centres and edges.
+        This should be numerically more precise than the shoelace formula.
+        '''
+        return np.bincount(self.face_id_by_edge, 0.5*self.determinants, self.n_face)
+
+    @cached_property
     def d_area(self):
-        """
-        What is this doing?
-        
-        """
         dv = self.edge_vect
         dA = np.empty_like(dv)
         dA[0], dA[1] = dv[1], -dv[0]
@@ -216,55 +311,30 @@ class Mesh(object):
 
     @cached_property
     def d_perimeter(self):
-        """
-        
-        
-        
-        """
         dL = self.edge_vect/self.length
         return dL - dL.take(self.edges.prev, 1)
 
     def edge_counts(self):
-        """
-        G.
-        ith entry is the number of edges in the boundary of face i.
-        If face i is not alive, the ith entry is zero.
-        
-        """
         return np.bincount(self.face_id_by_edge)
 
     @cached_property
     def _edge_lookup(self):
-        """
-        G.
-        Returns an array of length n_face.  If face i is alive, the ith 
-        entry is the id of an edge in the boundary of the face.  Otherwise,
-        it's -1.
-        
-        """
         lookup = np.empty(self.n_face, int)
         lookup.fill(-1)
         lookup[self.face_id_by_edge] = self.edges.ids
         return lookup
 
     def boundary(self, cell_id):
-        """
-        G.
-        Returns the edges which form the boundary if the input cell cell_id,
-        if it's alive.  If cell_id is not alive, it returns [-1].
-        Not clear on os._exit(1)
-        
-        """
         edge = self._edge_lookup[cell_id]
-        if edge==-1: #was edge ==-1.  _edge_lookup is an array.  So added [0]
+        if edge == -1:
             return [-1]
             os._exit(1) #force end program because edge is out of the edges ids #Pilar have added it!!!
-        if edge!= -1: 
+        if edge != -1: 
             return cycle(self.edges.next, edge)
-        
+
     def boundary_liv(self, cell_id): #cell id is the id of a living cell
         edge = self._edge_lookup[cell_id]
-        return cycle(self.edges.next, edge)    
+        return cycle(self.edges.next, edge)
 
     def moved(self, dv):
         """Caller is responsible for making dv consistent for different copies of a vertex."""
@@ -277,6 +347,9 @@ class Mesh(object):
 
     def add_edges(self, edge_pairs):
         return _add_edges(self, edge_pairs)
+
+    def plot_debug(self):
+        _plot_debug(self)
 
 
 def _remove(edges, reverse, vertices, face_id_by_edge):
@@ -297,7 +370,7 @@ def _remove(edges, reverse, vertices, face_id_by_edge):
     reverse = (np.cumsum(np.bincount(reverse))-1)[reverse]  # relabel to get a perm of [0,...,N-1]
     vertices = np.delete(vertices, to_del, 1)
     face_id_by_edge = np.delete(face_id_by_edge, to_del)
-    return reverse, vertices, face_id_by_edge
+    return reverse, vertices, face_id_by_edge, to_del
 
 
 # def sum_vertices(edges,dv):
@@ -307,34 +380,23 @@ def sum_vertices(edges, dv):
 
 
 def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
+    e0 = edge
+    e1 = rotate[edge]
+    e2 = rotate[e1]
+    e3 = reverse[edge]
+    e4 = rotate[e3]
+    e5 = rotate[e4]
 
+    before = np.array([e1, e2, e4, e5])
+    after = np.array([e2, e4, e5, e1])
 
-    e0 = edge           # edge to be rotated by 90 deg and rescaled
-    e1 = rotate[edge]   #  ''  found CW from e0 around origin of e0
-    e2 = rotate[e1]     #  ''  found CW from e1 around origin of e0
-    e3 = reverse[edge]  #  ''  anti-parallel to e0
-    e4 = rotate[e3]     #  ''  found CW from e3 around origin of e3
-    e5 = rotate[e4]     #  ''  found CW from e4 around origin of e3
+    after_r = reverse.take(after)
+    reverse[before] = after_r
+    reverse[after_r] = before
 
-    # permutation of indices (0 and 3 remain the same)
-    # changing the topology of the mesh
-    before = np.array([e1, e2, e4, e5]) # edges indicated by 'before' indices
-    after = np.array([e2, e4, e5, e1])  # are now indicated by the corresponding 'after' indices
-
-    after_r = reverse.take(after) # select the reverse of the new labels
-    reverse[before] = after_r     # the reverse of the 'after' edges become the reverse of the 'before' edges
-    reverse[after_r] = before     # the reverse of the (new) reverse takes the value of before
-
-    # 'vertices' is a numpy array indexed by (component [0,1], index)
-    # any reason why not e3 or e5? PERIODICITY
-    # e4 is the edge continuing from e0 along the border of the same cell,
-    # so their roots must be close! Instead, we can only say that
-    # vertices associated to e3 and e5 differ from e0 by 'dv' modulo a periodicity.
     dv = vertices[:, e4]-vertices[:, e0]
-    # isn't there a problem if the edge is on the boundary? 
-    #     are vertices labelled like this always nearby?
-    l = 1.01*eps/np.sqrt(dv[0]*dv[0]+dv[1]*dv[1])   # new length of edge to be 1.01 eps
-    dw = [dv[1]*l, -dv[0]*l]    # dw = dv rotated by 90 deg CW (rot -90 deg)
+    l = 1.01*eps/np.sqrt(dv[0]*dv[0]+dv[1]*dv[1])
+    dw = [dv[1]*l, -dv[0]*l]
 
     # change the coordinates of the vertices
     for i in [0, 1]:
@@ -348,7 +410,7 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
     face_id_by_edge[e0] = face_id_by_edge[e4]
     face_id_by_edge[e3] = face_id_by_edge[e1]
 
-    return np.hstack([before, after_r]), vertices[:,[e0,e3]]
+    return np.hstack([before, after_r])
 
 
 def _transition(mesh, eps):
@@ -359,48 +421,46 @@ def _transition(mesh, eps):
     ids_t1=half_edges[np.sum(dv*dv, 0) < eps*eps]
     
     if not short_edges:
-        return mesh, ids_t1
+        return mesh, ids_t1, []
     reverse, vertices, face_id_by_edge = edges.reverse.copy(), mesh.vertices.copy(), mesh.face_id_by_edge.copy()
     rotate = edges.rotate
     # Do T1 transitions
     # to avoid nasty edge cases, we don't allow T1's to happen on adjacent edges
     # and delay to the next timestep if necessary.
-    # A better approach would be to take multiple partial timesteps.
     boundary_edges = mesh.boundary_edges if mesh.has_boundary() else []
     while short_edges:
         edge = short_edges.pop()
         if edge in boundary_edges:
             edge = reverse[edge]
-        (neighbours,_) = _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge)
+        neighbours = _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge)
         for x in neighbours:
-            short_edges.discard(x)
+            short_edges.discard(x) 
 
+    nxt = rotate[reverse]
+    #c=[]
     # Remove collapsed (ie two-sided) faces.
+    edg_rem=[]
     while True:
         nxt = rotate[reverse]
-        # identify two-sided cells:
-        # this happens when one side of a triangular cell performs a T1:
-        # the adjacent edge along the boundary of the cell corresponds to its reverse
-        # (A) WHY IS EDGES.IDS CUT AT LEN(NXT)? SHOULDN'T THE TWO ARRAYS BE EQUAL IN LENGTH?
+        #c.append()
         two_sided = np.where(nxt[nxt] == edges.ids[:len(nxt)])[0]
-
-        # if none are two sided, do nothing
         if not len(two_sided):
             break
-        # (A) what the hell does this do?
         while np.any(reverse[reverse[rotate[two_sided]]] != reverse[rotate[nxt[two_sided]]]):
             reverse[reverse[rotate[two_sided]]] = reverse[rotate[nxt[two_sided]]]
         prev_face_id_by_edge = face_id_by_edge
-        reverse, vertices, face_id_by_edge = _remove(two_sided, reverse, vertices, face_id_by_edge)
+        reverse, vertices, face_id_by_edge, to_del = _remove(two_sided, reverse, vertices, face_id_by_edge)
         ids_removed = np.setdiff1d(prev_face_id_by_edge,face_id_by_edge)
+        edg_rem.append(to_del)
+        #print to_del, ids_removed
         # if ~(ids_t1==np.delete(ids_t1,ids_removed)):
         #     print 'Ids T1 to remove:', ids_t1, ids_removed, np.delete(ids_t1,ids_removed)
-
+        print(ids_removed, to_del)
     mesh = mesh.copy()
     mesh.edges = Edges(reverse)
     mesh.vertices = vertices
     mesh.face_id_by_edge = face_id_by_edge
-    return mesh, ids_t1
+    return mesh, ids_t1, edg_rem
 
 
 def _add_edges(mesh, edge_pairs):
@@ -424,7 +484,7 @@ def _add_edges(mesh, edge_pairs):
         v[[n+3, n+4, n+5]] = v2
 
         a = [n, n+1, n+2, n+3, n+5]
-        b =  [e1, n+4, reverse[e1], e2, reverse[e2]]
+        b = [e1, n+4, reverse[e1], e2, reverse[e2]]
         reverse[a], reverse[b] = b, a
 
         for j, edge in enumerate((e1, e2)):
@@ -447,6 +507,27 @@ def _add_edges(mesh, edge_pairs):
     mesh.vertices = vertices
     mesh.n_face = n_face_old + 2*len(edge_pairs)
     return mesh
+
+
+def _plot_debug (mesh):
+
+    import matplotlib.pyplot as plt
+
+    for p, v in zip(mesh.vertices.T, mesh.edge_vect.T):
+        q = p + v
+        edge = np.array([[*p],[*q]]).T
+        plt.plot(*edge,color='k',lw=.2)
+
+    for p, j in zip(mesh.vertices.T, mesh.jacobians):
+        a, b = j
+        plt.arrow(*(p+0.1*b), *(.5*b), color='r', head_width=.05)
+        plt.arrow(*(p+0.1*b), *(.5*a), color='b' ,head_width=.05)
+
+    plt.scatter(*mesh.nodes, color='g', s=30)
+
+    plt.scatter(*mesh.centres, color='orange', s=10)
+
+    plt.show()
 
 # <codecell>
 
