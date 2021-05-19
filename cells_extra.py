@@ -8,10 +8,10 @@ Created on Fri Apr 17 18:38:32 2020
 
 from mesh import sum_vertices
 import numpy as np
-from Global_Constant import (expansion_constant,
-                            t_G1, t_G2, t_S, time_hours,
-                            diff_rate_hours,
-                            T1_eps, viscosity, A_c)
+from constants import (expansion_constant,
+                       t_G1, t_G2, t_S, time_hours,
+                       diff_rate_hours,
+                       T1_eps, viscosity, A_c)
 from cells import Cells
 from forces import (TargetArea, Pressure, Perimeter, Tension)
 import copy
@@ -912,7 +912,7 @@ def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesi
         tension = tension - tension.take(cells.mesh.edges.prev, 1)
 
         F = F + tension
-        dv = dt*sum_vertices(cells.mesh.edges,F/viscosity) #viscosity is from Global_Constant
+        dv = dt*sum_vertices(cells.mesh.edges,F/viscosity) #viscosity is from 'constants'
         cells.mesh = cells.mesh.moved(dv)
         
     if expansion is None:

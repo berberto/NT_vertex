@@ -9,7 +9,7 @@ from mesh import _T1, Edges
 import numpy as np
 from cells import Cells
 from cells_extra import property_update
-from Global_Constant import (expansion_constant,
+from constants import (expansion_constant,
                             t_G1, t_G2, t_S,
                             T1_eps, viscosity, A_c)
 from run_select import division_axis, mod_division_axis
