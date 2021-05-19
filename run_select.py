@@ -25,7 +25,7 @@ import copy
 import seaborn as sns
 import warnings
 warnings.filterwarnings('ignore') #Don't show warnings
-from Global_Constant import dt, viscosity, t_G1, t_G2, t_S, A_c, J, pos_d, T1_eps, P, microns, time_hours, expansion_constant #file with necessary constants
+from constants import dt, viscosity, t_G1, t_G2, t_S, A_c, J, pos_d, T1_eps, P, microns, time_hours, expansion_constant #file with necessary constants
 
 diff_rate_hours=0.1 #differentiation rate (1/h) 
 

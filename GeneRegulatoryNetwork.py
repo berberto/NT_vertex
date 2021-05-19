@@ -7,7 +7,7 @@ Created on Fri Apr 17 18:26:22 2020
 """
 import numpy as np
 from scipy.integrate import odeint
-from Global_Constant import time_hours, diff_rate_hours
+from constants import time_hours, diff_rate_hours
 import time
 
 idx={
