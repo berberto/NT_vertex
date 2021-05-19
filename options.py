@@ -23,7 +23,6 @@ SIMpars.add_argument('--no-move', dest='move', action='store_false', default=Tru
 SIMpars.add_argument('--no-vertex', dest='vertex', action='store_false', default=True, help='Do not simulate the vertex model. Still, the expansion could be set different from zero, allowing cells to stretch, and divide')
 SIMpars.add_argument('--no-morph', dest='morphogen', action='store_false', default=True, help='Simulate the vertex model only, concentration identically vanishing.')
 SIMpars.add_argument('--no-divide', dest='division', action='store_false', default=True, help='Do not let cells divide')
-SIMpars.add_argument('--cython', dest='cython', action='store_true', default=False, help='Use cython version of FE code')
 
 FEpars = parser.add_argument_group(title='Morphogen parameters')
 FEpars.add_argument('--diff-coef','-D', dest='diff_coef', metavar='<val>', type=float, default=.2, help='Diffusion coefficient. Default: 0.2')
@@ -59,7 +58,6 @@ plotting = args.plotting
 (xsize,ysize) = args.size
 vertex = args.vertex
 morphogen = args.morphogen
-cython = args.cython
 move = args.move
 division = args.division
 

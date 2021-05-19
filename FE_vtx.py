@@ -13,9 +13,6 @@ from scipy.sparse import coo_matrix
 from cells_extra import cells_setup,add_IKNM_properties, ready_to_divide, cells_evolve
 from Finite_Element import centroids2
 from FE_transitions import T1, rem_collapsed, divide
-# from _fe_cy import ev_cy, ev_cy_sparse, ev_cy_trivial
-# from _fe_cy_omp import ev_cy
-from centroids_cy import cen2
 import concurrent.futures
 from multiprocessing import Array ,Process
 import matplotlib.pyplot as plt
@@ -209,40 +206,6 @@ class FE_vtx(object):
     else:
       self.concentration = np.zeros(m)
 
-    self.cells = new_cells
-    self.centroids = new_cents
-
-
-  def evolve_cy(self,v,prod_rate,degr_rate,dt,vertex=True):
-    """
-    Performs one step of the FE method. Computes the new cells object itself.
-    Uses np.linalg.solve
-    Args:
-      new_cells is the new cells object after movement
-      v is the diffusion coefficient
-      prod_rate is the morphogen production rate.
-      dt is the time step
-    
-    """
-    nxt=self.cells.mesh.edges.next
-    f_by_e = self.cells.mesh.face_id_by_edge
-    old_verts = self.cells.mesh.vertices.T
-    old_cents = self.centroids
-    
-    if vertex:
-      new_cells = cells_evolve(self.cells,dt)
-      new_verts = new_cells.mesh.vertices.T
-      new_cents = cen2(new_cells)#centroids2(new_cells)
-    else:
-      new_cells = self.cells
-      new_verts = old_verts
-      new_cents = old_cents
-
-    f = self.cells.properties['source']*prod_rate #source
-    n_edge = self.cells.mesh.edges.ids[-1]+1
-    # self.concentration = ev_cy_trivial(new_verts.astype(np.float64))
-    self.concentration = ev_cy(old_verts.astype(np.float64), new_verts.astype(np.float64), old_cents.astype(np.float64),new_cents.astype(np.float64), self.concentration.astype(np.float64), nxt.astype(np.intc) ,f_by_e.astype(np.intc), self.edges_to_nodes.astype(np.intc), self.faces_to_nodes.astype(np.intc), f.astype(np.float64) , np.intc(n_edge) , np.float64(v), np.float64(dt) )
-    # self.concentration = ev_cy_sparse(old_verts.astype(np.float64), new_verts.astype(np.float64), old_cents.astype(np.float64),new_cents.astype(np.float64), self.concentration.astype(np.float64), nxt.astype(np.intc) ,f_by_e.astype(np.intc), self.edges_to_nodes.astype(np.intc), self.faces_to_nodes.astype(np.intc), f.astype(np.float64) , np.intc(n_edge) , np.float64(v), np.float64(dt) )
     self.cells = new_cells
     self.centroids = new_cents
 

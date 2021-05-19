@@ -12,7 +12,7 @@ from NT_vtx import build_NT_vtx, load_NT_vtx
 from plotting import morphogen_video, cells_state_video, combined_video
 from options import (file_prefix, test_output, restart_file,
                 T_sim, T_init, frame_every, init_only, dt, N_frames,
-                simulate, plotting, cython, from_last,
+                simulate, plotting, from_last,
                 vertex, morphogen, move, division,
                 xsize,ysize, 
                 degr_rate, prod_rate, diff_coef, bind_rate,
@@ -56,10 +56,6 @@ if __name__ == "__main__":
             path += "_nodiv"
     else:
         path += "_static"
-
-    if cython:
-        path += "_cy"
-
 
     print(f"\nsaving in / retrieving from  \"{path}\"")
     if os.path.exists(path):
