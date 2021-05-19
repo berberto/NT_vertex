@@ -9,7 +9,6 @@ Created on Thu Jun  4 19:21:31 2020
 from FE_vtx import  build_FE_vtx, build_FE_vtx_from_scratch
 from GeneRegulatoryNetwork import GRN, build_GRN
 from FE_transitions import divide, T1, rem_collapsed
-from Finite_Element import centroids2
 from cells_extra import ready_to_divide, setup_source
 import matplotlib.pyplot as plt
 import numpy as np
@@ -94,7 +93,7 @@ class NT_vtx(object):
     # compute the new centroids
     # HOW ABOUT THE INTERPOLATION WHERE CELLS HAVE DIVIDED?
     # IS IT IN THE 'divide' FUNCTION?
-    self.FE_vtx.centroids = centroids2(self.FE_vtx.cells)
+    self.FE_vtx.centroids = self.FE_vtx.cells.mesh.centres.T # centroids2(self.FE_vtx.cells)
 
     # calculate the number of nodes associated to edges
     # this changes if there are boundaries
