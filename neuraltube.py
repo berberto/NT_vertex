@@ -119,15 +119,6 @@ if __name__ == "__main__":
             if 'leaving' not in neural_tube.properties:
                 neural_tube.properties['leaving'] = np.zeros(len(neural_tube))
             print('')
-
-        # selecting a random cell to leave the tissue (set its target area to 0)
-        # if 'leaving' not in neural_tube.FE_vtx.cells.properties:
-        #     n_cells = neural_tube.FE_vtx.cells.mesh.n_face
-        #     cell_leaving = np.random.randint(n_cells)
-        #     leaving = np.zeros(n_cells).astype(int)
-        #     leaving[cell_leaving] = 1
-        #     print("cell %d leaves the tissue"%(cell_leaving))
-        #     neural_tube.FE_vtx.cells.properties['leaving'] = leaving
         
         if not init_only:
             # simulation
