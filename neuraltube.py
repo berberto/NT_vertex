@@ -68,7 +68,7 @@ if __name__ == "__main__":
     print("starting size = ", xsize, ysize, "\n")
 
     print("initialization time   = ", T_init)
-    print("      ''       frames = ", int(T_init/frame_every))
+    print("      ''       frames = ", int(N_step_init/N_skip))
     print("simulation time   = ", T_sim)
     print("   ''      frames = ", N_frames)
     

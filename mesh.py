@@ -410,7 +410,7 @@ def _T1(edge, eps, rotate, reverse, vertices, face_id_by_edge):
     face_id_by_edge[e0] = face_id_by_edge[e4]
     face_id_by_edge[e3] = face_id_by_edge[e1]
 
-    return np.hstack([before, after_r])
+    return np.hstack([before, after_r]), vertices[:,[e0,e3]]
 
 
 def _transition(mesh, eps):
@@ -460,7 +460,7 @@ def _transition(mesh, eps):
     mesh.edges = Edges(reverse)
     mesh.vertices = vertices
     mesh.face_id_by_edge = face_id_by_edge
-    return mesh, ids_t1, edg_rem
+    return mesh, ids_t1 #, edg_rem
 
 
 def _add_edges(mesh, edge_pairs):
