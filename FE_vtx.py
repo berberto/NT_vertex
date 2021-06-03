@@ -140,6 +140,18 @@ class FE_vtx(object):
         self.faces_to_nodes = faces_to_nodes
 
     @property
+    def concentration_triangles (self):
+        nxt = self.cells.mesh.edges.next
+        f_by_e = self.cells.mesh.face_id_by_edge
+        e_to_n = self.edges_to_nodes
+        f_to_n = self.faces_to_nodes
+        return np.array([
+                self.concentration[e_to_n],         # c_{e,0}
+                self.concentration[e_to_n[nxt]],    # c_{e,1}
+                self.concentration[f_to_n[f_by_e]], # c_{e,2}
+            ])
+
+    @property
     def n_face(self):
         return self.cells.mesh.n_face
 
