@@ -8,6 +8,8 @@ parser.add_argument('--prefix', dest='file_prefix', metavar='<name>', type=str, 
 parser.add_argument('--dry', dest='test_output', action='store_true', default=False, help='Dry run. Test output path and options')
 parser.add_argument('--restart','-r', dest='restart_file', metavar='<file>', type=str, default=None, help='Restart from dill file storing a NT_vtx object: these are saved via "dill.dump(<NT obj>, <file>)"; NT object loaded as "<NT obj> = dill.dump(<file>)". The loaded NT object is used as initial condition for the full simulation (vertex + FE), and "thermalization" phase is skipped.')
 parser.add_argument('--continue', dest='from_last', action='store_true', default=False, help='Continue run from last .pkl file in path.')
+parser.add_argument('--quiet','-q', dest='verbose', action='store_false', default=True, help='Do not print anything at standard output.')
+
 
 SIMpars = parser.add_argument_group(title='Simulation parameters')
 SIMpars.add_argument('--dt', '-d', dest='dt', metavar='<val>', type=float, default=.001, help='Time step (float). Default: 0.001')
@@ -29,6 +31,7 @@ FEpars.add_argument('--diff-coef','-D', dest='diff_coef', metavar='<val>', type=
 FEpars.add_argument('--degr_rate','-k', dest='degr_rate', metavar='<val>', type=float, default=.1, help='Degradation rate. Default: 0.1')
 FEpars.add_argument('--prod-rate','-f', dest='prod_rate', metavar='<val>', type=float, default=.05, help='Production rate. Default: 0.05')
 FEpars.add_argument('--bind-rate','-b', dest='bind_rate', metavar='<val>', type=float, default=0., help='Binding rate. Default: 0')
+FEpars.add_argument('--source-width','-w', dest='source_width', metavar='<val>', type=float, default=2., help='Width of the cells width (in units of approximate cells diameter). Default: 2')
 
 #
 #	not yet implemented --- need to change setup functions for cells
@@ -45,6 +48,8 @@ file_prefix = args.file_prefix
 test_output = args.test_output
 restart_file = args.restart_file
 from_last = args.from_last
+verbose = args.verbose
+
 
 T_sim = args.T
 T_init = args.T_init
@@ -66,6 +71,7 @@ degr_rate = args.degr_rate # default: 0.1
 prod_rate = args.prod_rate # default: 0.05
 diff_coef = args.diff_coef # default: 0.2
 bind_rate = args.bind_rate # default: 0.
+source_width = args.source_width # default: 0.
 
 # parameters of the vertex model
 Kappa = args.Kappa # default: 1.0
