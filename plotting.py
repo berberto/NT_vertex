@@ -114,7 +114,7 @@ def _draw_geometry(geometry, ax=None):
         w, h = geometry.width, geometry.height
         # ax.add_patch(plt.Rectangle((-0.5*w, -0.5*h), w, h, fill=False, linewidth=2.0))
 
-def draw_cells(cells,final_width=None,final_height=None, ax=None, colored=True):
+def draw_cells(cells, xlim=[0,1], ylim=[0,1], ax=None, colored=True):
     """
     Modified version of draw from plotting.
     
@@ -123,18 +123,19 @@ def draw_cells(cells,final_width=None,final_height=None, ax=None, colored=True):
         fig = plt.figure()
         ax = fig.gca()
     facecolors = cells.properties.get('color', None)
-    
-    if final_width is None:
-        final_width= cells.mesh.geometry.width
-    if final_height is None:
-        if hasattr(cells.mesh.geometry,'height'):
-            final_height = cells.mesh.geometry.height
-        else:
-            final_height =max(np.abs( cells.mesh.vertices[1]))
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_xlim([-0.55*final_width,0.55*final_width])
-    ax.set_ylim([-0.55*final_height,0.55*final_height])
+    
+    # if final_width is None:
+    #     final_width= cells.mesh.geometry.width
+    # if final_height is None:
+    #     if hasattr(cells.mesh.geometry,'height'):
+    #         final_height = cells.mesh.geometry.height
+    #     else:
+    #         final_height =max(np.abs( cells.mesh.vertices[1]))
+
         
     mesh = cells.mesh.recentre()
 
@@ -171,16 +172,9 @@ def set_colour_poni_state(cells,poni_state):
             cells.properties['color'][k] = np.array([0,0,0]) # differentating cells
 
 
-def drawShh(nodes, alpha, z_high, z_low, ax=None, final_width=None, final_height=None, size=None, heatmap=True):
-    l=[]
-    r=[]
-    # if not size:
-    #     d_size=10.0
-    # else:
-    #     d_size = size
-    for i in range(len(nodes)):
-        l.append(nodes[i][0])
-        r.append(nodes[i][1])
+def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, heatmap=True):
+
+    z_low, z_high = zlim
     if not ax:
         fig = plt.figure()
         if heatmap:
@@ -189,96 +183,31 @@ def drawShh(nodes, alpha, z_high, z_low, ax=None, final_width=None, final_height
             ax = fig.add_subplot(111, projection='3d')
 
     ax.cla() # clear the axis
-    ax.set_xlim([-0.55*final_width,0.55*final_width])
-    ax.set_ylim([-0.55*final_height,0.55*final_height])
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
     ax.set_xticks([])
     ax.set_yticks([])
-    # ax.set_xlim([-0.55*d_size,0.55*d_size])
-    # ax.set_ylim([-0.55*d_size,0.55*d_size])
     if heatmap:
-        tri = Triangulation(nodes[:,0],nodes[:,1])
-        # mask out elongated triangles at the borders
-        mask = TriAnalyzer(tri).get_flat_tri_mask(.05)
-        tri.set_mask(mask)
-        ax.tricontourf(tri, alpha, levels=np.linspace(0.,z_high, 20), cmap=plt.get_cmap('Greens'))
+        tri = Triangulation(coord_tri[:,:,0].ravel(), coord_tri[:,:,1].ravel(), triangles=np.arange(len(coord_tri)*3).reshape(-1,3))
+        ax.tricontourf(tri, concs_tri.ravel(), levels=np.linspace(0.,z_high, 20), cmap=plt.get_cmap('Greens'))
         # refiner = UniformTriRefiner(tri)
         # tri_refi, z_test_refi = refiner.refine_field(alpha, subdiv=3)
         # ax.tricontourf(tri_refi, z_test_refi, levels=np.linspace(0.,z_high, 20))
     else:
-        ax.set_zlim([z_low -0.1 , z_high])
-        Axes3D.plot_trisurf(ax,l,r,alpha)
-    plt.draw()  
+        raise NotImplementedError("surface plot not implemented")
+        # l=[]
+        # r=[]
+        # for i in range(len(nodes)):
+        #     l.append(nodes[i][0])
+        #     r.append(nodes[i][1])
+        # ax.set_zlim([z_low -0.1 , z_high])
+        # Axes3D.plot_trisurf(ax,l,r,alpha)
+    plt.draw()
 
-def morphogen_video(cells_list, nodes_array, concs_list, outputdir, name_file, zmin=None, zmax=None, heatmap=True):
-
-    v_max = np.max((np.max(nodes_array[0]) , np.max(nodes_array[-1])))
-    size = 2*v_max
-    if zmax is None:
-        dummy_max=[]
-        for i in range(len(concs_list)):
-            dummy_max.append(np.max(concs_list[i]))
-        z_high = max(dummy_max)
-    else:
-        z_high = zmax
-    if zmin is None:
-        dummy_min=[]
-        for i in range(len(concs_list)):
-            dummy_min.append(np.min(concs_list[i]))
-        z_low = min(dummy_min)
-    else:
-        z_low = zmin
-
-    fig = plt.figure()
-    ax = fig.add_subplot(nrows=2)
-    # fig.set_size_inches(6,6)
-    i=0
-    frames=[]
-    final_width = cells_list[-1].mesh.geometry.width
-    if hasattr(cells_list[-1].mesh.geometry,'height'):
-        final_height = cells_list[-1].mesh.geometry.height
-    else:
-        final_height =max(np.abs(cells_list[-1].mesh.vertices[1]))
-    for k in range(len(cells_list)):
-        drawShh(nodes_array[i], concs_list[i], z_high, z_low, ax, size, heatmap=heatmap)
-        if heatmap:
-            _draw_edges(cells_list[k].mesh, ax)
-        i=i+1
-        frame=outputdir+"/image%03i.png" % i
-        fig.savefig(frame,dpi=500,bbox_inches="tight")
-        frames.append(frame)  
-    os.system("cd ")
-    os.system("ffmpeg -framerate 5/1 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer  
-
-    # for frame in frames: os.remove(frame)  
-
-def cells_state_video(cells_list, poni_list, outputdir, name_file):
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    # fig.set_size_inches(6,6)
-    i=0
-    frames=[]
-    final_width = cells_list[-1].mesh.geometry.width
-    if hasattr(cells_list[-1].mesh.geometry,'height'):
-        final_height = cells_list[-1].mesh.geometry.height
-    else:
-        final_height =max(np.abs(cells_list[-1].mesh.vertices[1]))
-    for k in range(len(cells_list)):
-        set_colour_poni_state(cells_list[k],poni_list[k])
-        draw_cells(cells_list[k],final_width,final_height, ax)
-        i=i+1
-        frame=outputdir+"/image%03i.png" % i
-        fig.savefig(frame,dpi=500,bbox_inches="tight")
-        frames.append(frame)
-
-    os.system("cd ")
-    os.system("ffmpeg -framerate 5/1 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer
-
-    # for frame in frames: os.remove(frame)  
 
 
 def combined_video(NT_list, filename=None,
-            zmin=None, zmax=None, heatmap=True, ffmpeg=False):
+            xlim=None, ylim=None, zlim=None, heatmap=True, ffmpeg=False):
     #def combined_video(cells_list, nodes_list, concs_list, poni_list, outputdir, name_file,
     #         zmin=None, zmax=None, heatmap=True, ffmpeg=False):
 
@@ -295,49 +224,52 @@ def combined_video(NT_list, filename=None,
     cells_list = [nt.FE_vtx.cells   for nt in NT_list]
     # verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
     concs_tri_list = [nt.FE_vtx.concentration_triangles   for nt in NT_list]
+    coord_tri_list = [nt.FE_vtx.cells.mesh.recentre().triangles   for nt in NT_list]
 
-    # setup
 
-    v_max = np.max((np.max(nodes_list[0]) , np.max(nodes_list[-1])))
-    size = 2*v_max
-    if zmax is None:
-        dummy_max=[]
-        for i in range(len(concs_list)):
-            dummy_max.append(np.max(concs_list[i]))
-        z_high = max(dummy_max)
-    else:
-        z_high = zmax
-    if zmin is None:
-        dummy_min=[]
-        for i in range(len(concs_list)):
-            dummy_min.append(np.min(concs_list[i]))
-        z_low = min(dummy_min)
-    else:
-        z_low = zmin
+    # calculate bounds for plotting
+    x_min, y_min, z_min = 3*[np.inf]
+    x_max, y_max, z_max = 3*[np.NINF]
+    for coord_tri, conc_tri in zip(coord_tri_list, concs_tri_list):
+        x_min = min(coord_tri[:,:,0].ravel().min(), x_min)
+        y_min = min(coord_tri[:,:,1].ravel().min(), y_min)
+        z_min = min(conc_tri.ravel().min(), z_min)
+
+        x_max = max(coord_tri[:,:,0].ravel().max(), x_max)
+        y_max = max(coord_tri[:,:,1].ravel().max(), y_max)
+        z_max = max(conc_tri.ravel().max(), z_max)
+
+    if xlim is not None:
+        x_min, x_max = xlim
+    if ylim is not None:
+        y_min, y_max = ylim
+    if zlim is not None:
+        z_min, z_max = zlim
+        
+    ax_lims = {'xlim': [x_min, x_max], 'ylim': [y_min, y_max]}
 
     fig, ax = plt.subplots(nrows=2)
     for a in ax:
+        a.set_xlim([x_min, x_max])
+        a.set_ylim([y_min, y_max])
+        a.set_xticks([])
+        a.set_yticks([])
         for side in ['top', 'bottom', 'left', 'right']:
             a.spines[side].set_visible(False)
-
-    final_width = cells_list[-1].mesh.geometry.width
-    if hasattr(cells_list[-1].mesh.geometry,'height'):
-        final_height = cells_list[-1].mesh.geometry.height
-    else:
-        final_height =max(np.abs(cells_list[-1].mesh.vertices[1]))
     
     def plot_frame(k):
         plt.cla()
         # top panel
         # 1., 0. to be replaced in general by z_high, z_low
-        drawShh(nodes_list[k], concs_list[k], 1., 0., ax[0],
-            final_width=final_width,final_height=final_height, heatmap=heatmap)
+        drawShh(coord_tri_list[k], concs_tri_list[k],
+            **ax_lims,
+            zlim=[z_min, z_max], ax=ax[0], heatmap=heatmap)
         if heatmap:
-            draw_cells(cells_list[k], final_width, final_height, ax[0], colored=False)
+            draw_cells(cells_list[k], **ax_lims, ax=ax[0], colored=False)
 
         # bottom panel
         set_colour_poni_state(cells_list[k],poni_list[k])
-        draw_cells(cells_list[k], final_width, final_height, ax[1])
+        draw_cells(cells_list[k], **ax_lims, ax=ax[1])
 
     if ffmpeg:
         i=0

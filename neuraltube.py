@@ -9,7 +9,7 @@ import numpy as np
 from datetime import datetime
 
 from NT_vtx import build_NT_vtx, load_NT_vtx
-from plotting import morphogen_video, cells_state_video, combined_video
+from plotting import combined_video
 from options import (file_prefix, test_output, restart_file,
                 T_sim, T_init, frame_every, init_only, dt, N_frames,
                 simulate, plotting, from_last,
