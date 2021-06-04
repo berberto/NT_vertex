@@ -149,7 +149,7 @@ class FE_vtx(object):
                 self.concentration[e_to_n],         # c_{e,0}
                 self.concentration[e_to_n[nxt]],    # c_{e,1}
                 self.concentration[f_to_n[f_by_e]], # c_{e,2}
-            ])
+            ]).T
 
     @property
     def n_face(self):
