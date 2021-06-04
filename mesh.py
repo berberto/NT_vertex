@@ -260,9 +260,9 @@ class Mesh(object):
                 axis 1 -> vertex of the triangle
         '''
         tri_ = np.empty((len(self.face_id_by_edge), 3, 2))
-        tri_[:,0,:] = self.vertices
-        tri_[:,1,:] = self.vertices.take(self.edges.next, axis=1)
-        tri_[:,2,:] = self.centres
+        tri_[:,0,:] = self.vertices.T
+        tri_[:,1,:] = self.vertices.take(self.edges.next, axis=1).T
+        tri_[:,2,:] = self.centres.take(self.face_id_by_edge, axis=1).T
         return tri_
 
     @cached_property
