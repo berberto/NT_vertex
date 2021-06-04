@@ -209,21 +209,21 @@ def drawShh(nodes, alpha, z_high, z_low, ax=None, final_width=None, final_height
         Axes3D.plot_trisurf(ax,l,r,alpha)
     plt.draw()  
 
-def morphogen_video(cells_history, nodes_array, alpha_array, outputdir, name_file, zmin=None, zmax=None, heatmap=True):
+def morphogen_video(cells_list, nodes_array, concs_list, outputdir, name_file, zmin=None, zmax=None, heatmap=True):
 
     v_max = np.max((np.max(nodes_array[0]) , np.max(nodes_array[-1])))
     size = 2*v_max
     if zmax is None:
         dummy_max=[]
-        for i in range(len(alpha_array)):
-            dummy_max.append(np.max(alpha_array[i]))
+        for i in range(len(concs_list)):
+            dummy_max.append(np.max(concs_list[i]))
         z_high = max(dummy_max)
     else:
         z_high = zmax
     if zmin is None:
         dummy_min=[]
-        for i in range(len(alpha_array)):
-            dummy_min.append(np.min(alpha_array[i]))
+        for i in range(len(concs_list)):
+            dummy_min.append(np.min(concs_list[i]))
         z_low = min(dummy_min)
     else:
         z_low = zmin
@@ -233,15 +233,15 @@ def morphogen_video(cells_history, nodes_array, alpha_array, outputdir, name_fil
     # fig.set_size_inches(6,6)
     i=0
     frames=[]
-    final_width = cells_history[-1].mesh.geometry.width
-    if hasattr(cells_history[-1].mesh.geometry,'height'):
-        final_height = cells_history[-1].mesh.geometry.height
+    final_width = cells_list[-1].mesh.geometry.width
+    if hasattr(cells_list[-1].mesh.geometry,'height'):
+        final_height = cells_list[-1].mesh.geometry.height
     else:
-        final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
-    for k in range(len(cells_history)):
-        drawShh(nodes_array[i], alpha_array[i], z_high, z_low, ax, size, heatmap=heatmap)
+        final_height =max(np.abs(cells_list[-1].mesh.vertices[1]))
+    for k in range(len(cells_list)):
+        drawShh(nodes_array[i], concs_list[i], z_high, z_low, ax, size, heatmap=heatmap)
         if heatmap:
-            _draw_edges(cells_history[k].mesh, ax)
+            _draw_edges(cells_list[k].mesh, ax)
         i=i+1
         frame=outputdir+"/image%03i.png" % i
         fig.savefig(frame,dpi=500,bbox_inches="tight")
@@ -251,21 +251,21 @@ def morphogen_video(cells_history, nodes_array, alpha_array, outputdir, name_fil
 
     # for frame in frames: os.remove(frame)  
 
-def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
+def cells_state_video(cells_list, poni_list, outputdir, name_file):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
     # fig.set_size_inches(6,6)
     i=0
     frames=[]
-    final_width = cells_history[-1].mesh.geometry.width
-    if hasattr(cells_history[-1].mesh.geometry,'height'):
-        final_height = cells_history[-1].mesh.geometry.height
+    final_width = cells_list[-1].mesh.geometry.width
+    if hasattr(cells_list[-1].mesh.geometry,'height'):
+        final_height = cells_list[-1].mesh.geometry.height
     else:
-        final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
-    for k in range(len(cells_history)):
-        set_colour_poni_state(cells_history[k],poni_state_history[k])
-        draw_cells(cells_history[k],final_width,final_height, ax)
+        final_height =max(np.abs(cells_list[-1].mesh.vertices[1]))
+    for k in range(len(cells_list)):
+        set_colour_poni_state(cells_list[k],poni_list[k])
+        draw_cells(cells_list[k],final_width,final_height, ax)
         i=i+1
         frame=outputdir+"/image%03i.png" % i
         fig.savefig(frame,dpi=500,bbox_inches="tight")
@@ -277,24 +277,40 @@ def cells_state_video(cells_history, poni_state_history, outputdir, name_file):
     # for frame in frames: os.remove(frame)  
 
 
-def combined_video(cells_history, nodes_array, alpha_array, poni_state_history, outputdir, name_file,
+def combined_video(NT_list, filename=None,
             zmin=None, zmax=None, heatmap=True, ffmpeg=False):
+    #def combined_video(cells_list, nodes_list, concs_list, poni_list, outputdir, name_file,
+    #         zmin=None, zmax=None, heatmap=True, ffmpeg=False):
+
+    if filename is None:
+        raise ValueError("Provide name for output video file")
+
+    nodes_list = [
+                np.vstack([
+                    nt.FE_vtx.cells.mesh.vertices.T[::3],
+                    nt.FE_vtx.centroids[~nt.FE_vtx.cells.empty()]
+                ]) for nt in NT_list]
+    concs_list = [nt.FE_vtx.concentration   for nt in NT_list]
+    poni_list = [nt.GRN.state[:,-4:]   for nt in NT_list]
+    cells_list = [nt.FE_vtx.cells   for nt in NT_list]
+    # verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
+    concs_tri_list = [nt.FE_vtx.concentration_triangles   for nt in NT_list]
 
     # setup
 
-    v_max = np.max((np.max(nodes_array[0]) , np.max(nodes_array[-1])))
+    v_max = np.max((np.max(nodes_list[0]) , np.max(nodes_list[-1])))
     size = 2*v_max
     if zmax is None:
         dummy_max=[]
-        for i in range(len(alpha_array)):
-            dummy_max.append(np.max(alpha_array[i]))
+        for i in range(len(concs_list)):
+            dummy_max.append(np.max(concs_list[i]))
         z_high = max(dummy_max)
     else:
         z_high = zmax
     if zmin is None:
         dummy_min=[]
-        for i in range(len(alpha_array)):
-            dummy_min.append(np.min(alpha_array[i]))
+        for i in range(len(concs_list)):
+            dummy_min.append(np.min(concs_list[i]))
         z_low = min(dummy_min)
     else:
         z_low = zmin
@@ -304,29 +320,29 @@ def combined_video(cells_history, nodes_array, alpha_array, poni_state_history, 
         for side in ['top', 'bottom', 'left', 'right']:
             a.spines[side].set_visible(False)
 
-    final_width = cells_history[-1].mesh.geometry.width
-    if hasattr(cells_history[-1].mesh.geometry,'height'):
-        final_height = cells_history[-1].mesh.geometry.height
+    final_width = cells_list[-1].mesh.geometry.width
+    if hasattr(cells_list[-1].mesh.geometry,'height'):
+        final_height = cells_list[-1].mesh.geometry.height
     else:
-        final_height =max(np.abs(cells_history[-1].mesh.vertices[1]))
+        final_height =max(np.abs(cells_list[-1].mesh.vertices[1]))
     
     def plot_frame(k):
         plt.cla()
         # top panel
         # 1., 0. to be replaced in general by z_high, z_low
-        drawShh(nodes_array[k], alpha_array[k], 1., 0., ax[0],
+        drawShh(nodes_list[k], concs_list[k], 1., 0., ax[0],
             final_width=final_width,final_height=final_height, heatmap=heatmap)
         if heatmap:
-            draw_cells(cells_history[k], final_width, final_height, ax[0], colored=False)
+            draw_cells(cells_list[k], final_width, final_height, ax[0], colored=False)
 
         # bottom panel
-        set_colour_poni_state(cells_history[k],poni_state_history[k])
-        draw_cells(cells_history[k], final_width, final_height, ax[1])
+        set_colour_poni_state(cells_list[k],poni_list[k])
+        draw_cells(cells_list[k], final_width, final_height, ax[1])
 
     if ffmpeg:
         i=0
         frames=[]
-        for k in range(len(cells_history)):
+        for k in range(len(cells_list)):
             plot_frame(k)
             plt.show()
             exit()
@@ -335,15 +351,15 @@ def combined_video(cells_history, nodes_array, alpha_array, poni_state_history, 
             fig.savefig(frame,dpi=100,bbox_inches="tight")
             frames.append(frame)  
         os.system("cd ")
-        os.system("ffmpeg -framerate 30 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+name_file+".mp4") #for Mac computer  
+        os.system("ffmpeg -framerate 30 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+filename+".mp4") #for Mac computer  
 
         # for frame in frames: os.remove(frame)  
 
     else:
-        frames=range(len(cells_history))
-        dt = 60000./len(cells_history)
+        frames=range(len(cells_list))
+        dt = 60000./len(cells_list)
         ani = FuncAnimation(fig, plot_frame,
                             interval=dt,
                             frames=frames,
                             blit=False)
-        ani.save(f'{name_file}.mp4')
+        ani.save(f'{filename}.mp4')

@@ -153,17 +153,6 @@ if __name__ == "__main__":
         # allNTinit = sorted([x for x in allfiles if "_NT_init.pkl" in x])
         NT_list = [load_NT_vtx(path+"/"+file) for file in allNT]
         # NTinit_list = [load_NT_vtx(path+"/"+file) for file in allNTinit]
-        nodes_list = [
-                    np.vstack([
-                        nt.FE_vtx.cells.mesh.vertices.T[::3],
-                        nt.FE_vtx.centroids[~nt.FE_vtx.cells.empty()]
-                    ]) for nt in NT_list]
-        concs_list = [nt.FE_vtx.concentration   for nt in NT_list]
-        ponis_list = [nt.GRN.state[:,-4:]   for nt in NT_list]
-        cells_list = [nt.FE_vtx.cells   for nt in NT_list]
-        verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
 
-        # cells_state_video(cells_list, ponis_list, path, path+"/video_cells")
-        # morphogen_video(cells_list, nodes_list, concs_list, path, path+"/video_morphogen")#,zmin=0)#,zmax=10)
-        combined_video(cells_list, nodes_list, concs_list, ponis_list, path, path+"/video_combined")#,zmin=0)#,zmax=10)
+        combined_video(NT_list, filename=path+"/video_combined")#,zmin=0)#,zmax=10)
     
