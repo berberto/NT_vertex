@@ -81,10 +81,11 @@ diff_adhesion = args.diff_adhesion # default: None
 
 
 def print_options (filename=None):
-	print("---- optional argument values ----")
-	for key, val in vars(args).items():
-		print(f'{key} = {val}')
-	print("----------------------------------")
+	if verbose:
+		print("---- optional argument values ----")
+		for key, val in vars(args).items():
+			print(f'{key} = {val}')
+		print("----------------------------------")
 
 	if filename is not None:
 		with open(filename, 'w') as file:

@@ -204,8 +204,6 @@ def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, h
 
 def combined_video(NT_list, filename=None,
             xlim=None, ylim=None, zlim=None, heatmap=True, ffmpeg=False):
-    #def combined_video(cells_list, nodes_list, concs_list, poni_list, outputdir, name_file,
-    #         zmin=None, zmax=None, heatmap=True, ffmpeg=False):
 
     if filename is None:
         raise ValueError("Provide name for output video file")
@@ -246,10 +244,6 @@ def combined_video(NT_list, filename=None,
 
     fig, ax = plt.subplots(nrows=2)
     for a in ax:
-        a.set_xlim([x_min, x_max])
-        a.set_ylim([y_min, y_max])
-        a.set_xticks([])
-        a.set_yticks([])
         for side in ['top', 'bottom', 'left', 'right']:
             a.spines[side].set_visible(False)
     
