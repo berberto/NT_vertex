@@ -9,16 +9,24 @@ import numpy as np
 from datetime import datetime
 
 from NT_vtx import build_NT_vtx, load_NT_vtx
-from plotting import morphogen_video, cells_state_video, combined_video
-from options import (file_prefix, test_output, restart_file,
+from plotting import combined_video
+from options import (file_prefix, test_output, restart_file, verbose,
                 T_sim, T_init, frame_every, init_only, dt, N_frames,
                 simulate, plotting, from_last,
                 vertex, morphogen, move, division,
                 xsize,ysize, 
-                degr_rate, prod_rate, diff_coef, bind_rate,
+                degr_rate, prod_rate, diff_coef, bind_rate, source_width,
                 Kappa, Gamma, Lambda, diff_adhesion,
                 print_options
                 )
+
+import builtins
+def print(*args, **kwargs):
+    if verbose:
+        return builtins.print(*args, **kwargs)
+    else:
+        pass
+
 
 if __name__ == "__main__":
     
@@ -110,7 +118,7 @@ if __name__ == "__main__":
                 neural_tube.transitions(division=division)
                 
                 # set the source of morphogen to be few cells wide
-                neural_tube.set_source_by_x(width=4)
+                neural_tube.set_source_by_x(width=source_width)
 
             print('')
         else:
@@ -153,17 +161,6 @@ if __name__ == "__main__":
         # allNTinit = sorted([x for x in allfiles if "_NT_init.pkl" in x])
         NT_list = [load_NT_vtx(path+"/"+file) for file in allNT]
         # NTinit_list = [load_NT_vtx(path+"/"+file) for file in allNTinit]
-        nodes_list = [
-                    np.vstack([
-                        nt.FE_vtx.cells.mesh.vertices.T[::3],
-                        nt.FE_vtx.centroids[~nt.FE_vtx.cells.empty()]
-                    ]) for nt in NT_list]
-        concs_list = [nt.FE_vtx.concentration   for nt in NT_list]
-        ponis_list = [nt.GRN.state[:,-4:]   for nt in NT_list]
-        cells_list = [nt.FE_vtx.cells   for nt in NT_list]
-        verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
 
-        # cells_state_video(cells_list, ponis_list, path, path+"/video_cells")
-        # morphogen_video(cells_list, nodes_list, concs_list, path, path+"/video_morphogen")#,zmin=0)#,zmax=10)
-        combined_video(cells_list, nodes_list, concs_list, ponis_list, path, path+"/video_combined")#,zmin=0)#,zmax=10)
+        combined_video(NT_list, filename=path+"/video_combined")#,zmin=0)#,zmax=10)
     
