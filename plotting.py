@@ -29,6 +29,7 @@ color = {
     "Nkx": "#02DDD3",   # cyan
     "Irx": "#DDB002"    # gold
 }
+colors_array = np.array([mcol.to_rgb(color[gene]) for gene in ['Pax', 'Olig', 'Nkx', 'Irx']])
 
 def _draw_edges(mesh, ax):
     w = mesh.vertices - mesh.vertices.take(mesh.edges.rotate, 1)  # winding
@@ -153,23 +154,18 @@ def draw_cells(cells, xlim=[0,1], ylim=[0,1], ax=None, colored=True):
 
 def set_colour_poni_state(cells,poni_state):
     n_face = cells.mesh.n_face
-    source =cells.properties['source']
-    cells.properties['color']=np.ones((n_face, 3)) #to store RGB number for each face
-    for k in range(n_face):
-        m = np.argmax(poni_state[k])
-        if source[k]==1:
-            cells.properties['color'][k] = np.array([1,1,1]) #source
-        elif m==0:
-            cells.properties['color'][k] = mcol.to_rgb(color['Pax'])# np.array([0,0,1]) #Blue, pax high
-        elif m==1:
-            cells.properties['color'][k] = mcol.to_rgb(color['Olig'])# np.array([1,0,0]) #Red, Olig2 high
-        elif m==2:
-            cells.properties['color'][k] = mcol.to_rgb(color['Nkx'])# np.array([0,0,1]) #Green, NKx22 high
-        elif m==3:
-            cells.properties['color'][k] = mcol.to_rgb(color['Irx'])# np.array([0,1,1]) # ?, Irx high 
+    source = cells.properties['source']
+    
+    # set alpha channel as soft-max
+    # alpha channel for each gene (N_cells, genes)
+    alpha = np.exp(poni_state/.3)
+    alpha /= np.sum(alpha, axis=1)[:,None]
 
-        if cells.properties['leaving'][k] == 1:
-            cells.properties['color'][k] = np.array([0,0,0]) # differentating cells
+    cells.properties['color'] = np.matmul(alpha, colors_array)
+
+    # set particular color for differentiating / source cells
+    cells.properties['color'][cells.properties['leaving']==1] = np.array([0,0,0])
+    cells.properties['color'][cells.properties['source']==1] = np.array([1,1,1])
 
 
 def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, heatmap=True):
