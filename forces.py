@@ -90,7 +90,7 @@ class Tension(Force): #DID NOT WORK ON MAC
 
     def force(self, cells):
         F = (0.5*cells.by_edge('Lambda', 'Lambda_boundary')/cells.mesh.length)*cells.mesh.edge_vect
-        return F - F.take(cells.mesh.edges.prev, 1)
+        return F # - F.take(cells.mesh.edges.prev, 1)
 
 
 class Perimeter(Force):
