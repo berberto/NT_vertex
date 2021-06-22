@@ -108,7 +108,7 @@ if __name__ == "__main__":
             for k in range(N_step_init):
                 if k%N_skip == 0:
                     print("%2.1f/100   t = %.4f   frame = %d"%(k*dt/T_init*100., k*dt, int(k/N_skip)), end="\r")
-                    with open (path+"/%06d_NT_init.pkl"%(k), "wb") as f:
+                    with open (path+"/%07.3f_NT_init.pkl"%(k*dt), "wb") as f:
                         dill.dump(neural_tube, f)
 
                 diff_rates=neural_tube.GRN.diff_rates.copy()
@@ -134,7 +134,7 @@ if __name__ == "__main__":
             for k in range(k_start,N_step+1):
                 if k%N_skip == 0:
                     print("%2.1f/100   t = %.4f   frame = %d"%(k*dt/T_sim*100., k*dt, int(k/N_skip)), end="\r")
-                    with open (path+"/%06d_NT.pkl"%(k), "wb") as f:
+                    with open (path+"/%07.3f_NT.pkl"%(k*dt), "wb") as f:
                         dill.dump(neural_tube, f)
 
                 leaving=neural_tube.properties['leaving']
