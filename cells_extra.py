@@ -898,18 +898,20 @@ def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesi
             edges_fp = (cells.properties['source'][cells.mesh.face_id_by_edge]==1)
             # 2. find the index of the edges whose REVERSE are NOT associated to FP cells
             rev_not_fp = (cells.properties['source'][cells.mesh.face_id_by_edge[cells.mesh.edges.reverse]]==0)
-            # 3. the intersection between the two are the indices of the edges which are at the border between FP and other cells
+            # 3. the intersection between the two are the indices of the edges of FP cells bordering with other cells
             bdr_fp = np.where(edges_fp & rev_not_fp)[0]
-            for n in bdr_fp:
-                # if the difference in area is greater than some number (IS THIS A SORT OF TRICK OR IS IT PHYSICS?)
-                if abs(cells.mesh.area[cells.mesh.face_id_by_edge[n]] - cells.mesh.area[cells.mesh.face_id_by_edge[cells.mesh.edges.reverse[n]]]) > 0.4:
-                    # we divide the length by a parameter larger than 1
-                    # that is equivalent to multiply
-                    len_modified[n] *= 1./diff_adhesion
+            # 4. together with their reverse, thei give the complete boundary between FP cells and other cells
+            bdr_fp = np.unique(np.hstack([bdr_fp, cells.mesh.edges.reverse[bdr_fp]]))
+            # for n in bdr_fp:
+            #     # if the difference in area is greater than some number (IS THIS A SORT OF TRICK OR IS IT PHYSICS?)
+            #     if abs(cells.mesh.area[cells.mesh.face_id_by_edge[n]] - cells.mesh.area[cells.mesh.face_id_by_edge[cells.mesh.edges.reverse[n]]]) > 0.4:
+            #         # we divide the length by a parameter larger than 1
+            #         # that is equivalent to multiply Lambda by that parameter.
+            #         len_modified[n] *= 1./diff_adhesion
+            len_modified[bdr_fp] /= diff_adhesion
         
         # compute the tension with the modified edges lengths
         tension = (0.5*cells.by_edge('Lambda','Lambda_boundary')/len_modified)*cells.mesh.edge_vect
-        tension = tension - tension.take(cells.mesh.edges.prev, 1)
 
         F = F + tension
         dv = dt*sum_vertices(cells.mesh.edges,F/viscosity) #viscosity is from 'constants'
