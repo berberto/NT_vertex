@@ -102,6 +102,9 @@ if __name__ == "__main__":
         if restart_file is None:
             print('\nBuilding NT object from scratch')
             neural_tube=build_NT_vtx(size = [xsize,ysize])
+
+            # set the source of morphogen to be few cells wide
+            neural_tube.set_source_by_x(width=source_width)
         
             # initialization
             print('Initialization: simulation of the vertex model only')
@@ -114,11 +117,8 @@ if __name__ == "__main__":
                 diff_rates=neural_tube.GRN.diff_rates.copy()
                 neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
                     vertex=vertex,move=move,morphogen=False,
-                    diff_rates=diff_rates,diff_adhesion=None)
-                neural_tube.transitions(division=division)
-                
-                # set the source of morphogen to be few cells wide
-                neural_tube.set_source_by_x(width=source_width)
+                    diff_rates=diff_rates,diff_adhesion=diff_adhesion)
+                neural_tube.transitions(division=division)                
 
             print('')
         else:
