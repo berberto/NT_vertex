@@ -901,11 +901,12 @@ def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesi
             # 3. the intersection between the two are the indices of the edges which are at the border between FP and other cells
             bdr_fp = np.where(edges_fp & rev_not_fp)[0]
             for n in bdr_fp:
-                # if the difference in area is greater than some number (IS THIS A SORT OF TRICK OR IS IT PHYSICS?)
-                if abs(cells.mesh.area[cells.mesh.face_id_by_edge[n]] - cells.mesh.area[cells.mesh.face_id_by_edge[cells.mesh.edges.reverse[n]]]) > 0.4:
-                    # we divide the length by a parameter larger than 1
-                    # that is equivalent to multiply
-                    len_modified[n] *= 1./diff_adhesion
+                # # if the difference in area is greater than some number (IS THIS A SORT OF TRICK OR IS IT PHYSICS?)
+                # if abs(cells.mesh.area[cells.mesh.face_id_by_edge[n]] - cells.mesh.area[cells.mesh.face_id_by_edge[cells.mesh.edges.reverse[n]]]) > 0.4:
+                
+                # we divide the length by a parameter larger than 1
+                # that is equivalent to multiply Lambda by that parameter.
+                len_modified[n] *= 1./diff_adhesion
         
         # compute the tension with the modified edges lengths
         tension = (0.5*cells.by_edge('Lambda','Lambda_boundary')/len_modified)*cells.mesh.edge_vect
