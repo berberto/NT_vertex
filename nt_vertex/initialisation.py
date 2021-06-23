@@ -6,8 +6,8 @@
 import numpy as np
 from scipy.spatial import Voronoi
 
-from permutations import cycles, inverse
-from mesh import Edges, Mesh, Torus, Cylinder, Plane
+from .permutations import cycles, inverse
+from .mesh import Edges, Mesh, Torus, Cylinder, Plane
 
 
 def swap_if(condition, a, b):

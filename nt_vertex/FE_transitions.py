@@ -5,14 +5,14 @@ Created on Thu Jun  4 14:49:34 2020
 
 @author: andrewg
 """
-from mesh import _T1, Edges
+from .mesh import _T1, Edges
 import numpy as np
-from cells import Cells
-from cells_extra import property_update
-from constants import (expansion_constant,
+from .cells import Cells
+from .cells_extra import property_update
+from .constants import (expansion_constant,
                             t_G1, t_G2, t_S,
                             T1_eps, viscosity, A_c)
-from run_select import division_axis, mod_division_axis
+from .division import division_axis, mod_division_axis
 
 import matplotlib.pyplot as plt
 # import matplotlib as mpl

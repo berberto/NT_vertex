@@ -12,8 +12,8 @@ import numpy as np
 import scipy
 from numba import jit
 from scipy.sparse import coo_matrix
-from FE_transitions import T1, rem_collapsed, divide
-from cells_extra import cells_setup, add_IKNM_properties, ready_to_divide, cells_evolve
+from .FE_transitions import T1, rem_collapsed, divide
+from .cells_extra import cells_setup, add_IKNM_properties, ready_to_divide, cells_evolve
 
 
 @jit(nopython=True)

@@ -10,13 +10,14 @@ from matplotlib.collections import PolyCollection
 #matplotlib.use('Agg')#added  by G for cluster
 import matplotlib.pyplot as plt
 import os
-from permutations import cycles
 from mpl_toolkits.mplot3d import Axes3D #Added by me
 from matplotlib.tri import Triangulation, TriAnalyzer, UniformTriRefiner
 import matplotlib.colors as mcol
 from matplotlib.animation import FuncAnimation
 from matplotlib import use
 use('Agg')
+
+from .permutations import cycles
 
 color = {
     "Shh":"#000000",    # black
@@ -203,7 +204,9 @@ def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, h
 
 
 def combined_video(NT_list, filename=None,
-            xlim=None, ylim=None, zlim=None, heatmap=True, ffmpeg=False):
+            xlim=None, ylim=None, zlim=None, heatmap=True,
+            duration=60.,
+            ffmpeg=False):
 
     if filename is None:
         raise ValueError("Provide name for output video file")
@@ -279,7 +282,7 @@ def combined_video(NT_list, filename=None,
 
     else:
         frames=range(len(cells_list))
-        dt = 60000./len(cells_list)
+        dt = duration*1000./len(cells_list)
         ani = FuncAnimation(fig, plot_frame,
                             interval=dt,
                             frames=frames,
