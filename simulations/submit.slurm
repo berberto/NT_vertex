@@ -5,7 +5,7 @@
 #SBATCH --job-name=test_diff
 #SBATCH -n 4
 #SBATCH --mem=128G
-#SBATCH --time=0:01:00
+#SBATCH --time=12:00:00
 #SBATCH --mail-type=BEGIN,END,FAIL
 
 
