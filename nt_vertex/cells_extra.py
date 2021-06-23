@@ -6,19 +6,19 @@ Created on Fri Apr 17 18:38:32 2020
 @author: andrewg
 """
 
-from mesh import sum_vertices
+from .mesh import sum_vertices
 import numpy as np
-from constants import (expansion_constant,
+from .constants import (expansion_constant,
                        t_G1, t_G2, t_S, time_hours,
                        diff_rate_hours,
                        T1_eps, viscosity, A_c)
-from cells import Cells
-from forces import (TargetArea, Pressure, Perimeter, Tension)
+from .cells import Cells
+from .forces import (TargetArea, Pressure, Perimeter, Tension)
 import copy
-from initialisationEd import (_modified_toroidal_hex_mesh,
+from .initialisationEd import (_modified_toroidal_hex_mesh,
                               _modified_toroidal_random_mesh,
                               _modified_toroidal_voronoi_mesh)
-from run_select import division_axis, mod_division_axis
+from .division import division_axis, mod_division_axis
 from scipy.integrate import odeint
 import sys
 

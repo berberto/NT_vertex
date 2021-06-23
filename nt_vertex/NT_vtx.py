@@ -6,16 +6,17 @@ Created on Thu Jun  4 19:21:31 2020
 @author: andrewg
 """
 
-from FE_vtx import  build_FE_vtx, build_FE_vtx_from_scratch
-from GeneRegulatoryNetwork import GRN, build_GRN
-from FE_transitions import divide, T1, rem_collapsed
-from cells_extra import ready_to_divide, setup_source
 import matplotlib.pyplot as plt
 import numpy as np
 import time
 import os
 import sys
 import dill
+
+from .FE_vtx import  build_FE_vtx, build_FE_vtx_from_scratch
+from .GeneRegulatoryNetwork import GRN, build_GRN
+from .FE_transitions import divide, T1, rem_collapsed
+from .cells_extra import ready_to_divide, setup_source
 
 
 

@@ -8,7 +8,7 @@ import copy
 import os
 import numpy as np
 
-from permutations import cycle
+from .permutations import cycle
 
 
 # ====Cells data structure====

@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-# <nbformat>3.0</nbformat>
-
-# <codecell>
 
 import numpy as np
 import sys
@@ -15,11 +12,11 @@ def inverse(permutation):
     return res
 
 
-@jit
+# @jit
 def cycles(permutation):
     N = len(permutation)
-    labels = np.empty(N, int)
-    labels.fill(-1)
+    labels = -1 * np.ones(N).astype(int)
+    # labels.fill(-1)
     label = 0
     k = 0
     order = np.empty(N, int)
