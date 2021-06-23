@@ -16,5 +16,5 @@ if __name__ == "__main__":
     sim.run()
 
     # gather saved simulations and produce a video
-    sim.video(duration=10.) # duration in s.
+    sim.video(duration=60.) # duration in s.
  
