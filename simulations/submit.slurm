@@ -14,7 +14,10 @@ parArray=($parameters)
 
 f=${parArray[0]}
 d=${parArray[1]}
+da="5."
+outprefix="diff_F"$f"_D"$d"_D=adh"$da
 
-outprefix=diff_F"$f"_D"$d"
-python neuraltube.py --prefix "$outprefix" --init "100." -t "200." --every "0.2" --dt "0.002" -f "$f" -D "$d" --continue 2>&1 | tee outputs/diff_F"$f"_D"$d".log
+echo $outprefix
+
+# python neuraltube.py --prefix "$outprefix" --init "100." -t "200." --every "0.2" --dt "0.002" --diff-adh "5." -f "$f" -D "$d" --continue 2>&1 | tee outputs/diff_F"$f"_D"$d".log
 
