@@ -17,5 +17,5 @@ d=${parArray[1]}
 da=5
 outprefix="F="$f"_D="$d"_Dadh="$da
 
-python neuraltube.py --dry --prefix "$outprefix" --init "200." -t "200." --every "0.2" --dt "0.002" --diff-adh "$da" -f "$f" -D "$d" 2>&1 | tee outputs/"$outprefix".log
+python neuraltube.py --prefix "$outprefix" --init "200." -t "200." --every "0.2" --dt "0.002" --diff-adh "$da" -f "$f" -D "$d" 2>&1 | tee outputs/"$outprefix".log
 
