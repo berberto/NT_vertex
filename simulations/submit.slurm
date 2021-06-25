@@ -19,7 +19,7 @@ da=5
 # to the output directory
 current_commit() {
 	if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
-		local str="$(git rev-parse --short HEAD)_"
+		local str="$(git rev-parse --short HEAD)/"
 	else
 		local str=""
 	fi
