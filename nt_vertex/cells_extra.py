@@ -102,89 +102,6 @@ def property_update(cells, ready):
             properties['family'] = np.append(properties['family'],fill)
     return properties #properties for the new cells object
 
-#offspring[k] = [-1,-1] if cell k has not divided.
-#If offspring[k]=[a,b], a,b>0 if cell k has divided and a,b are the ids of the
-#daughter cells.
-#The point of this is to allow us to work backwards and find out a cell's
-#family tree if we want.
-
-def physical_property_update(cells):
-    """
-    If there are groups of cells with different physical parameters, this function
-    sets/updates the physical parameters appropriately. 
-    
-    Args:
-        cells is a cells object.
-    
-    """
-    if 'default_parameters' in cells.properties:
-        cells.properties['all']=np.ones(cells.mesh.n_face)
-        set_group_properties(cells,'all', cells.properties['default_parameters'])
-    if 'source_parameters' in cells.properties:
-        set_group_properties(cells,'source', cells.properties['source_parameters'])
-    if 'cluster_parameters' in cells.properties():  
-        set_group_properties(cells,'cluster_parameters', cells.properties['cluster_parameters'])
-
-def property_updateIKNM(cells, dt):
-    """
-    As in Pilar's work.
-    Updates a cell's age as a function of its ageing_rate.
-    Updates the z nuclei position ('zposn') as a function of age.
-    Sets target area 'A0' for each cells as a function of the cell's age
-    and its z nucleus position  and its ageing_rate ('ageingrate')
-    
-    Args:
-        cells is a cells object.
-        dt is the time step.
-        
-    """
-    cells.properties['age']=cells.properties['age']+ dt*cells.properties['ageingrate']
-    """Calculate z nuclei position (Apical-Basal movement), depending of the cell cycle phase time and age of the cell"""
-    N_G1=1-1.0/t_G1*properties['age'] #nuclei position in G1 phase
-    N_S=0
-    N_G2=1.0/(t_G2)*(properties['age']-(t_G1+t_S))  #nuclei position in G2 and S phase
-    cells.properties['zposn'] = np.minimum(1.0,np.maximum(N_G1,np.maximum(N_S,N_G2)))
-    """Target area function depending age and z nuclei position"""
-    cells.properties['A0'] = (properties['age']+1.0)*0.5*(1.0+properties['zposn']**2)
-    
-def divide2_cells(cells):  
-    """
-    divide2 modified for cells objects
-    """
-    properties = cells.properties
-    if 'age' in properties:
-        ready = np.where(~cells.empty() & (cells.mesh.area>=A_c) & (cells.properties['age']>=(t_G1+t_S+t_G2)))[0] 
-    else: #~cells.empty() is list. ith entry True if cell i alive, False otherwise.
-        ready = np.where(~cells.empty() & (cells.mesh.area>=0.95*A_c))[0] #added 0.5
-    edge_pairs=[]
-    if len(ready)==0: #do nothing
-        return cells
-    for cell_id in ready:
-        edge_pairs.append(mod_division_axis(cells.mesh,cell_id))
-        #edge_pairs.append(mod_division_axis(cells.mesh,cell_id))
-        #print edge_pairs  
-    mesh=cells.mesh.add_edges(edge_pairs) #Add new edges in the mesh
-        #print "add edges
-    props = property_update(cells, ready) #update cells.properties
-    cells2 = Cells(mesh,props) #form a new cells object with the updated properties. WHen we update properties, change to cells2 =Cells(mesh,prop)
-    return cells2
-
-def divide2_cells2(cells,ready):  
-    """
-    divide2 modified for cells objects
-    """
-    edge_pairs=[]
-    if len(ready)==0: #do nothing
-        return cells
-    for cell_id in ready:
-        edge_pairs.append(mod_division_axis(cells.mesh,cell_id))
-        #edge_pairs.append(mod_division_axis(cells.mesh,cell_id))
-        #print edge_pairs  
-    mesh=cells.mesh.add_edges(edge_pairs) #Add new edges in the mesh
-        #print "add edges
-    props = property_update(cells, ready) #update cells.properties
-    cells2 = Cells(mesh,props) #form a new cells object with the updated properties. WHen we update properties, change to cells2 =Cells(mesh,prop)
-    return cells2
 
 def ready_to_divide(cells):
     """
@@ -199,46 +116,7 @@ def ready_to_divide(cells):
     else:#~cells.empty()[i] is True iff cell i is alive, it's False otherwise
         ready = np.where(~cells.empty() & (cells.mesh.area>=0.95*A_c))[0]
     return ready
-    
-def build_cells(size=None, grid_type=None , source_width=None,age=None,parent=None,left= None):
-    """
-    size is a list of two positive, even integers
-    size[0] is the number of cells horizontally in the cell grid
-    size[1] is the number of cells vertically in the cell grid
-    The default size is [10,10]
-    If grid type is none, the initial arrangement of cells will be hexagonal.
-    If not, it will be random.
-    The geometry of the initial mesh will always be toroidal for now.
-    source_width is an approximate thickness (as an integer number of cells)
-    for the floor plate.  It must be less than size[0].
-    
-    """
-    if size is None:
-        size=[10,10] #size[0] is the number of cells in the grid
-    else:
-        size=size
-    if grid_type is None:
-        mesh=_modified_toroidal_hex_mesh(size[0], size[1],noise=0.2,rand=np.random)
-    else:
-        mesh=_modified_toroidal_random_mesh(size[0], size[1],noise=0.2,rand=np.random)
-    cells = Cells(mesh)
-    properties=cells.properties
-    n_face=cells.mesh.n_face
-    if source_width is not None:
-        approx_cell_width = cells.mesh.geometry.width/float(size[0])
-        centroids = cells.mesh.centres.T # centroids2(cells)
-        source_vect=np.zeros(n_face)
-        left_vect=np.zeros(n_face)
-        left_xlim = -0.5*source_width*approx_cell_width 
-        right_xlim = -left_xlim
-        for k in range(n_face):
-            if centroids[k][0] < right_xlim:
-                left_vect[k]=1.0
-                if (centroids[k][0] > left_xlim):
-                    source_vect[k]=1.0
-        properties['source']=source_vect
-        properties['left']=left_vect
-    return cells
+
 
 def build_cells_simple(size=None, grid_type=None): #used in Neural_Tube2_setup, in NT_full_sim_seq
     """
@@ -264,52 +142,7 @@ def build_cells_simple(size=None, grid_type=None): #used in Neural_Tube2_setup, 
     cells = Cells(mesh)
     return cells
                    
-def set_edge_parameters(cells,prop_name,default,prop_vector=None,param=None):
-    """
-    prop_name is a string
-    param is a 2-d list of parameters
-    prop_vector[i]=1 means cell i is of type 1
-    and prop[i]=0 means cell i is of type 0. 
-    type 0 faces get param[0]
-    type 1 faces get param[1]
-    default is a default value for the parameter in question
-    """   
-    if param==None:
-        cells.properties[prop_name]=default
-    if type(param)==float or type(param)==int:
-        cells.properties[prop_name]=param
-    else:
-        n_edge=len(cells.mesh.edges.reverse)
-        n_face=cells.mesh.n_face
-        cells.properties[prop_name]=param[0]*np.ones(n_edge)
-        for i in range(n_face):
-            if prop_vector[i]==1:
-                dummy= cells.mesh.boundary(i)
-                for k in dummy:
-                    cells.properties[prop_name][k]=param[1]
-                    
-def set_face_parameters(cells,prop_name,default,prop_vector=None,param=None):
-    """
-    prop_name is a string
-    param is a 2-d list of parameters
-    prop_vector[i]=1 means cell i is of type 1
-    and prop[i]=0 means cell i is of type 0. 
-    type 0 faces get param[0]
-    type 1 faces get param[1]
-    default is a default value for the parameter in question
-    """   
-    if param==None:
-        cells.properties[prop_name]=default
-    if type(param)==float or type(param)==int:
-        cells.properties[prop_name]=param
-    else:
-        n_face=cells.mesh.n_face
-        cells.properties[prop_name]=param[0]*np.ones(n_face)
-        for i in range(n_face):
-            if prop_vector[i]==1:
-                cells.properties[prop_name][i]=param[1]
 
-        
 def setup_source(cells, width=None): #used in NT_full_sim_seq
     """
     Defines the faces which are morphogen producers as a vertical strip.
@@ -332,94 +165,6 @@ def setup_source(cells, width=None): #used in NT_full_sim_seq
             if (cents[k][0] > -0.5*width*approx_cell_width):
                 cells.properties['source'][k]=1.0
 
-        
-                
-def setup_cluster(FE, centre, size, parameters):#used in NT_full_sim_seq. Argument 'parameters' is not used
-    """
-    FE is a finite element object 
-    centre is an array.  It's the approximate centre of the cluster
-    centre[0] is the approx number of cells right  of is the middle
-    centre[1] is the approx number of cells up from the x axis
-    size is an array.  
-    size[0] is the approx number of cells across the cluster
-    size[1] is the approx number of cells vertically
-    parameters is a vector of floats
-    parameters[0] is K for the cluster faces
-    parameters[1] is A0 for the cluster faces
-    parameters[2] is Gamma for the cluster faces
-    parameters[3] is Lambda for the edges of the cluster faces
-    parameters[4] is P for the edges of the cluster faces
-    parameters[5] is boundary_P for the edges of the cluster faces
-    """  
-    approx_cell_width = 2*np.mean(FE.cells.mesh.length)
-    cents=FE.centroids
-    n_face = cells.mesh.n_face
-    FE.cells.properties['cluster']=np.zeros(n_face)
-    for k in FE.living_faces:
-        if (centoids[k][0] > (centre[0]-0.5*size[0])*approx_cell_width):
-            if (centoids[k][0] < (centre[0]+0.5*size[0])*approx_cell_width):
-                if (centoids[k][1] > (centre[1]-0.5*size[1])*approx_cell_width):
-                    if (centoids[k][1] > (centre[1]+0.5*size[1])*approx_cell_width):
-                        FE.cells.properties['cluster'][k]=1.0
-                        
-def setup_cluster2(FE, centre=None, size=None, parameters=None):
-    """
-    FE is a finite element object 
-    centre is an array or list.  It's the approximate centre of the cluster
-    centre[0] is the approx number of cells right  of is the middle
-    centre[1] is the approx number of cells up from the x axis
-    size is an array or list.  
-    size[0] is the approx number of cells across the cluster
-    size[1] is the approx number of cells vertically
-    parameters is a vector of floats
-    parameters[0] is K for the cluster faces
-    parameters[1] is A0 for the cluster faces
-    parameters[2] is Gamma for the cluster faces
-    parameters[3] is Lambda for the edges of the cluster faces
-    parameters[4] is P for the edges of the cluster faces
-    parameters[5] is boundary_P for the edges of the cluster faces
-    """  
-    approx_cell_width = 2*np.mean(FE.cells.mesh.length)
-    cents=FE.centroids
-    n_face = FE.cells.mesh.n_face
-    FE.cells.properties['cluster']=np.zeros(n_face)
-    if centre is None:
-        centre=[3,2]
-    if size is None:
-        size=[2,2]
-    for k in FE.living_faces:
-        if (FE.centroids[k][0] > (centre[0]-0.5*size[0])*approx_cell_width):
-            if (FE.centroids[k][0] < (centre[0]+0.5*size[0])*approx_cell_width):
-                if (FE.centroids[k][1] > (centre[1]-0.5*size[1])*approx_cell_width):
-                    if (FE.centroids[k][1] < (centre[1]+0.5*size[1])*approx_cell_width):
-                        FE.cells.properties['cluster'][k]=1.0
-    if parameters is not None:
-        FE.cells.properties['cluster_parameters']=parameters
-        
-def setup_cluster3(FE, centre=None, size=None): #used in NT_full_sim_seq
-    """
-    FE is a finite element object 
-    centre is an array or list.  It's the approximate centre of the cluster
-    centre[0] is the approx number of cells right  of is the middle
-    centre[1] is the approx number of cells up from the x axis
-    size is an array or list.  
-    size[0] is the approx number of cells across the cluster
-    size[1] is the approx number of cells vertically
-    """  
-    approx_cell_width = 2*np.mean(FE.cells.mesh.length)
-    cents=FE.centroids
-    n_face = FE.cells.mesh.n_face
-    FE.cells.properties['cluster']=np.zeros(n_face)
-    if centre is None:
-        centre=[3,2]
-    if size is None:
-        size=[2,2]
-    for k in FE.living_faces:
-        if (FE.centroids[k][0] > (centre[0]-0.5*size[0])*approx_cell_width):
-            if (FE.centroids[k][0] < (centre[0]+0.5*size[0])*approx_cell_width):
-                if (FE.centroids[k][1] > (centre[1]-0.5*size[1])*approx_cell_width):
-                    if (FE.centroids[k][1] < (centre[1]+0.5*size[1])*approx_cell_width):
-                        FE.cells.properties['cluster'][k]=1.0
 
 def setup_cluster_cells(cells, centre=None, size=None):
     """
@@ -448,55 +193,6 @@ def setup_cluster_cells(cells, centre=None, size=None):
                         if (cents[k][1] < (centre[1]+0.5*size[1])*approx_cell_width):
                             cells.properties['cluster'][k]=1.0    
     
-def set_group_properties(cells,group_name, group_parameters):
-    """
-    Creates physical property vectors for the cells object if they do
-    not exist already.
-    Then it sets the property vectors by group according to the group
-    parameters.
-    cells is a cells object
-    group_name (string) is the name of a group of cells
-    cells.properties[group_name] is an array of length n_face
-    cells.properties[group_name][i] = 1 iff cell i belongs to group_name
-    cells.properties[group_name][i] = 0 otherwise
-    The physical parameters 'K', 'A0',.. are assumed to already exist.
-    parameters is a vector of floats
-    parameters[0] is K for the group_name faces
-    parameters[1] is A0 for the group_name faces
-    Note that if age is a property (as in IKNM), we do not set A0
-    parameters[2] is Gamma for the group_name faces
-    parameters[3] is Lambda for the edges of the group_name faces
-    parameters[4] is lambda_boundary
-    parameters[5] is P for the edges of the group_name faces
-    parameters[6] is boundary_P for the edges of the group_name faces
-    NEED TO INCLUDE LAMBDA_BDY PARAMETER FOR GEOMETRIES WITH BOUNDARIES
-    """
-    n_face=cells.mesh.n_face
-    n_edge = len(cells.mesh.edges.reverse)
-    group_ids=np.where(cells.properties[group_name]==1)[0]
-    if "K" not in cells.properties: #
-        cells.properties['K']=np.ones(n_face)
-    cells.properties['K'][group_ids]=group_parameters[0]
-    if "A0" not in cells.properties:
-        cells.properties['A0']=np.ones(n_face)
-    if 'age' not in cells.properties: #
-        cells.properties['A0'][group_ids]=group_parameters[1]
-    if "Gamma" not in 'Lambda':
-        cells.properties['Gamma']=np.ones(n_face)
-    cells.properties['Gamma'][group_ids]=group_parameters[2]
-    for k in group_ids:
-        if 'Lambda' not in cells.properties:
-            cells.properties['Lambda']=np.ones(n_edge)   
-        cells.properties['Lambda'][cells.mesh.boundary(k)]=group_parameters[3]
-        if 'Lambda_boundary' not in cells.properties:
-            cells.properties['Lambda_boundary']=np.ones(n_edge)   
-        cells.properties['Lambda_boundary'][cells.mesh.boundary(k)]=group_parameters[4]
-        if 'P' not in cells.properties:
-            cells.properties['P']=np.ones(n_edge)   
-        cells.properties['P'][cells.mesh.boundary(k)]=group_parameters[5]
-        if 'boundary_P' not in cells.properties:
-            cells.properties['boundary_P']=np.ones(n_edge)   
-        cells.properties['boundary_P'][cells.mesh.boundary(k)]=group_parameters[6]
 
 def set_physical_properties(cells, physical_parameters=None): #used in NT_full_sim_seq
     """
@@ -531,7 +227,7 @@ def set_physical_properties(cells, physical_parameters=None): #used in NT_full_s
     cells.properties['boundary_P']=physical_parameters[6] #bdy properties are scalars?
     
 
-def set_group_properties2(cells,group_name, group_parameters): #used in NT_full_sim_seq
+def set_group_properties(cells,group_name, group_parameters): #used in NT_full_sim_seq
     """
     Assumes physical property vectors exist.
     Sets the property vector values by group according to the group
@@ -570,111 +266,7 @@ def set_group_properties2(cells,group_name, group_parameters): #used in NT_full_
     #cells.properties['Lambda_boundary'][group_ids]=group_parameters[4]
     cells.properties['P'][group_ids]=group_parameters[5]
     #cells.properties['boundary_P'][group_ids]=group_parameters[6]        
-               
-def randomize(cells, N, dt):
-    """
-    Hacked up version of simulation_with_division (Pilar)
-    Carries out N steps of IKNM to randomise the initial cell grid.
-    Args:
-        cells is a cells object
-        N is the number of steps
-        dt is the time step
-    Returns:
-        a randomised cells object, with empty properties.
-    """
-    default_physical_parameters = [1.0,1.0,0.04,0.075,0.0,0.5]
-    cells.properties['all']=np.ones(cells.mesh.n_face) 
-    set_group_properties(cells,'all', default_physical_parameters)
-    cells.properties['age']=np.random.normal(0.8,0.15,len(cells)) #random ages
-    cells.properties['parent'] = cells.mesh.face_ids #save the ids to control division parents-daugthers 
-    cells.properties['ageingrate'] = np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)) #degradation rate per each cell
-    #'parent_group' is not initialised.
-    #properties['parent_group']
-    expansion = np.array([0.0,0.0])
-    counter=0
-    x=np.array([1.0,0.04,0.075]) #K,G,L, parameters for force?
-    K_val,G,L=x[0],x[1],x[2]
-    rand=np.random
-    while counter < N:
-        #cells id where is true the division conditions: living cells & area greater than 2 & age cell in mitosis 
-        cells.properties['age'] = cells.properties['age']+dt*cells.properties['ageingrate'] #add time step depending of the degradation rate 
-        
-        """Calculate z nuclei position (Apical-Basal movement), depending of the cell cycle phase time and age of the cell"""
-        N_G1=1-1.0/t_G1*cells.properties['age'] #nuclei position in G1 phase
-        N_S=0
-        N_G2=1.0/(t_G2)*(cells.properties['age']-(t_G1+t_S))  #nuclei position in G2 and S phase
-        cells.properties['zposn'] = np.minimum(1.0,np.maximum(N_G1,np.maximum(N_S,N_G2)))
-        
-        
-        """Target area function depending age and z nuclei position"""
-        cells.properties['A0'] = (cells.properties['age']+1.0)*0.5*(1.0+cells.properties['zposn']**2)
-        
-        cells.mesh , number_T1= cells.mesh.transition(T1_eps)  #check edges verifing T1 transition
-        F = force(cells)/viscosity  #force per each cell force= targetarea+Tension+perimeter+pressure_boundary 
-        dv = dt*sum_vertices(cells.mesh.edges,F) #movement of the vertices using eq: viscosity*dv/dt = F
 
-        if hasattr(cells.mesh.geometry,'width'):
-            expansion[0] = expansion_constant*np.average(F[0]*cells.mesh.vertices[0])*dt/(cells.mesh.geometry.width**2)
-        if hasattr(cells.mesh.geometry,'height'): #Cylinder mesh doesn't have 'height' argument
-            expansion[1] = np.average(F[1]*cells.mesh.vertices[1])*dt/(cells.mesh.geometry.height**2)
-        cells.mesh = cells.mesh.moved(dv).scaled(1.0+expansion)
-        counter+=1            
-    cells.properties={} #clear cell properties
-    return cells
-
-def randomize2(cells, N, dt):
-    """
-    Hacked up version of simulation_with_division (Pilar?)
-    Carries out N steps of IKNM to randomise the intial cell grid.
-    Args:
-        cells is a cells object
-        N is the number of steps
-        dt is the time step
-    Returns:
-        a randomised cells object, with empty properties.
-    """
-    default_physical_parameters = [1.0,1.0,0.04,0.075,0.0,0.5]
-    cells.properties['all']=np.ones(cells.mesh.n_face) 
-    set_group_properties(cells,'all', default_physical_parameters)
-    cells.properties['age']=np.random.normal(0.8,0.15,len(cells)) #random ages
-    cells.properties['parent'] = cells.mesh.face_ids #save the ids to control division parents-daugthers 
-    cells.properties['ageingrate'] = np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)) #degradation rate per each cell
-    #'parent_group' is not initialised.
-    #properties['parent_group']
-    expansion = np.array([0.0,0.0])
-    counter=0
-    x=np.array([1.0,0.04,0.075]) #K,G,L, parameters for force?
-    K_val,G,L=x[0],x[1],x[2]
-    rand=np.random
-    history=[]
-    force= TargetArea()+Perimeter()+Tension()+Pressure()
-    while counter < N:
-        #cells id where is true the division conditions: living cells & area greater than 2 & age cell in mitosis 
-        cells.properties['age'] = cells.properties['age']+dt*cells.properties['ageingrate'] #add time step depending of the degradation rate 
-        
-        """Calculate z nuclei position (Apical-Basal movement), depending of the cell cycle phase time and age of the cell"""
-        N_G1=1-1.0/t_G1*cells.properties['age'] #nuclei position in G1 phase
-        N_S=0
-        N_G2=1.0/(t_G2)*(cells.properties['age']-(t_G1+t_S))  #nuclei position in G2 and S phase
-        cells.properties['zposn'] = np.minimum(1.0,np.maximum(N_G1,np.maximum(N_S,N_G2)))
-        
-        
-        """Target area function depending age and z nuclei position"""
-        cells.properties['A0'] = (cells.properties['age']+1.0)*0.5*(1.0+cells.properties['zposn']**2)
-        
-        cells.mesh , number_T1= cells.mesh.transition(T1_eps)  #check edges verifing T1 transition
-        F = force(cells)/viscosity  #force per each cell force= targetarea+Tension+perimeter+pressure_boundary 
-        dv = dt*sum_vertices(cells.mesh.edges,F) #movement of the vertices using eq: viscosity*dv/dt = F
-
-        if hasattr(cells.mesh.geometry,'width'):
-            expansion[0] = expansion_constant*np.average(F[0]*cells.mesh.vertices[0])*dt/(cells.mesh.geometry.width**2)
-        if hasattr(cells.mesh.geometry,'height'): #Cylinder mesh doesn't have 'height' argument
-            expansion[1] = np.average(F[1]*cells.mesh.vertices[1])*dt/(cells.mesh.geometry.height**2)
-        cells.mesh = cells.mesh.moved(dv).scaled(1.0+expansion)
-        counter+=1  
-        history.append(cells)          
-    #cells.properties={} #clear cell properties
-    return history
 
 def set_zposn_A0(cells):
     N_G1=1-1.0/t_G1*cells.properties['age'] #nuclei position in G1 phase
@@ -717,59 +309,6 @@ def update_leaving(cells,dt,diff_rates=None):
     cells.properties['leaving'] = cells.properties['leaving'] + (1 - cells.properties['leaving']) * (~(cells.empty()) & (rand.rand(len(cells)) < dt*rates))
 
     
-def colour_offsp(cells):
-    cells2=cells.copy()
-    cells2.properties['color']=np.ones((cells2.mesh.n_face, 3)) #to store RGB number for each face
-    for k in range(1,7):
-        rgb_value = int_to_rgb(k)
-        #print "ou est",np.where(cells2.properties['parent'] == k)[0]
-        #print "just a number", cells2.mesh.n_face
-        cells2.properties['color'][np.where(cells2.properties['parent'] == k)] = rgb_value
-    return cells2
-
-def colour_source(cells , rgb_value):
-    """
-    Args:
-        cells is a cells object
-        rgb_value is a np.array([i,j,k]) where i,j,k in {0,1}
-    """
-    n_face=cells.mesh.n_face
-    cells.properties['color']=np.ones((n_face, 3)) #to store RGB number for each face
-    for k in range(n_face):
-        if cells.properties['source'][k]==1: #if cell k has ancestor s, it gets the colour rgb_value
-            cells.properties['color'][k]=rgb_value
-    return cells 
-
-def colour_group(cells, group_name , rgb_value):
-    """
-    Args:
-        cells is a cells object
-        group_name (string) is the name of a group of cells.
-        cells.properties[group_name][k] = 1 iff cell k belongs to the group
-        (It's zero otherwise.)
-        rgb_value is a np.array([i,j,k]) where i,j,k in {0,1}
-    """
-    n_face=cells.mesh.n_face
-    cells.properties['color']=np.ones((n_face, 3)) #to store RGB number for each face
-    for k in range(n_face):
-        if cells.properties[group_name][k]==1: #if cell k has ancestor s, it gets the colour rgb_value
-            cells.properties['color'][k]=rgb_value
-    return cells   
-
-def int_to_rgb(v):
-    if v==1:
-        return np.array([0,0,1])
-    if v==2:
-        return np.array([0,1,0])
-    if v==3:
-        return np.array([0,1,1])
-    if v==4:
-        return np.array([1,0,0])
-    if v==5:
-        return np.array([1,0,1])
-    if v==6:
-        return np.array([1,1,1])
-    
 def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None,differentiation=True):
     """
     Args:
@@ -809,14 +348,14 @@ def cells_setup(size=None, vm_parameters=None,source_data=None,cluster_data=None
     else:
         setup_source(cells,source_data[0]) #sets width of source if specified
         if len(source_data ==2): #if vm parameters are input, this sets them
-            set_group_properties2(cells,'source', source_data[1]) 
+            set_group_properties(cells,'source', source_data[1]) 
     if cluster_data is not None:
         if len(cluster_data)==0: #input is [], generate default cluster
             setup_cluster_cells(cells)
         else:
             setup_cluster_cells(cells, cluster_data[0], cluster_data[1]) #create cluster as specified
             if len(cluster_data)==3: #set up cluster properties if specified
-                set_group_properties2(cells,'cluster', cluster_data[2]) 
+                set_group_properties(cells,'cluster', cluster_data[2]) 
     if differentiation:
         cells.properties['leaving'] = np.zeros(len(cells))
         cells.properties['diff_rates'] = np.zeros(len(cells))
@@ -834,7 +373,6 @@ def divide_ready(cells, ready):
     edge_pairs=[]
     for cell_id in ready:
         edge_pairs.append(mod_division_axis(cells.mesh,cell_id))
-        cells.properties['ageingrate'][cell_id] = 0.
         #edge_pairs.append(mod_division_axis(cells.mesh,cell_id))
         #print edge_pairs  
     mesh=cells.mesh.add_edges(edge_pairs) #Add new edges in the mesh
@@ -925,15 +463,3 @@ def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesi
     if 'zposn' in cells.properties:
         update_zposn_and_A0(cells)
     return cells #, expansion
-
-        
-
-def living_not_source(cells):
-    """
-    cells.properties dictionary must contain
-    """
-    if 'source' in cells.properties:
-        return ~cells.empty()[cells.properties['source'].astype(bool)]
-    else:
-        return ~cells.empty()
-    
