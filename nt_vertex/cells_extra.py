@@ -710,26 +710,11 @@ def update_age(cells,dt):
     cells.properties['age'] = cells.properties['age']+dt*cells.properties['ageingrate']
 
 def update_leaving(cells,dt,diff_rates=None):
-    alive = np.where(~(cells.empty()))[0]
     if diff_rates is not None:
-        # print(f'len(cells) = {len(cells)}')
-        # print(f'len(alive) = {len(alive)}')
-        # print(f'len(diff_rates) = {len(diff_rates)}')
         rates = diff_rates
     else:
         rates = 0.5 * time_hours * diff_rate_hours * np.zeros(len(cells))
-
-    # print("\n",~(cells.empty()))
-    alive = np.where(~(cells.empty()))[0]
-    # print(f'{len(alive)} cells vs {len(cells)} total cells')
-    # exit()
-    # print(f'len(cells.properties["leaving"]) before, {len(cells.properties["leaving"])}')
-    # print(f'len(rates), {len(rates)}')
-    # print(f'len(cells), {len(cells)}')
-    # print(f'len(~(cells.empty())), {len(~(cells.empty()))}')
     cells.properties['leaving'] = cells.properties['leaving'] + (1 - cells.properties['leaving']) * (~(cells.empty()) & (rand.rand(len(cells)) < dt*rates))
-    # print("cells.properties['leaving']")
-    # print(cells.properties['leaving'])
 
     
 def colour_offsp(cells):
@@ -849,6 +834,7 @@ def divide_ready(cells, ready):
     edge_pairs=[]
     for cell_id in ready:
         edge_pairs.append(mod_division_axis(cells.mesh,cell_id))
+        cells.properties['ageingrate'][cell_id] = 0.
         #edge_pairs.append(mod_division_axis(cells.mesh,cell_id))
         #print edge_pairs  
     mesh=cells.mesh.add_edges(edge_pairs) #Add new edges in the mesh
