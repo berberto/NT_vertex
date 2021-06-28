@@ -79,7 +79,8 @@ def property_update(cells, ready):
                 extension[k] = np.abs(np.random.normal(1.0*new_turnover_rates[k]/lifespan,0.2*new_turnover_rates[k]/lifespan))
             properties['ageingrate'] =np.append(properties['ageingrate'],extension)
         else:   
-            properties['ageingrate'] =np.append(properties['ageingrate'], np.abs(np.random.normal(1.0/lifespan,0.2/lifespan,int(2.0*len(ready)))))
+            properties['ageingrate'] =np.append(properties['ageingrate'], np.maximum(np.random.normal(1.0/lifespan,0.2/lifespan,len(2*len(ready))), 0.5/lifespan))
+            # properties['ageingrate'] =np.append(properties['ageingrate'], np.abs(np.random.normal(1.0/lifespan,0.2/lifespan,int(2*len(ready)))))
     if  'parent_group' in properties: #heredity of type
         properties['parent_group'] = np.append(properties['parent_group'],np.repeat(properties['parent_group'][ready],2))  # Daugthers and parent have the same ids  
     if 'age' in properties: #if
@@ -395,7 +396,7 @@ def T1_and_T2_transitions(cells):
 
 def add_IKNM_properties(cells):   
     cells.properties['age']=np.random.rand(len(cells)) #np.random.normal(0.8,0.15,len(cells)) #create age property
-    cells.properties['ageingrate'] = np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)) #create ageing_rate property
+    cells.properties['ageingrate'] = np.maximum(np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)), 0.5/lifespan) #create ageing_rate property
     set_zposn_A0(cells)
     
 
