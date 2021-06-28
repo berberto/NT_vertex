@@ -183,6 +183,8 @@ def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, h
     ax.set_xticks([])
     ax.set_yticks([])
     if heatmap:
+        if np.allclose(concs_tri.ravel(), 0):
+            return
         tri = Triangulation(coord_tri[:,:,0].ravel(), coord_tri[:,:,1].ravel(), triangles=np.arange(len(coord_tri)*3).reshape(-1,3))
         ax.tricontourf(tri, concs_tri.ravel(), levels=np.linspace(0.,z_high, 20), cmap=plt.get_cmap('Greens'))
         # refiner = UniformTriRefiner(tri)
