@@ -394,7 +394,7 @@ def T1_and_T2_transitions(cells):
     return cells
 
 def add_IKNM_properties(cells):   
-    cells.properties['age']=np.random.normal(0.8,0.15,len(cells)) #create age property
+    cells.properties['age']=np.random.rand(len(cells)) #np.random.normal(0.8,0.15,len(cells)) #create age property
     cells.properties['ageingrate'] = np.random.normal(1.0/lifespan,0.2/lifespan,len(cells)) #create ageing_rate property
     set_zposn_A0(cells)
     
