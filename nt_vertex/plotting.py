@@ -6,8 +6,6 @@
 import itertools
 import numpy as np
 from matplotlib.collections import PolyCollection
-#import matplotlib#added by G for cluster
-#matplotlib.use('Agg')#added  by G for cluster
 import matplotlib.pyplot as plt
 import os
 from mpl_toolkits.mplot3d import Axes3D #Added by me
@@ -207,6 +205,8 @@ def combined_video(NT_list, filename=None,
             xlim=None, ylim=None, zlim=None, heatmap=True,
             duration=60.,
             ffmpeg=False):
+
+    use('Agg')
 
     if filename is None:
         raise ValueError("Provide name for output video file")

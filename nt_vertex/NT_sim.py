@@ -147,14 +147,18 @@ class NT_simulation (object):
             with open (outfile, "wb") as f:
                 dill.dump(self.neural_tube, f)
 
-    def load(self):
+    def load(self, init=False):
         try:
             allfiles = os.listdir(self.checkpoint_dir)
 
         except FileNotFoundError:
             raise FileNotFoundError("path not found: \""+self.checkpoint_dir+"\"")
 
-        allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
+        if init:
+            allNT = sorted([x for x in allfiles if "_NT_init.pkl" in x])
+        else:
+            allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
+
         if len(allNT) == 0:
             raise FileNotFoundError("No snapshots found in \""+self.checkpoint_dir+"\"")
 
@@ -229,10 +233,10 @@ class NT_simulation (object):
                     self.neural_tube.transitions(division=division)
                 print("")
 
-    def video(self, duration=60.):
+    def video(self, duration=60., init=False):
         if self.plotting:
-
-            NT_list = self.load()
-            # NTinit_list = [load_NT_vtx(self.path+"/"+file) for file in allNTinit]
-
+            NT_list = self.load(init=init)
             combined_video(NT_list, filename=self.path+"/video_combined", duration=duration)#,zmin=0)#,zmax=10)
+        else:
+            print("skip plotting")
+
