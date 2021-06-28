@@ -79,8 +79,7 @@ def property_update(cells, ready):
                 extension[k] = np.abs(np.random.normal(1.0*new_turnover_rates[k]/lifespan,0.2*new_turnover_rates[k]/lifespan))
             properties['ageingrate'] =np.append(properties['ageingrate'],extension)
         else:   
-            properties['ageingrate'] =np.append(properties['ageingrate'], np.maximum(np.random.normal(1.0/lifespan,0.2/lifespan,len(2*len(ready))), 0.5/lifespan))
-            # properties['ageingrate'] =np.append(properties['ageingrate'], np.abs(np.random.normal(1.0/lifespan,0.2/lifespan,int(2*len(ready)))))
+            properties['ageingrate'] =np.append(properties['ageingrate'], np.maximum(np.random.normal(1.0/lifespan,0.2/lifespan,2*len(ready)), 0.5/lifespan))
     if  'parent_group' in properties: #heredity of type
         properties['parent_group'] = np.append(properties['parent_group'],np.repeat(properties['parent_group'][ready],2))  # Daugthers and parent have the same ids  
     if 'age' in properties: #if
