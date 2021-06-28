@@ -32,7 +32,7 @@ class NT_simulation (object):
             diff_coef=diff_coef,degr_rate=degr_rate,
             prod_rate=prod_rate, bind_rate=bind_rate,
             Kappa=Kappa, Gamma=Gamma, Lambda=Lambda,
-            simulate=simulate, plotting=plotting,
+            simulate=simulate, plotting=plotting, init_only=init_only,
             from_last=from_last, restart_file=restart_file,
             dry=test_output,
             diff_adhesion=diff_adhesion,
