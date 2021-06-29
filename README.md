@@ -54,11 +54,23 @@ python neuraltube.py --help
 
 For instance, a basic simulation setting a tag for the output directory, total simulation time (separately for initialization and full simulation), time-step and time between frames:
 ```
-python neuraltube.py [--prefix <tag for output directory>]
-					 [-t  <total simulation time>]
-					 [--every  <time b/w frames>]
-					 [--init  <initialization time>]
-					 [--dt  <time step>]
+python neuraltube.py \
+	[--prefix <tag for output directory>]
+	[-t  <total simulation time>]
+	[--init  <initialization time>]
+	[--dt  <time step>]
+	[--every  <time b/w frames>]
 ```
 
 The same options can be passed to the `NT_simulation` constructor as keyword arguments. In this case, the command-line options are overwritten.
+The equivalent is obtained with
+```python
+sim = NT_simulation(
+		prefix="tag_for_output_directory">,
+		T_sim=<total simulation time>,
+		T_init=<initialization time>,
+		dt=<time step>,
+		frame_every=<time b/w frames>
+	)
+```
+in `neuraltube.py`.
