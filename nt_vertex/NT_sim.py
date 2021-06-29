@@ -247,7 +247,7 @@ class NT_simulation (object):
     def video(self, duration=60., files='main', log=False):
         if self.plotting:
             NT_list = self.load(files=files)
-            combined_video(NT_list, filename=self.path+"/video_combined", duration=duration)
+            combined_video(NT_list, filename=self.path+"/video_combined", duration=duration, log=log)
         else:
             print("skip plotting")
 
