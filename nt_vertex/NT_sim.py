@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import os
 from datetime import datetime
 import dill
@@ -147,17 +148,22 @@ class NT_simulation (object):
             with open (outfile, "wb") as f:
                 dill.dump(self.neural_tube, f)
 
-    def load(self, init=False):
+    def load(self, files='main'):
         try:
             allfiles = os.listdir(self.checkpoint_dir)
 
         except FileNotFoundError:
             raise FileNotFoundError("path not found: \""+self.checkpoint_dir+"\"")
 
-        if init:
+        if files == 'init':
             allNT = sorted([x for x in allfiles if "_NT_init.pkl" in x])
-        else:
+        elif files == 'main':
             allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
+        elif files == 'both':
+            allNT = sorted([x for x in allfiles if "_NT_init.pkl" in x])
+            allNT += sorted([x for x in allfiles if "_NT.pkl" in x])
+        else:
+            raise ValueError(f"Invalid 'files' option '{files}'")
 
         if len(allNT) == 0:
             raise FileNotFoundError("No snapshots found in \""+self.checkpoint_dir+"\"")
@@ -233,10 +239,10 @@ class NT_simulation (object):
                     self.neural_tube.transitions(division=division)
                 print("")
 
-    def video(self, duration=60., init=False):
+    def video(self, duration=60., files='main'):
         if self.plotting:
-            NT_list = self.load(init=init)
-            combined_video(NT_list, filename=self.path+"/video_combined", duration=duration)#,zmin=0)#,zmax=10)
+            NT_list = self.load(files=files)
+            combined_video(NT_list, filename=self.path+"/video_combined", duration=duration)
         else:
             print("skip plotting")
 
