@@ -6,8 +6,6 @@
 import itertools
 import numpy as np
 from matplotlib.collections import PolyCollection
-#import matplotlib#added by G for cluster
-#matplotlib.use('Agg')#added  by G for cluster
 import matplotlib.pyplot as plt
 import os
 from mpl_toolkits.mplot3d import Axes3D #Added by me
@@ -185,6 +183,8 @@ def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, h
     ax.set_xticks([])
     ax.set_yticks([])
     if heatmap:
+        if np.allclose(concs_tri.ravel(), 0):
+            return
         tri = Triangulation(coord_tri[:,:,0].ravel(), coord_tri[:,:,1].ravel(), triangles=np.arange(len(coord_tri)*3).reshape(-1,3))
         ax.tricontourf(tri, concs_tri.ravel(), levels=np.linspace(0.,z_high, 20), cmap=plt.get_cmap('Greens'))
         # refiner = UniformTriRefiner(tri)
@@ -207,6 +207,8 @@ def combined_video(NT_list, filename=None,
             xlim=None, ylim=None, zlim=None, heatmap=True,
             duration=60.,
             ffmpeg=False):
+
+    use('Agg')
 
     if filename is None:
         raise ValueError("Provide name for output video file")

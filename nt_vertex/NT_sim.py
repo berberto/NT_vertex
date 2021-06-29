@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import os
 from datetime import datetime
 import dill
@@ -32,7 +33,7 @@ class NT_simulation (object):
             diff_coef=diff_coef,degr_rate=degr_rate,
             prod_rate=prod_rate, bind_rate=bind_rate,
             Kappa=Kappa, Gamma=Gamma, Lambda=Lambda,
-            simulate=simulate, plotting=plotting,
+            simulate=simulate, plotting=plotting, init_only=init_only,
             from_last=from_last, restart_file=restart_file,
             dry=test_output,
             diff_adhesion=diff_adhesion,
@@ -62,6 +63,7 @@ class NT_simulation (object):
         self.restart_file=restart_file
         self.N_step = int(T_sim/dt)
         self.N_step_init = int(T_init/dt)
+        self.time=t0
         # number of frames
         if self.frame_every > 0.: # default: frame_every < 0; changed with --every flag
             self.N_skip = int(self.frame_every/self.dt)
@@ -147,14 +149,23 @@ class NT_simulation (object):
             with open (outfile, "wb") as f:
                 dill.dump(self.neural_tube, f)
 
-    def load(self):
+    def load(self, files='main'):
         try:
             allfiles = os.listdir(self.checkpoint_dir)
 
         except FileNotFoundError:
             raise FileNotFoundError("path not found: \""+self.checkpoint_dir+"\"")
 
-        allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
+        if files == 'init':
+            allNT = sorted([x for x in allfiles if "_NT_init.pkl" in x])
+        elif files == 'main':
+            allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
+        elif files == 'both':
+            allNT = sorted([x for x in allfiles if "_NT_init.pkl" in x])
+            allNT += sorted([x for x in allfiles if "_NT.pkl" in x])
+        else:
+            raise ValueError(f"Invalid 'files' option '{files}'")
+
         if len(allNT) == 0:
             raise FileNotFoundError("No snapshots found in \""+self.checkpoint_dir+"\"")
 
@@ -195,11 +206,12 @@ class NT_simulation (object):
                 self.save(k, T=T_init, suffix="NT_init.pkl")
 
                 diff_rates=self.neural_tube.GRN.diff_rates.copy()
-                self.neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                    vertex=vertex,move=move,morphogen=False,
-                    diff_rates=diff_rates,diff_adhesion=diff_adhesion)
-                self.neural_tube.transitions(division=division)                
-
+                self.neural_tube.evolve(self.diff_coef,self.prod_rate,self.bind_rate,self.degr_rate,
+                    self.time,self.dt,
+                    vertex=self.vertex, move=self.move, morphogen=False,
+                    diff_adhesion=self.diff_adhesion,
+                    diff_rates=diff_rates)
+                self.neural_tube.transitions(division=self.division)     
             print('')
         else:
             print(f'Loading restart file \"{self.restart_file}\"')
@@ -223,16 +235,19 @@ class NT_simulation (object):
                     leaving=self.neural_tube.properties['leaving']
 
                     diff_rates=self.neural_tube.GRN.diff_rates.copy()
-                    self.neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                        vertex=vertex,move=move,morphogen=morphogen,
-                        diff_rates=diff_rates,diff_adhesion=diff_adhesion)
-                    self.neural_tube.transitions(division=division)
+                    self.neural_tube.evolve(self.diff_coef,self.prod_rate,self.bind_rate,self.degr_rate,
+                        self.time,self.dt,
+                        vertex=self.vertex, move=self.move, morphogen=self.morphogen,
+                        diff_adhesion=self.diff_adhesion,
+                        diff_rates=diff_rates)
+                    self.neural_tube.transitions(division=self.division)
+                    self.time += self.dt
                 print("")
 
-    def video(self, duration=60.):
+    def video(self, duration=60., files='main'):
         if self.plotting:
+            NT_list = self.load(files=files)
+            combined_video(NT_list, filename=self.path+"/video_combined", duration=duration)
+        else:
+            print("skip plotting")
 
-            NT_list = self.load()
-            # NTinit_list = [load_NT_vtx(self.path+"/"+file) for file in allNTinit]
-
-            combined_video(NT_list, filename=self.path+"/video_combined", duration=duration)#,zmin=0)#,zmax=10)
