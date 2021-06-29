@@ -63,6 +63,7 @@ class NT_simulation (object):
         self.restart_file=restart_file
         self.N_step = int(T_sim/dt)
         self.N_step_init = int(T_init/dt)
+        self.time=t0
         # number of frames
         if self.frame_every > 0.: # default: frame_every < 0; changed with --every flag
             self.N_skip = int(self.frame_every/self.dt)
@@ -205,11 +206,12 @@ class NT_simulation (object):
                 self.save(k, T=T_init, suffix="NT_init.pkl")
 
                 diff_rates=self.neural_tube.GRN.diff_rates.copy()
-                self.neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                    vertex=vertex,move=move,morphogen=False,
-                    diff_rates=diff_rates,diff_adhesion=diff_adhesion)
-                self.neural_tube.transitions(division=division)                
-
+                self.neural_tube.evolve(self.diff_coef,self.prod_rate,self.bind_rate,self.degr_rate,
+                    self.time,self.dt,
+                    vertex=self.vertex, move=self.move, morphogen=False,
+                    diff_adhesion=self.diff_adhesion,
+                    diff_rates=diff_rates)
+                self.neural_tube.transitions(division=self.division)     
             print('')
         else:
             print(f'Loading restart file \"{self.restart_file}\"')
@@ -233,10 +235,13 @@ class NT_simulation (object):
                     leaving=self.neural_tube.properties['leaving']
 
                     diff_rates=self.neural_tube.GRN.diff_rates.copy()
-                    self.neural_tube.evolve(diff_coef,prod_rate,bind_rate,degr_rate,.0,dt,
-                        vertex=vertex,move=move,morphogen=morphogen,
-                        diff_rates=diff_rates,diff_adhesion=diff_adhesion)
-                    self.neural_tube.transitions(division=division)
+                    self.neural_tube.evolve(self.diff_coef,self.prod_rate,self.bind_rate,self.degr_rate,
+                        self.time,self.dt,
+                        vertex=self.vertex, move=self.move, morphogen=self.morphogen,
+                        diff_adhesion=self.diff_adhesion,
+                        diff_rates=diff_rates)
+                    self.neural_tube.transitions(division=self.division)
+                    self.time += self.dt
                 print("")
 
     def video(self, duration=60., files='main'):
