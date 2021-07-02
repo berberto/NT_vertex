@@ -19,13 +19,22 @@ da=5
 # to the output directory
 current_commit() {
 	if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
-		local str="$(git rev-parse --short HEAD)/"
+		local str="$(git rev-parse --short HEAD)"
 	else
-		local str=""
+		local str="no-git"
 	fi
 	echo "$str"
 }
-outprefix=$(current_commit)"F="$f"_D="$d"_Dadh="$da
+if [ $1 ]; then
+	subdir=$1
+else
+	subdir=$(current_commit)
+fi
+
+outprefix=$subdir"/F="$f"_D="$d"_Dadh="$da
+
+echo $outprefix
+exit
 
 python neuraltube.py --prefix "$outprefix" --init "200." -t "200." --every "0.2" --dt "0.001" --diff-adh "$da" -f "$f" -D "$d" 2>&1 | tee outputs/"$outprefix".log
 
