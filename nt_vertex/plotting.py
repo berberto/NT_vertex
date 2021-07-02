@@ -167,7 +167,7 @@ def set_colour_poni_state(cells,poni_state):
     cells.properties['color'][cells.properties['source']==1] = np.array([1,1,1])
 
 
-def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, heatmap=True):
+def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, heatmap=True, log=True):
 
     z_low, z_high = zlim
     if not ax:
@@ -186,10 +186,18 @@ def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, h
         if np.allclose(concs_tri.ravel(), 0):
             return
         tri = Triangulation(coord_tri[:,:,0].ravel(), coord_tri[:,:,1].ravel(), triangles=np.arange(len(coord_tri)*3).reshape(-1,3))
-        ax.tricontourf(tri, concs_tri.ravel(), levels=np.linspace(0.,z_high, 20), cmap=plt.get_cmap('Greens'))
-        # refiner = UniformTriRefiner(tri)
-        # tri_refi, z_test_refi = refiner.refine_field(alpha, subdiv=3)
-        # ax.tricontourf(tri_refi, z_test_refi, levels=np.linspace(0.,z_high, 20))
+        if log:
+            z = np.log10(concs_tri.ravel() + 1e-9)
+            levels=np.linspace(-8,np.log10(z_high), 20)
+        else:
+            z = concs_tri.ravel()
+            levels=np.linspace(0,z_high, 20)
+
+        im = ax.tricontourf(tri, z,
+                                levels=levels,
+                                cmap=plt.get_cmap('Greens'),
+                                extend='max'
+                            )
     else:
         raise NotImplementedError("surface plot not implemented")
         # l=[]
@@ -204,7 +212,7 @@ def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, h
 
 
 def combined_video(NT_list, filename=None,
-            xlim=None, ylim=None, zlim=None, heatmap=True,
+            xlim=None, ylim=None, zlim=None, heatmap=True, log=True,
             duration=60.,
             ffmpeg=False):
 
@@ -258,7 +266,7 @@ def combined_video(NT_list, filename=None,
         # 1., 0. to be replaced in general by z_high, z_low
         drawShh(coord_tri_list[k], concs_tri_list[k],
             **ax_lims,
-            zlim=[z_min, z_max], ax=ax[0], heatmap=heatmap)
+            zlim=[z_min, z_max], ax=ax[0], heatmap=heatmap, log=log)
         if heatmap:
             draw_cells(cells_list[k], **ax_lims, ax=ax[0], colored=False)
 

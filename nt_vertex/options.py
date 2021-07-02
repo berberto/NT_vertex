@@ -36,11 +36,16 @@ FEpars.add_argument('--source-width','-w', dest='source_width', metavar='<val>',
 #
 #	not yet implemented --- need to change setup functions for cells
 #
-VTXpars = parser.add_argument_group(title='Vertex model parameters (UNEFFECTIVE)')
+VTXpars = parser.add_argument_group(title='Vertex model parameters')
 VTXpars.add_argument('--kappa','-K', dest='Kappa', metavar='<val>', type=float, default=1.0, help='Area elastic modulus. Default: 1.0')
 VTXpars.add_argument('--gamma','-G', dest='Gamma', metavar='<val>', type=float, default=0.04, help='Global contractility parameter. Default: 0.04')
 VTXpars.add_argument('--lambda','-L', dest='Lambda', metavar='<val>', type=float, default=.075, help='Line tension. Default: 0.05')
 VTXpars.add_argument('--diff-adh', dest='diff_adhesion', metavar='<val>', type=float, default=None, help='Ratio between line tension at the boundary of floorplate region, and all the other line tensions (Lambda). Default: None (equivalent to 1., but skips the differential adhesion calculations)')
+VTXpars.add_argument('--nucl-stiff', dest='nucl_stiff', metavar='<val>', type=float, default=10.0, help='Stiffness constant for nuclear motion in G2. Default: 10.0')
+VTXpars.add_argument('--nucl-crowd', dest='nucl_crowd', metavar='<val>', type=float, default=5.0, help='Amplitude of the crowding force. Default: 5.0')
+VTXpars.add_argument('--nucl-size', dest='nucl_size', metavar='<val>', type=float, default=0.2, help='Relative range of pairwise crowding force. Default: 0.2')
+VTXpars.add_argument('--nucl-noise', dest='nucl_noise', metavar='<val>', type=float, default=0.01, help='Noise amplitude in A-B nuclear dynamics. Default: 0.01')
+
 
 args = parser.parse_args()
 
@@ -78,6 +83,11 @@ Kappa = args.Kappa # default: 1.0
 Gamma = args.Gamma # default: 0.04
 Lambda = args.Lambda # default: 0.075
 diff_adhesion = args.diff_adhesion # default: None
+
+nucl_stiff= args.nucl_stiff
+nucl_crowd= args.nucl_crowd
+nucl_size= args.nucl_size
+nucl_noise= args.nucl_noise
 
 
 def print_options (filename=None):

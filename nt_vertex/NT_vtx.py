@@ -60,10 +60,13 @@ class NT_vtx(object):
     setup_source(self.cells, width=width)
     
   def evolve(self,diff_coeff, prod_rate,bind_rate,deg_rate,time,dt,
-          vertex=True, move=True, grn=True, morphogen=True, diff_rates=None, diff_adhesion=None):
+          vertex=True, move=True, grn=True, morphogen=True, diff_rates=None, diff_adhesion=None,
+          nucl_stiff=10., nucl_noise=0.01, nucl_crowd=5., nucl_size=0.2):
     sig_input = self.FE_vtx.concentration[self.FE_vtx.faces_to_nodes]
 
-    self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, vertex=vertex, move=move, morphogen=morphogen, diff_rates=diff_rates, diff_adhesion=diff_adhesion)
+    self.FE_vtx.evolve(diff_coeff, prod_rate, deg_rate, dt, vertex=vertex, move=move, morphogen=morphogen, diff_rates=diff_rates,
+          diff_adhesion=diff_adhesion, nucl_stiff=nucl_stiff, nucl_noise=nucl_noise, nucl_crowd=nucl_crowd, nucl_size=nucl_size)
+    
     if grn:
       self.GRN.evolve(time , dt , sig_input , bind_rate)
       self.GRN.lost_morphogen[self.FE_vtx.cells.properties['source'].astype(bool)]=0.0 # no binding at source
