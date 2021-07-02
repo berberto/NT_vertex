@@ -160,7 +160,7 @@ class FE_vtx(object):
         return self.cells.properties
 
     def evolve(self, diff_coef, prod_rate, degr_rate, dt, vertex=True, move=True, morphogen=True, diff_rates=None,
-               diff_adhesion=None):
+               diff_adhesion=None, nucl_stiff=10., nucl_noise=0.01, nucl_crowd=5., nucl_size=0.2):
         """
         Performs one step of the FE method. Computes the new cells object itself.
         Uses np.linalg.solve
@@ -179,7 +179,8 @@ class FE_vtx(object):
         n_e = self.cells.mesh.edges.ids.size
 
         if move:  # move: use vertex model forces if True, else only expansion
-            new_cells = cells_evolve(self.cells, dt, vertex=vertex, diff_rates=diff_rates, diff_adhesion=diff_adhesion)
+            new_cells = cells_evolve(self.cells, dt, vertex=vertex, diff_rates=diff_rates, diff_adhesion=diff_adhesion,
+                                     k=nucl_stiff, eps=nucl_noise, r=nucl_crowd, s=nucl_size)
             new_verts = new_cells.mesh.vertices.T
             new_cents = new_cells.mesh.centres.T
         else:

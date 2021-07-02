@@ -86,6 +86,8 @@ def property_update(cells, ready):
         properties['age'] = np.append(properties['age'],np.zeros(2*len(ready)))#extend
     if 'A0' in properties:    
         properties['A0']=np.append(properties['A0'],np.repeat(properties['A0'][ready],2))
+    if 'zposn' in properties:
+        properties['zposn']=np.append(properties['zposn'], np.repeat(properties['zposn'][ready],2))
     if 'leaving' in properties: #not sure what this is for.  To make leaving cells shrink and die.
         properties['leaving'] = np.append(properties['leaving'], np.zeros(2*len(ready)))  
     if 'offspring' in properties: #trace family tree.  NOT IN USE ANYMORE
@@ -275,8 +277,81 @@ def set_zposn_A0(cells):
     cells.properties['zposn'] = np.minimum(1.0,np.maximum(N_G1,np.maximum(N_S,N_G2)))
     """Target area function depending age and z nuclei position"""
     cells.properties['A0'] = (cells.properties['age']+1.0)*0.5*(1.0+cells.properties['zposn']**2)
-    
-def update_zposn_and_A0(cells):
+
+
+def pairwise_crowding_force (delta_z, s=0.2):
+    x = delta_z/s
+    return np.exp(- x**2/2)*x
+
+def crowding_force (cells, s=0.1):
+    '''
+    For every cell calculate the total crowding force
+    as the sum over its neighbours of the pairwise crowding force
+
+    '''
+
+    # Get the positions of all the nuclei.
+    nucl_pos = cells.properties['zposn']
+
+    # Get the ids of cells by their edges
+    cell_ids = cells.mesh.face_id_by_edge   # ids of faces/cells
+    neig_ids = cell_ids[cells.mesh.edges.reverse] # ids of their neighbours
+
+    # position of nuclei in cells and their neighbours.
+    z  = np.take(nucl_pos, cell_ids) # cells of interest
+    zn = np.take(nucl_pos, neig_ids) # their neighbours
+
+    # calculate the difference in nucl_pos between neighbouring cells.
+    delta_z = z - zn   # the difference in z for all pairs
+    f_pairs = pairwise_crowding_force(delta_z, s=s)  # the corresponding pairwise forces
+
+    # calculate the sum of the pairwise contributions for each cell of interest
+    force = np.bincount(cell_ids, f_pairs, cells.mesh.n_face)
+
+    return force
+
+def _target_area (age, zpos, g=1., M=1.):
+    return M*(1 + zpos**2)/(1 + np.exp(- g * age))
+
+
+def target_area (cells, M=1., eps=0.05, t1=1.1):
+    '''
+    Target area as a function of the nuclear position and the cell-cycle stage
+
+    '''
+    # logistic dependence on t (exponential growth, until capacity),
+    # and some other dependence on z (growing with z)
+    z = cells.properties['zposn']
+    t = cells.properties['age']
+    g = np.log((1-eps)/eps)/t1 # * cells.properties['ageingrate']
+
+    # _t = np.linspace(0,1.5,100)
+    # _z = np.linspace(0,1,100)
+    # tt,zz=np.meshgrid(_t, _z)
+    # import matplotlib.pyplot as plt
+    # from matplotlib import use
+    # use('tkagg')
+    # plt.contourf(tt,zz,_target_area(zz,tt, g = np.log((1-eps)/eps)/t1), 100)
+    # plt.colorbar()
+    # plt.show()
+
+    # N_G1=1-1.0/t_G1*_t #nuclei position in G1 phase
+    # N_S=0
+    # N_G2=1.0/(t_G2)*(_t-(t_G1+t_S))  #nuclei position in G2 and S phase
+    # zt = np.minimum(1.0,np.maximum(N_G1,np.maximum(N_S,N_G2)))
+    # # plt.plot(_t, zt)
+    # plt.plot(_t, _target_area(_t, zt, g = np.log((1-eps)/eps)/t1))
+    # plt.show()
+
+    # plt.plot(_t, _target_area(_t, 0, g = np.log((1-eps)/eps)/t1))
+    # plt.show()
+
+    # exit()
+
+    return _target_area(t, z, g=g)
+
+
+def update_zposn_and_A0(cells, dt, k=10., eps=.01, r=5., s=0.2):
     """
     Args:
         cells object
@@ -285,12 +360,26 @@ def update_zposn_and_A0(cells):
     dictionary.
     
     """
-    N_G1=1-1.0/t_G1*cells.properties['age'] #nuclei position in G1 phase
-    N_S=0
-    N_G2=1.0/(t_G2)*(cells.properties['age']-(t_G1+t_S))  #nuclei position in G2 and S phase
-    cells.properties['zposn'] = np.minimum(1.0,np.maximum(N_G1,np.maximum(N_S,N_G2)))
-    """Target area function depending age and z nuclei position"""
-    cells.properties['A0'] = (cells.properties['age']+1.0)*0.5*(1.0+cells.properties['zposn']**2)
+    _z = cells.properties['zposn'].copy()
+
+    # nuclei in cells which are in G2 or M phase, 
+    # are strongly pulled towards the apical side
+    # (target position z0=1 and elastic force with stiffness k)
+    beyond_S = np.where(cells.properties['age'] > t_G1 + t_S)[0]
+    z0 = np.zeros_like(_z)
+    z0[beyond_S] = 1.
+    stiffness = np.ones_like(_z) * k/10.
+    stiffness[beyond_S] = k
+
+    # all cells are affected by crowding forces
+    # (with a strength given by r)
+    _z += dt * ( stiffness * ( z0 - _z ) + r * crowding_force(cells, s=s) )
+    _z += np.sqrt(2 * eps * dt) * np.random.normal(size=len(_z))
+    cells.properties['zposn'] = np.clip(_z, 0., 1.)
+
+    cells.properties['A0'] = target_area(cells)
+    cells.properties['A0'][np.where(cells.empty())[0]] = 0. # unnecessary...
+
     if 'leaving' in cells.properties:
         cells.properties['A0'] *= 1 - cells.properties['leaving']
 
@@ -399,7 +488,9 @@ def add_IKNM_properties(cells):
     set_zposn_A0(cells)
     
 
-def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesion=None):
+def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesion=None,
+                 k=10., eps=.01, r=5., s=0.2
+    ):
     """
     Same as evolve, just renamed (for use in another method called 'evolve')
     """
@@ -455,5 +546,5 @@ def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesi
     if 'age' in cells.properties:
         update_age(cells,dt)
     if 'zposn' in cells.properties:
-        update_zposn_and_A0(cells)
+        update_zposn_and_A0(cells, dt, k=k, eps=eps, r=r, s=s)
     return cells #, expansion

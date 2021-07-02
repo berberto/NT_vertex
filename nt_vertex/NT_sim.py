@@ -12,6 +12,7 @@ from .options import (file_prefix, test_output, restart_file, verbose,
                 vertex, morphogen, move, division,
                 xsize,ysize, 
                 degr_rate, prod_rate, diff_coef, bind_rate, source_width,
+                nucl_stiff, nucl_crowd, nucl_size, nucl_noise,
                 Kappa, Gamma, Lambda, diff_adhesion,
                 print_options
                 )
@@ -33,6 +34,7 @@ class NT_simulation (object):
             diff_coef=diff_coef,degr_rate=degr_rate,
             prod_rate=prod_rate, bind_rate=bind_rate,
             Kappa=Kappa, Gamma=Gamma, Lambda=Lambda,
+            nucl_stiff=10., nucl_crowd=5., nucl_size=0.2, nucl_noise=0.01,
             simulate=simulate, plotting=plotting, init_only=init_only,
             from_last=from_last, restart_file=restart_file,
             dry=test_output,
@@ -72,16 +74,22 @@ class NT_simulation (object):
             self.N_skip = max(self.N_step//self.N_frames, 1)
         self.N_frames = min(self.N_frames,self.N_step)
 
-        # physical parameters
+        # physical parameters - diffusion
         self.diff_coef=diff_coef
         self.degr_rate=degr_rate
         self.prod_rate=prod_rate
         self.bind_rate=bind_rate
+        self.source_width=source_width
+        # physical parameters - vertex
         self.Kappa=Kappa
         self.Gamma=Gamma
         self.Lambda=Lambda
         self.diff_adhesion=diff_adhesion
-        self.source_width=source_width
+        # physical parameters - IKNM
+        self.nucl_stiff=nucl_stiff
+        self.nucl_crowd=nucl_crowd
+        self.nucl_size=nucl_size
+        self.nucl_noise=nucl_noise
 
         # debug options
         self.vertex=vertex
@@ -208,6 +216,8 @@ class NT_simulation (object):
                 diff_rates=self.neural_tube.GRN.diff_rates.copy()
                 self.neural_tube.evolve(self.diff_coef,self.prod_rate,self.bind_rate,self.degr_rate,
                     self.time,self.dt,
+                    nucl_stiff=self.nucl_stiff, nucl_crowd=self.nucl_crowd,
+                    nucl_size=self.nucl_size, nucl_noise=self.nucl_noise,
                     vertex=self.vertex, move=self.move, morphogen=False,
                     diff_adhesion=self.diff_adhesion,
                     diff_rates=diff_rates)
@@ -237,6 +247,8 @@ class NT_simulation (object):
                     diff_rates=self.neural_tube.GRN.diff_rates.copy()
                     self.neural_tube.evolve(self.diff_coef,self.prod_rate,self.bind_rate,self.degr_rate,
                         self.time,self.dt,
+                        nucl_stiff=self.nucl_stiff, nucl_crowd=self.nucl_crowd,
+                        nucl_size=self.nucl_size, nucl_noise=self.nucl_noise,
                         vertex=self.vertex, move=self.move, morphogen=self.morphogen,
                         diff_adhesion=self.diff_adhesion,
                         diff_rates=diff_rates)
