@@ -210,29 +210,17 @@ def drawShh(coord_tri, concs_tri, xlim=[0,1], ylim=[0,1], zlim=[0,1], ax=None, h
     plt.draw()
 
 
+def _unpack (NT_list, xlim=None, ylim=None, zlim=None):
 
-def combined_video(NT_list, filename=None,
-            xlim=None, ylim=None, zlim=None, heatmap=True, log=True,
-            duration=60.,
-            ffmpeg=False):
-
-    use('Agg')
-
-    if filename is None:
-        raise ValueError("Provide name for output video file")
-
-    nodes_list = [
-                np.vstack([
-                    nt.FE_vtx.cells.mesh.vertices.T[::3],
-                    nt.FE_vtx.centroids[~nt.FE_vtx.cells.empty()]
-                ]) for nt in NT_list]
-    concs_list = [nt.FE_vtx.concentration   for nt in NT_list]
     poni_list = [nt.GRN.state[:,-4:]   for nt in NT_list]
     cells_list = [nt.FE_vtx.cells   for nt in NT_list]
-    # verts_list = [nt.FE_vtx.cells.mesh.vertices.T[::3] for nt in NT_list]
     concs_tri_list = [nt.FE_vtx.concentration_triangles   for nt in NT_list]
     coord_tri_list = [nt.FE_vtx.cells.mesh.recentre().triangles   for nt in NT_list]
 
+    return (coord_tri_list, concs_tri_list), cells_list, poni_list
+
+
+def _define_lims (coord_tri_list, concs_tri_list, xlim=None, ylim=None, zlim=None):
 
     # calculate bounds for plotting
     x_min, y_min, z_min = 3*[np.inf]
@@ -252,49 +240,75 @@ def combined_video(NT_list, filename=None,
         y_min, y_max = ylim
     if zlim is not None:
         z_min, z_max = zlim
-        
-    ax_lims = {'xlim': [x_min, x_max], 'ylim': [y_min, y_max]}
 
+    return {'xlim':[x_min, x_max], 'ylim':[y_min, y_max], 'zlim':[z_min, z_max]}
+
+
+def plot_frame(ax, coord_tri, concs_tri, cells, poni, xlim=(None,None), ylim=(None,None), zlim=[0,1], heatmap=True, log=False):
+    assert ax.shape == (2,), '\"ax\" need to contain 2 Axes objects'
+    plt.cla()
+    # top panel
+    # 1., 0. to be replaced in general by z_high, z_low
+    ax_lims = {'xlim': xlim, 'ylim': ylim}
+    drawShh(coord_tri, concs_tri,
+        **ax_lims,
+        zlim=zlim, ax=ax[0], heatmap=heatmap, log=log)
+    if heatmap:
+        draw_cells(cells, **ax_lims, ax=ax[0], colored=False)
+
+    # bottom panel
+    set_colour_poni_state(cells,poni)
+    draw_cells(cells, **ax_lims, ax=ax[1])
+
+
+def _setup_axes ():
     fig, ax = plt.subplots(nrows=2)
     for a in ax:
         for side in ['top', 'bottom', 'left', 'right']:
             a.spines[side].set_visible(False)
-    
-    def plot_frame(k):
-        plt.cla()
-        # top panel
-        # 1., 0. to be replaced in general by z_high, z_low
-        drawShh(coord_tri_list[k], concs_tri_list[k],
-            **ax_lims,
-            zlim=[z_min, z_max], ax=ax[0], heatmap=heatmap, log=log)
-        if heatmap:
-            draw_cells(cells_list[k], **ax_lims, ax=ax[0], colored=False)
+    return fig, ax
 
-        # bottom panel
-        set_colour_poni_state(cells_list[k],poni_list[k])
-        draw_cells(cells_list[k], **ax_lims, ax=ax[1])
 
-    if ffmpeg:
-        i=0
-        frames=[]
-        for k in range(len(cells_list)):
-            plot_frame(k)
-            plt.show()
-            exit()
-            i=i+1
-            frame=outputdir+"/image%03i.png" % i
-            fig.savefig(frame,dpi=100,bbox_inches="tight")
-            frames.append(frame)  
-        os.system("cd ")
-        os.system("ffmpeg -framerate 30 -i "+outputdir+"/image%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p "+filename+".mp4") #for Mac computer  
+def snapshot (nt, filename=None):
+    use('svg')
+    poni = nt.GRN.state[:,-4:]
+    cells = nt.FE_vtx.cells
+    concs_tri = nt.FE_vtx.concentration_triangles
+    coord_tri = nt.FE_vtx.cells.mesh.recentre().triangles
 
-        # for frame in frames: os.remove(frame)  
-
+    fig, ax = _setup_axes()
+    plot_frame(ax, coord_tri, concs_tri, cells, poni)
+    if filename is None:
+        plt.show()
     else:
-        frames=range(len(cells_list))
-        dt = duration*1000./len(cells_list)
-        ani = FuncAnimation(fig, plot_frame,
-                            interval=dt,
-                            frames=frames,
-                            blit=False)
-        ani.save(f'{filename}.mp4')
+        fig.savefig(filename)
+
+
+def combined_video(NT_list, filename=None,
+            xlim=None, ylim=None, zlim=None, heatmap=True, log=True,
+            duration=60., snapshot_frames=None):
+
+    use('Agg')
+
+    if filename is None:
+        raise ValueError("Provide name for output video file")
+
+    fig, ax = _setup_axes()
+
+    (coord_tri_list, concs_tri_list), cells_list, poni_list = _unpack(NT_list)
+
+    ax_lims = {'xlim': xlim, 'ylim': ylim, 'zlim': zlim}
+    ax_lims = _define_lims(coord_tri_list, concs_tri_list, **ax_lims)
+
+    def _plot_frame(k):
+        plot_frame(ax,
+                    coord_tri_list[k], concs_tri_list[k], cells_list[k], poni_list[k],
+                    **ax_lims, heatmap=heatmap, log=log)
+
+    frames=range(len(cells_list))
+    dt = duration*1000./len(cells_list)
+    ani = FuncAnimation(fig, _plot_frame,
+                        interval=dt,
+                        frames=frames,
+                        blit=False)
+    ani.save(f'{filename}.mp4')
