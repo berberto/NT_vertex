@@ -139,10 +139,11 @@ class NT_simulation (object):
         self.checkpoints_dir = self.path+"/checkpoints"
         self.stats_dir = self.path+"/stats"
         self.frames_dir = self.path+"/frames"
+        self.plots_dir = self.path+"/plots"
 
         print(f"\nsaving in / retrieving from  \"{self.checkpoints_dir}\"")
 
-        paths = [self.checkpoints_dir, self.stats_dir, self.frames_dir]
+        paths = [self.checkpoints_dir, self.stats_dir, self.frames_dir, self.plots_dir]
         for path in paths:
             if os.path.exists(path):
                 print("Directory \""+path+"\" already exists")
@@ -272,13 +273,9 @@ class NT_simulation (object):
             print("skip plotting")
 
 
-    def analysis (self):
+    def save_stats (self, files='main'):
 
-        import matplotlib.pyplot as plt
-        from matplotlib import use
-        use('tkagg')
-
-        NT_list = self.load()
+        NT_list = self.load(files=files)
         last = NT_list[-1]
         N_cells = len(last.cells)
         state_ = np.nan * np.ones( last.cell_state.shape + self.times.shape ).astype(float)
@@ -304,7 +301,37 @@ class NT_simulation (object):
         np.save(self.stats_dir+"/zposn.npy", zposn_)
         np.save(self.stats_dir+"/areas.npy", areas_)
         np.save(self.stats_dir+"/neigs.npy", neigs_)
+
+        self.stats = {}
+        self.stats['state'] = state_
+        self.stats['ages'] = ages_
+        self.stats['zposn'] = zposn_
+        self.stats['areas'] = areas_
+        self.stats['neigs'] = neigs_
+
+    def plots(self):
+
+        import matplotlib.pyplot as plt
+        from matplotlib import use
+        use('tkagg')
+
+        imshow_kwargs = {'origin':'lower',
+                  # 'extent': [xmin, xmax, ymin, ymax],
+                  # 'vmin':0.,
+                  # 'vmax':np.max(action_high[:,i])
+                }
+
+        fig, ax = plt.subplots()
+        ax.imshow(self.stats['age'], **imshow_kwargs)
+
+        plt.show()
+
+    def analysis (self):
+        self.save_stats()
+        self.plots()
         
+    
+    # TO DEBUG
     def snapshot(self, time, files="main"):
         _ = self.load(files=files)
         if time < self.times.min() or time > self.times.max():
