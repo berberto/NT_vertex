@@ -5,7 +5,7 @@ from datetime import datetime
 import dill
 
 from .NT_vtx import build_NT_vtx, load_NT_vtx
-from .plotting import combined_video
+from .plotting import combined_video, plot_frame, snapshot
 from .options import (file_prefix, test_output, restart_file, verbose,
                 T_sim, T_init, frame_every, init_only, dt, N_frames,
                 simulate, plotting, from_last,
@@ -104,14 +104,12 @@ class NT_simulation (object):
         # string with timestamp
         self.time_id = datetime.now().strftime('%Y_%m_%d_%H:%M:%S')
 
-        self.make_path(path)
+        self.make_paths(path)
 
         print_options(self.path+"/parameters.txt")
 
         if dry:
             exit(0)
-
-
 
     def set_path(self, path=None):
         if path is not None:
@@ -135,54 +133,64 @@ class NT_simulation (object):
             else:
                 self.path += "_static"
 
-    def make_path(self, path=None):
+    def make_paths(self, path=None):
 
         self.set_path(path)
-        self.checkpoint_dir = self.path+"/checkpoints"
+        self.checkpoints_dir = self.path+"/checkpoints"
+        self.stats_dir = self.path+"/stats"
+        self.frames_dir = self.path+"/frames"
 
-        print(f"\nsaving in / retrieving from  \"{self.checkpoint_dir}\"")
-        if os.path.exists(self.checkpoint_dir):
-            print("(path alread exists)\n")
-        else:
-            os.system("mkdir -p "+self.checkpoint_dir)
+        print(f"\nsaving in / retrieving from  \"{self.checkpoints_dir}\"")
+
+        paths = [self.checkpoints_dir, self.stats_dir, self.frames_dir]
+        for path in paths:
+            if os.path.exists(path):
+                print("Directory \""+path+"\" already exists")
+            else:
+                os.makedirs(path, exist_ok=True)
 
     def __call__ (self):
         self.run()
         self.video()
 
-    def save (self, k, T=None, suffix="_nt.pkl"):
+    def save (self, k, T=None, suffix="nt.pkl"):
         if k%self.N_skip == 0:
             print("%2.1f/100   t = %.4f   frame = %d"%(k*self.dt/T*100., k*self.dt, int(k/self.N_skip)), end="\r")
-            outfile=(self.checkpoint_dir+"/{:07.3f}_"+suffix).format(k*self.dt)
+            outfile=(self.checkpoints_dir+"/"+_format_time(k*self.dt)+"_"+suffix)
             with open (outfile, "wb") as f:
                 dill.dump(self.neural_tube, f)
 
-    def load(self, files='main'):
+    def load(self, files='main', index=None):
         try:
-            allfiles = os.listdir(self.checkpoint_dir)
+            allfiles = os.listdir(self.checkpoints_dir)
 
         except FileNotFoundError:
-            raise FileNotFoundError("path not found: \""+self.checkpoint_dir+"\"")
+            raise FileNotFoundError("path not found: \""+self.checkpoints_dir+"\"")
 
         if files == 'init':
             allNT = sorted([x for x in allfiles if "_NT_init.pkl" in x])
+            self.init_times = np.array([float(name.split("_NT")[0]) for name in allNT])
         elif files == 'main':
             allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
+            self.times = np.array([float(name.split("_NT")[0]) for name in allNT])
         elif files == 'both':
-            allNT = sorted([x for x in allfiles if "_NT_init.pkl" in x])
-            allNT += sorted([x for x in allfiles if "_NT.pkl" in x])
+            allNT_init = sorted([x for x in allfiles if "_NT_init.pkl" in x])
+            self.init_times = np.array([float(name.split("_NT")[0]) for name in allNT_init])
+            allNT = sorted([x for x in allfiles if "_NT.pkl" in x])
+            self.times = np.array([float(name.split("_NT")[0]) for name in allNT])
+            allNT = (allNT_init + allNT).copy()
         else:
             raise ValueError(f"Invalid 'files' option '{files}'")
 
         if len(allNT) == 0:
-            raise FileNotFoundError("No snapshots found in \""+self.checkpoint_dir+"\"")
+            raise FileNotFoundError("No snapshots found in \""+self.checkpoints_dir+"\"")
 
-        print(f'\n{len(allNT)} frames found')
+        # print(f'\n{len(allNT)} frames found')
 
-        # allNTinit = sorted([x for x in allfiles if "_NT_init.pkl" in x])
-        NT_list = [load_NT_vtx(self.checkpoint_dir+"/"+file) for file in allNT]
-
-        return NT_list
+        if index is None:
+            return [load_NT_vtx(self.checkpoints_dir+"/"+file) for file in allNT]
+        else:
+            return load_NT_vtx(self.checkpoints_dir+"/"+allNT[index])
 
 
     def initialize (self):
@@ -263,3 +271,50 @@ class NT_simulation (object):
         else:
             print("skip plotting")
 
+
+    def analysis (self):
+
+        import matplotlib.pyplot as plt
+        from matplotlib import use
+        use('tkagg')
+
+        NT_list = self.load()
+        last = NT_list[-1]
+        N_cells = len(last.cells)
+        state_ = np.nan * np.ones( last.cell_state.shape + self.times.shape ).astype(float)
+        ages_ = np.nan * np.ones( (N_cells,) + self.times.shape ).astype(float)
+        areas_ = np.nan * np.ones( (N_cells,) + self.times.shape ).astype(float)
+        neigs_ = np.nan * np.ones( (N_cells,) + self.times.shape ).astype(int)
+        zposn_ = np.nan * np.ones( (N_cells,) + self.times.shape ).astype(float)
+
+        for (i,t), nt in zip(enumerate(self.times), NT_list):
+
+            # get the cells that exist at any given time
+            alive = np.where(~nt.cells.empty())[0]
+
+            # save properties of alive cells (other entries are nan)
+            state_[alive,:,i] = nt.cell_state[alive]
+            ages_[alive,i] = nt.properties['age'][alive]
+            zposn_[alive,i] = nt.properties['zposn'][alive]
+            areas_[alive,i] = nt.mesh.area[alive]
+            neigs_[alive,i] = nt.mesh.neighbours[alive]
+
+        np.save(self.stats_dir+"/state.npy", state_)
+        np.save(self.stats_dir+"/ages.npy", ages_)
+        np.save(self.stats_dir+"/zposn.npy", zposn_)
+        np.save(self.stats_dir+"/areas.npy", areas_)
+        np.save(self.stats_dir+"/neigs.npy", neigs_)
+        
+    def snapshot(self, time, files="main"):
+        _ = self.load(files=files)
+        if time < self.times.min() or time > self.times.max():
+            print("Time outside the simulated time interval.\n",
+                  "Clipping between min and max.")
+        idx = np.argmin(np.abs(self.times - time))
+        nt = self.load(files=files, index=idx)
+        filename = self.frames_dir+"/"+_format_time(time)+"_frame.svg"
+        snapshot(nt, filename=filename)
+
+
+def _format_time (time):
+    return "{:07.3f}".format(time)

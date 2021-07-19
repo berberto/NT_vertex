@@ -15,6 +15,8 @@ if __name__ == "__main__":
     # run simulation and save snapshots in "path"
     sim.run()
 
+    sim.analysis()
+
     # gather saved simulations and produce a video
     sim.video(duration=60.) # duration in s.
  

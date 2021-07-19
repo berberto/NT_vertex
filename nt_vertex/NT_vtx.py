@@ -46,7 +46,7 @@ class NT_vtx(object):
 
   @property
   def cell_state(self):
-    return self.GRN.poni_grn.state
+    return self.GRN.state
 
   @property
   def not_empty(self):
