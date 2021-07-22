@@ -283,6 +283,7 @@ class NT_simulation (object):
         areas_ = np.nan * np.ones( (N_cells,) + self.times.shape ).astype(float)
         neigs_ = np.nan * np.ones( (N_cells,) + self.times.shape ).astype(int)
         zposn_ = np.nan * np.ones( (N_cells,) + self.times.shape ).astype(float)
+        adjs_ = []
 
         for (i,t), nt in zip(enumerate(self.times), NT_list):
 
@@ -295,12 +296,19 @@ class NT_simulation (object):
             zposn_[alive,i] = nt.properties['zposn'][alive]
             areas_[alive,i] = nt.mesh.area[alive]
             neigs_[alive,i] = nt.mesh.neighbours[alive]
+            
+            # adjacency (tissue topology)
+            cell_ids = nt.cells.mesh.face_id_by_edge   # ids of faces/cells
+            neig_ids = nt.cell_ids[cells.mesh.edges.reverse] # ids of their neighbours
+            adjs_.append(np.vstack(cell_ids, neig_ids))
 
         np.save(self.stats_dir+"/state.npy", state_)
         np.save(self.stats_dir+"/ages.npy", ages_)
         np.save(self.stats_dir+"/zposn.npy", zposn_)
         np.save(self.stats_dir+"/areas.npy", areas_)
         np.save(self.stats_dir+"/neigs.npy", neigs_)
+        with open(self.stats_dir+"/adjs.pkl", "wb") as f:
+            dill.dump(f, adjs_)
 
         self.stats = {}
         self.stats['state'] = state_
@@ -308,6 +316,7 @@ class NT_simulation (object):
         self.stats['zposn'] = zposn_
         self.stats['areas'] = areas_
         self.stats['neigs'] = neigs_
+        self.stats['adjs'] = adjs_
 
     def plots(self):
 
