@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 import dill
 
+from .plot_stats import plot_stats
 from .NT_vtx import build_NT_vtx, load_NT_vtx
 from .plotting import combined_video, plot_frame, snapshot
 from .options import (file_prefix, test_output, restart_file, verbose,
@@ -319,27 +320,12 @@ class NT_simulation (object):
         self.stats['adjs'] = adjs_
 
     def plots(self):
-
-        import matplotlib.pyplot as plt
-        from matplotlib import use
-        use('tkagg')
-
-        imshow_kwargs = {'origin':'lower',
-                  # 'extent': [xmin, xmax, ymin, ymax],
-                  # 'vmin':0.,
-                  # 'vmax':np.max(action_high[:,i])
-                }
-
-        fig, ax = plt.subplots()
-        ax.imshow(self.stats['age'], **imshow_kwargs)
-
-        plt.show()
+        plot_stats(path=self.stats_dir, outdir=self.plots_dir)
 
     def analysis (self):
         self.save_stats()
         self.plots()
         
-    
     # TO DEBUG
     def snapshot(self, time, files="main"):
         _ = self.load(files=files)
