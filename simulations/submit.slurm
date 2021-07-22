@@ -4,7 +4,7 @@
 #SBATCH --array=1-24
 #SBATCH --job-name=ab_dyn
 #SBATCH -n 1
-#SBATCH --mem=128G
+#SBATCH --mem=32G
 #SBATCH --time=12:00:00
 #SBATCH --mail-type=BEGIN,END,FAIL
 

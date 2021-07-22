@@ -300,8 +300,8 @@ class NT_simulation (object):
             
             # adjacency (tissue topology)
             cell_ids = nt.cells.mesh.face_id_by_edge   # ids of faces/cells
-            neig_ids = nt.cell_ids[cells.mesh.edges.reverse] # ids of their neighbours
-            adjs_.append(np.vstack(cell_ids, neig_ids))
+            neig_ids = np.take(cell_ids, nt.cells.mesh.edges.reverse) # ids of their neighbours
+            adjs_.append(np.vstack((cell_ids, neig_ids)))
 
         np.save(self.stats_dir+"/state.npy", state_)
         np.save(self.stats_dir+"/ages.npy", ages_)
@@ -309,7 +309,7 @@ class NT_simulation (object):
         np.save(self.stats_dir+"/areas.npy", areas_)
         np.save(self.stats_dir+"/neigs.npy", neigs_)
         with open(self.stats_dir+"/adjs.pkl", "wb") as f:
-            dill.dump(f, adjs_)
+            dill.dump(adjs_, f)
 
         self.stats = {}
         self.stats['state'] = state_

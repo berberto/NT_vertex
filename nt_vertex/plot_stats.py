@@ -17,7 +17,7 @@ def plot_stats (path=None, outdir=None):
         zposn_ = np.load(path+"/zposn.npy")
         areas_ = np.load(path+"/areas.npy")
         neigs_ = np.load(path+"/neigs.npy")
-        with open(path+"/adjs.pkl", "w") as f:
+        with open(path+"/adjs.pkl", "rb") as f:
             adjs_ = dill.load(f)
     except:
         print("Something wrong with the path")
@@ -156,26 +156,34 @@ def plot_stats (path=None, outdir=None):
     '''
     A-B nuclear dynamics for one given cell and its neighbours
     '''
-    # 1. find cells that are born within the observed time-frame
-    non_empty = np.where( np.any( ~np.isnan(ages_), axis=1 ) & np.isnan(ages_[:,0]) )[0]
-    # 2. for each of these, select only the part which is defined, and create a list of arrays
-    zposn_aligned = [ zs[~np.isnan(zs)] for zs in zposn_[non_empty] ]
-    times_birth = [ np.where(~np.isnan(zs))[0][0] for zs in zposn_[non_empty] ]
-    for n,i in enumerate(np.random.randint(0,len(non_empty),size=10)):
-        z_cell = zposn_aligned[i]
-        t_start = times_birth[i]
+    # 1. find the cells that are born during the simulation (so we can plot from the start)
+    start_in = np.where( np.any( ~np.isnan(ages_), axis=1 ) & np.isnan(ages_[:,0]) )[0]
+    # 4. for a number of randomly selected cells among these:
+    for n, i in enumerate(np.random.choice(start_in, size=10, replace=False)):
         fig, ax = plt.subplots()
-        ax.set_xlim([t_start,t_start+len(z_cell)])
+
+        # a. take the A-B position for the selected cell
+        z_cell = zposn_[i]
+        # b. find where it is actually alive, and use this to set the axis limits
+        ts_ = np.where(~np.isnan(z_cell))[0]
+        ax.set_xlim([ts_.min(), ts_.max()])
         ax.set_ylim([0,1])
-        ax.plot(z_cell, lw=2)
-        # find cells neighbouring the one selected, at any time
+        # c. plot; no need to specify the times, because it is in the limits
+        ax.plot(z_cell, lw=3, color='k')
+        # d. find cells neighbouring the one selected, at any time when the selected cell exists
         neighbours = np.array([]).astype(int)
-        for t in len(self.times):
-            neighbours = np.hstack((neighbours,np.where(adjs_[t][1] == i)[0]))
+        for t in ts_:
+            adj_ = adjs_[t]
+            neighbours = np.hstack((neighbours, adj_[1][np.where(adj_[0] == i)[0]]))
         neighbours = np.unique(neighbours)
+
+        # e. plot the A-B position of the neighbours
         for j in neighbours:
-            ax.plot(zposn_[j], lw=1) # !!!!
+            # again, this will plot automatically the not-NaN part,
+            # so no need to specify the time steps
+            ax.plot(zposn_[j], lw=1)
         plt.savefig(outdir+f"/AB_sample_neigh_{n}.png")
+
 
 
 
