@@ -121,8 +121,8 @@ class NT_simulation (object):
             else:
                 self.path = f"{self.outputdir}/{self.time_id}"
 
-            if self.morphogen:
-                self.path += '_D=%.3f_k=%.3f_f=%.3f_b=%.3f'%(diff_coef, degr_rate, prod_rate, bind_rate)
+            # if self.morphogen:
+            #     self.path += '_D=%.3f_k=%.3f_f=%.3f_b=%.3f'%(diff_coef, degr_rate, prod_rate, bind_rate)
 
             # debugging options (selectively remove part of the dynamics)
             if self.move: # default: move=True, vertex=True, division=True

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --partition=cpu
-#SBATCH --array=1-24
+#SBATCH --array=1-32
 #SBATCH --job-name=ab_dyn
 #SBATCH -n 1
 #SBATCH --mem=32G
@@ -11,8 +11,11 @@
 parameters=`sed -n "${SLURM_ARRAY_TASK_ID} p" params.txt`
 parArray=($parameters)
 
-f=${parArray[0]}
-d=${parArray[1]}
+k=${parArray[0]}
+r=${parArray[1]}
+e=${parArray[2]}
+f=${parArray[3]}
+d=${parArray[4]}
 da=5
 
 # check which commit we are in, and prepend the short hash
@@ -31,7 +34,10 @@ else
 	subdir=$(current_commit)
 fi
 
-outprefix=$subdir"/F="$f"_D="$d"_Dadh="$da
+outprefix=$subdir"/K="$k"_r="$r"_eps="$e"_F="$f"_D="$d
 
-python neuraltube.py --prefix "$outprefix" --init "200." -t "200." --every "0.2" --dt "0.001" --diff-adh "$da" -f "$f" -D "$d" 2>&1 | tee outputs/"$outprefix".log
+python neuraltube.py --prefix "$outprefix" \
+	--init "200." -t "200." --every "0.2" --dt "0.001" \
+	--nucl-stiff "$k" --nucl-crowd "$r" --nucl-noise "$e" -f "$f" -D "$d" \
+	--diff-adh "$da" 2>&1 | tee outputs/"$outprefix".log
 
