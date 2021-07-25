@@ -34,6 +34,7 @@ else
 	subdir=$(current_commit)
 fi
 
+mkdir -p "outputs/$subdir"
 outprefix=$subdir"/K="$k"_r="$r"_eps="$e"_F="$f"_D="$d
 
 python neuraltube.py --prefix "$outprefix" \
