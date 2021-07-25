@@ -35,7 +35,7 @@ class NT_simulation (object):
             diff_coef=diff_coef,degr_rate=degr_rate,
             prod_rate=prod_rate, bind_rate=bind_rate,
             Kappa=Kappa, Gamma=Gamma, Lambda=Lambda,
-            nucl_stiff=10., nucl_crowd=5., nucl_size=0.2, nucl_noise=0.01,
+            nucl_stiff=nucl_stiff, nucl_crowd=nucl_crowd, nucl_size=nucl_size, nucl_noise=nucl_noise,
             simulate=simulate, plotting=plotting, init_only=init_only,
             from_last=from_last, restart_file=restart_file,
             dry=test_output,

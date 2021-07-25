@@ -351,6 +351,36 @@ def target_area (cells, M=1., eps=0.05, t1=1.1):
     return _target_area(t, z, g=g)
 
 
+def _active_force_z (cells, k=10):
+
+    _z = cells.properties['zposn'].copy()
+
+    # 2 versions, uncomment accordingly
+
+    # VERSION 1
+    # nuclei are pulled towards the target position z0
+    # defined as the deterministic position in the paper.
+    # For high values of k it recovers the original dynamics.
+    N_G1=1-1.0/t_G1*cells.properties['age'] #nuclei position in G1 phase
+    N_S=0
+    N_G2=1.0/(t_G2)*(cells.properties['age']-(t_G1+t_S))  #nuclei position in G2 and S phase
+    z0 = np.minimum(1.0,np.maximum(N_G1,np.maximum(N_S,N_G2)))
+    stiffness = k
+
+    # # VERSION 2
+    # # nuclei in cells which are in G2 or M phase, 
+    # # are strongly pulled towards the apical side
+    # # (target position z0=1 and elastic force with stiffness k)
+    # # and towards basal side in G1 and S
+    # beyond_S = np.where(cells.properties['age'] > t_G1 + t_S)[0]
+    # z0 = np.zeros_like(_z)
+    # z0[beyond_S] = 1.
+    # stiffness = np.ones_like(_z) * k/10.
+    # stiffness[beyond_S] = k
+
+    return stiffness * ( z0 - _z )
+
+
 def update_zposn_and_A0(cells, dt, k=10., eps=.01, r=5., s=0.2):
     """
     Args:
@@ -362,18 +392,9 @@ def update_zposn_and_A0(cells, dt, k=10., eps=.01, r=5., s=0.2):
     """
     _z = cells.properties['zposn'].copy()
 
-    # nuclei in cells which are in G2 or M phase, 
-    # are strongly pulled towards the apical side
-    # (target position z0=1 and elastic force with stiffness k)
-    beyond_S = np.where(cells.properties['age'] > t_G1 + t_S)[0]
-    z0 = np.zeros_like(_z)
-    z0[beyond_S] = 1.
-    stiffness = np.ones_like(_z) * k/10.
-    stiffness[beyond_S] = k
-
     # all cells are affected by crowding forces
     # (with a strength given by r)
-    _z += dt * ( stiffness * ( z0 - _z ) + r * crowding_force(cells, s=s) )
+    _z += dt * ( _active_force_z(cells, k=k) + r * crowding_force(cells, s=s) )
     _z += np.sqrt(2 * eps * dt) * np.random.normal(size=len(_z))
     cells.properties['zposn'] = np.clip(_z, 0., 1.)
 
