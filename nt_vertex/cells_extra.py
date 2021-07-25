@@ -311,7 +311,16 @@ def crowding_force (cells, s=0.1):
     return force
 
 def _target_area (age, zpos, g=1., M=1.):
-    return M*(1 + zpos**2)/(1 + np.exp(- g * age))
+
+    # 2 versions, uncomment accordingly
+
+    # VERSION 1
+    # the original model: linear growth in time,
+    # quadratic dependence on z
+    return 0.5*(1 + zpos**2)*(1 + age)
+
+    # # VERSION 2
+    # return M*(1 + zpos**2)/(1 + np.exp(- g * age))
 
 
 def target_area (cells, M=1., eps=0.05, t1=1.1):

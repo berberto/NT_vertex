@@ -74,3 +74,8 @@ sim = NT_simulation(
 	)
 ```
 in `neuraltube.py`.
+
+
+#### Source code info
+
+See the [README in the package source directory](nt_vertex/README.md)
