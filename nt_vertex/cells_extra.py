@@ -565,6 +565,7 @@ def cells_evolve(cells,dt,expansion=None,vertex=True,diff_rates=None,diff_adhesi
             expansion[0] = expansion_constant*np.average(F[0]*cells.mesh.vertices[0])/(cells.mesh.geometry.width**2)
         if hasattr(cells.mesh.geometry,'height'): #Cylinder mesh doesn't have 'height' argument
             expansion[1] = np.average(F[1]*cells.mesh.vertices[1])/(cells.mesh.geometry.height**2)
+    expansion *= 2.
 
     # move only by stretching
     cells.mesh = cells.mesh.scaled(1.0+dt*expansion) #expansion a global constant
